@@ -9,10 +9,6 @@ import { connectDB } from "./db";
 
 export function createServer() {
   const app = express();
-  const httpServer = createHttpServer(app);
-  const io = new SocketServer(httpServer, {
-    cors: { origin: "*", methods: ["GET", "POST"] },
-  });
 
   // Connect to MongoDB
   connectDB().catch(console.error);
@@ -34,6 +30,16 @@ export function createServer() {
   app.post("/api/auth/signup", handleSignup);
   app.post("/api/auth/login", handleLogin);
   app.post("/api/auth/create-member", handleCreateMember);
+
+  return app;
+}
+
+export function createServerWithSocket() {
+  const app = createServer();
+  const httpServer = createHttpServer(app);
+  const io = new SocketServer(httpServer, {
+    cors: { origin: "*", methods: ["GET", "POST"] },
+  });
 
   // WebSocket events
   io.on("connection", (socket) => {
