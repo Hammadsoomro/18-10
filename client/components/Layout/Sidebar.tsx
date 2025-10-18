@@ -80,7 +80,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
         className={cn(
           "fixed left-0 top-0 h-screen bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-800 z-40 transition-all duration-300 flex flex-col",
           isCollapsed ? "w-20" : "w-64",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
@@ -131,7 +131,9 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
         {/* Account Info */}
         {!isCollapsed && user && (
           <div className="p-4 border-b border-slate-800">
-            <p className="text-xs text-slate-400 uppercase tracking-wider">Account</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider">
+              Account
+            </p>
             <p className="text-white font-semibold mt-1">{user.name}</p>
             <p className="text-xs text-slate-400 capitalize">{user.role}</p>
           </div>
@@ -145,12 +147,14 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
               onClick={() => handleNavigate(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
-                isCollapsed && "justify-center"
+                isCollapsed && "justify-center",
               )}
               title={isCollapsed ? item.label : ""}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+              {!isCollapsed && (
+                <span className="text-sm font-medium">{item.label}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -161,30 +165,37 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             onClick={() => handleNavigate("/settings")}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
-              isCollapsed && "justify-center"
+              isCollapsed && "justify-center",
             )}
             title={isCollapsed ? "Settings" : ""}
           >
             <Settings className="h-5 w-5 flex-shrink-0" />
-            {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
+            {!isCollapsed && (
+              <span className="text-sm font-medium">Settings</span>
+            )}
           </button>
 
           <button
             onClick={handleLogout}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors",
-              isCollapsed && "justify-center"
+              isCollapsed && "justify-center",
             )}
             title={isCollapsed ? "Logout" : ""}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
+            {!isCollapsed && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
           </button>
         </div>
       </aside>
 
       {/* Content offset */}
-      <div className="hidden md:block" style={{ width: isCollapsed ? "80px" : "256px" }} />
+      <div
+        className="hidden md:block"
+        style={{ width: isCollapsed ? "80px" : "256px" }}
+      />
     </>
   );
 }

@@ -43,11 +43,21 @@ export default function Settings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue={user?.name} className="mt-2" />
+                    <Input
+                      id="name"
+                      defaultValue={user?.name}
+                      className="mt-2"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue={user?.email} className="mt-2" disabled />
+                    <Input
+                      id="email"
+                      type="email"
+                      defaultValue={user?.email}
+                      className="mt-2"
+                      disabled
+                    />
                   </div>
                 </div>
 
@@ -55,7 +65,9 @@ export default function Settings() {
                   <Label htmlFor="role">Account Type</Label>
                   <Input
                     id="role"
-                    defaultValue={user?.role === "admin" ? "Admin" : "Team Member"}
+                    defaultValue={
+                      user?.role === "admin" ? "Admin" : "Team Member"
+                    }
                     className="mt-2"
                     disabled
                   />
@@ -64,11 +76,19 @@ export default function Settings() {
                 {user?.teamId && (
                   <div>
                     <Label htmlFor="teamId">Team ID</Label>
-                    <Input id="teamId" defaultValue={user.teamId} className="mt-2" disabled />
+                    <Input
+                      id="teamId"
+                      defaultValue={user.teamId}
+                      className="mt-2"
+                      disabled
+                    />
                   </div>
                 )}
 
-                <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  onClick={handleSaveSettings}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Save Changes
                 </Button>
               </CardContent>
@@ -105,7 +125,9 @@ export default function Settings() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <Label>Lines per claim: {claimLineCount}</Label>
-                      <span className="text-sm text-slate-500">1 - 10 lines</span>
+                      <span className="text-sm text-slate-500">
+                        1 - 10 lines
+                      </span>
                     </div>
                     <Slider
                       value={[claimLineCount]}
@@ -119,7 +141,9 @@ export default function Settings() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <Label>Cooldown period: {cooldownSeconds} seconds</Label>
-                      <span className="text-sm text-slate-500">10 - 300 seconds</span>
+                      <span className="text-sm text-slate-500">
+                        10 - 300 seconds
+                      </span>
                     </div>
                     <Slider
                       value={[cooldownSeconds]}
@@ -130,7 +154,10 @@ export default function Settings() {
                     />
                   </div>
 
-                  <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={handleSaveSettings}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
                     Save Claim Settings
                   </Button>
                 </CardContent>
@@ -171,7 +198,10 @@ export default function Settings() {
                       Receive alerts for claims and distributions
                     </p>
                   </div>
-                  <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+                  <Switch
+                    checked={notificationsEnabled}
+                    onCheckedChange={setNotificationsEnabled}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
@@ -181,10 +211,16 @@ export default function Settings() {
                       Play sound for incoming messages
                     </p>
                   </div>
-                  <Switch checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                  <Switch
+                    checked={soundEnabled}
+                    onCheckedChange={setSoundEnabled}
+                  />
                 </div>
 
-                <Button onClick={handleSaveSettings} className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button
+                  onClick={handleSaveSettings}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
                   Save Preferences
                 </Button>
               </CardContent>
@@ -203,7 +239,11 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" className="mt-2" />
+                  <Input
+                    id="current-password"
+                    type="password"
+                    className="mt-2"
+                  />
                 </div>
 
                 <div>
@@ -213,10 +253,16 @@ export default function Settings() {
 
                 <div>
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" className="mt-2" />
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    className="mt-2"
+                  />
                 </div>
 
-                <Button className="bg-blue-600 hover:bg-blue-700">Update Password</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Update Password
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

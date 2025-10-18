@@ -60,8 +60,12 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-slate-400" />
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Email</p>
-                  <p className="font-medium text-slate-900 dark:text-white">{user.email}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Email
+                  </p>
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -69,8 +73,12 @@ export default function Profile() {
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-slate-400" />
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Team</p>
-                    <p className="font-medium text-slate-900 dark:text-white">{user.teamId}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Team
+                    </p>
+                    <p className="font-medium text-slate-900 dark:text-white">
+                      {user.teamId}
+                    </p>
                   </div>
                 </div>
               )}
@@ -78,8 +86,12 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-slate-400" />
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Member Since</p>
-                  <p className="font-medium text-slate-900 dark:text-white">{joinDate}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Member Since
+                  </p>
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {joinDate}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -91,26 +103,34 @@ export default function Profile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">User ID</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  User ID
+                </p>
                 <p className="font-mono text-sm text-slate-700 dark:text-slate-300 break-all">
                   {user.id}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Account Type</p>
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                  user.role === "admin"
-                    ? "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400"
-                    : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                }`}>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  Account Type
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                    user.role === "admin"
+                      ? "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400"
+                      : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
+                  }`}
+                >
                   {user.role === "admin" ? "Administrator" : "Team Member"}
                 </span>
               </div>
 
               {user.adminId && (
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Admin ID</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    Admin ID
+                  </p>
                   <p className="font-mono text-sm text-slate-700 dark:text-slate-300 break-all">
                     {user.adminId}
                   </p>
@@ -128,18 +148,30 @@ export default function Profile() {
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">42</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Lines Claimed</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  42
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  Lines Claimed
+                </p>
               </div>
 
               <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">156</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Total Claims</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  156
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  Total Claims
+                </p>
               </div>
 
               <div className="text-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">8</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Days Active</p>
+                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+                  8
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  Days Active
+                </p>
               </div>
             </div>
           </CardContent>

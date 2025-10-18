@@ -104,7 +104,9 @@ export default function Inbox() {
 
   const truncateText = (text: string, maxWords: number = 10) => {
     const words = text.split(" ");
-    return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "..." : text;
+    return words.length > maxWords
+      ? words.slice(0, maxWords).join(" ") + "..."
+      : text;
   };
 
   return (
@@ -125,11 +127,13 @@ export default function Inbox() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                    claimCooldown > 0
-                      ? "bg-red-200 dark:bg-red-900"
-                      : "bg-green-200 dark:bg-green-900"
-                  }`}>
+                  <div
+                    className={`w-16 h-16 rounded-lg flex items-center justify-center ${
+                      claimCooldown > 0
+                        ? "bg-red-200 dark:bg-red-900"
+                        : "bg-green-200 dark:bg-green-900"
+                    }`}
+                  >
                     {claimCooldown > 0 ? (
                       <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
                     ) : (
@@ -187,14 +191,20 @@ export default function Inbox() {
                             {claim.claimedAt}
                           </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          claim.status === "ready"
-                            ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            claim.status === "ready"
+                              ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                              : claim.status === "cooldown"
+                                ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                          }`}
+                        >
+                          {claim.status === "ready"
+                            ? "🟢 Ready"
                             : claim.status === "cooldown"
-                            ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400"
-                            : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                        }`}>
-                          {claim.status === "ready" ? "🟢 Ready" : claim.status === "cooldown" ? "🔴 Cooldown" : "⚪️ No Available"}
+                              ? "🔴 Cooldown"
+                              : "⚪️ No Available"}
                         </span>
                       </div>
                     </div>
@@ -238,7 +248,10 @@ export default function Inbox() {
 
                       <div className="bg-white dark:bg-slate-900 rounded p-3 space-y-2">
                         {item.lines.map((line, idx) => (
-                          <div key={idx} className="text-sm flex items-start gap-2">
+                          <div
+                            key={idx}
+                            className="text-sm flex items-start gap-2"
+                          >
                             <span className="text-slate-400">•</span>
                             <span className="text-slate-700 dark:text-slate-300">
                               {truncateText(line, 15)}

@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, AlertCircle, CheckCircle2, Clock, Users, Zap } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Users,
+  Zap,
+} from "lucide-react";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -39,7 +46,9 @@ export default function Dashboard() {
       <div className="p-6 space-y-6">
         {/* Welcome section */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl p-8 shadow-lg">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome back, {user?.name}!
+          </h1>
           <p className="text-blue-100">
             {user?.role === "admin"
               ? "Manage your team and distribution settings"
@@ -60,16 +69,20 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Current Status</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Current Status
+                  </p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {claimReady ? "Ready" : "Cooldown"}
                   </p>
                 </div>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  claimReady
-                    ? "bg-green-100 dark:bg-green-950"
-                    : "bg-red-100 dark:bg-red-950"
-                }`}>
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    claimReady
+                      ? "bg-green-100 dark:bg-green-950"
+                      : "bg-red-100 dark:bg-red-950"
+                  }`}
+                >
                   {claimReady ? (
                     <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
                   ) : (
@@ -91,20 +104,26 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Status</p>
-                  <p className={`text-2xl font-bold ${
-                    distributorActive
-                      ? "text-cyan-600 dark:text-cyan-400"
-                      : "text-slate-600 dark:text-slate-400"
-                  }`}>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Status
+                  </p>
+                  <p
+                    className={`text-2xl font-bold ${
+                      distributorActive
+                        ? "text-cyan-600 dark:text-cyan-400"
+                        : "text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
                     {distributorActive ? "Active" : "Inactive"}
                   </p>
                 </div>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  distributorActive
-                    ? "bg-cyan-100 dark:bg-cyan-950"
-                    : "bg-slate-100 dark:bg-slate-800"
-                }`}>
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    distributorActive
+                      ? "bg-cyan-100 dark:bg-cyan-950"
+                      : "bg-slate-100 dark:bg-slate-800"
+                  }`}
+                >
                   {distributorActive ? (
                     <Activity className="h-8 w-8 text-cyan-600 dark:text-cyan-400 animate-pulse" />
                   ) : (
@@ -120,49 +139,65 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-slate-200 dark:border-slate-800">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Numbers</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Numbers
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-slate-900 dark:text-white">
                 {stats.totalNumbers}
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">All time</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                All time
+              </p>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 dark:border-slate-800">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Queued Lines</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Queued Lines
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
                 {stats.queuedLines}
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">Ready to claim</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                Ready to claim
+              </p>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 dark:border-slate-800">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Active Members
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {stats.activeMembers}
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">In your team</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                In your team
+              </p>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 dark:border-slate-800">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Claimed Today</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Claimed Today
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.claimedToday}
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">Numbers claimed</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                Numbers claimed
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -175,18 +210,30 @@ export default function Dashboard() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
-                <div className="font-semibold text-blue-900 dark:text-blue-400">Add Numbers</div>
-                <p className="text-sm text-blue-700 dark:text-blue-300">Input and queue new numbers</p>
+                <div className="font-semibold text-blue-900 dark:text-blue-400">
+                  Add Numbers
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Input and queue new numbers
+                </p>
               </button>
 
               <button className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
-                <div className="font-semibold text-cyan-900 dark:text-cyan-400">View Inbox</div>
-                <p className="text-sm text-cyan-700 dark:text-cyan-300">Check claims and distributions</p>
+                <div className="font-semibold text-cyan-900 dark:text-cyan-400">
+                  View Inbox
+                </div>
+                <p className="text-sm text-cyan-700 dark:text-cyan-300">
+                  Check claims and distributions
+                </p>
               </button>
 
               <button className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
-                <div className="font-semibold text-green-900 dark:text-green-400">Team Settings</div>
-                <p className="text-sm text-green-700 dark:text-green-300">Manage members and settings</p>
+                <div className="font-semibold text-green-900 dark:text-green-400">
+                  Team Settings
+                </div>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Manage members and settings
+                </p>
               </button>
             </div>
           </CardContent>

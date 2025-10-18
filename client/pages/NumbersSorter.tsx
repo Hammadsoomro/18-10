@@ -62,7 +62,9 @@ export default function NumbersSorter() {
 
   const truncateText = (text: string, maxWords: number = 15) => {
     const words = text.split(" ");
-    return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "..." : text;
+    return words.length > maxWords
+      ? words.slice(0, maxWords).join(" ") + "..."
+      : text;
   };
 
   return (
@@ -76,7 +78,9 @@ export default function NumbersSorter() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Add new line</label>
+                <label className="block text-sm font-medium mb-2">
+                  Add new line
+                </label>
                 <Textarea
                   placeholder="Enter contact details or number information..."
                   value={inputValue}
@@ -86,7 +90,10 @@ export default function NumbersSorter() {
                 />
               </div>
 
-              <Button onClick={handleAddLine} className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={handleAddLine}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Line
               </Button>

@@ -6,7 +6,13 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Zap, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,12 +32,17 @@ export default function AutoDistributor() {
     { id: "1", name: "John Doe", email: "john@example.com", active: true },
     { id: "2", name: "Jane Smith", email: "jane@example.com", active: true },
     { id: "3", name: "Mike Johnson", email: "mike@example.com", active: false },
-    { id: "4", name: "Sarah Williams", email: "sarah@example.com", active: true },
+    {
+      id: "4",
+      name: "Sarah Williams",
+      email: "sarah@example.com",
+      active: true,
+    },
   ]);
 
   const handleToggleMember = (id: string) => {
     setSelectedMembers((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
     );
   };
 
@@ -60,21 +71,30 @@ export default function AutoDistributor() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  isActive
-                    ? "bg-purple-200 dark:bg-purple-900"
-                    : "bg-slate-200 dark:bg-slate-800"
-                }`}>
-                  <Zap className={`h-6 w-6 ${isActive ? "text-purple-600 animate-pulse" : "text-slate-600"}`} />
+                <div
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    isActive
+                      ? "bg-purple-200 dark:bg-purple-900"
+                      : "bg-slate-200 dark:bg-slate-800"
+                  }`}
+                >
+                  <Zap
+                    className={`h-6 w-6 ${isActive ? "text-purple-600 animate-pulse" : "text-slate-600"}`}
+                  />
                 </div>
                 <div>
                   <CardTitle>Auto Distributor Status</CardTitle>
-                  <p className={`text-sm ${isActive ? "text-purple-600" : "text-slate-600"}`}>
+                  <p
+                    className={`text-sm ${isActive ? "text-purple-600" : "text-slate-600"}`}
+                  >
                     {isActive ? "Active - Distributing" : "Inactive - Paused"}
                   </p>
                 </div>
               </div>
-              <Switch checked={isActive} onCheckedChange={handleToggleDistributor} />
+              <Switch
+                checked={isActive}
+                onCheckedChange={handleToggleDistributor}
+              />
             </div>
           </CardHeader>
         </Card>
@@ -108,13 +128,17 @@ export default function AutoDistributor() {
             {/* Timer */}
             <Card className="border-slate-200 dark:border-slate-800">
               <CardHeader>
-                <CardTitle className="text-lg">Distribution Loop Timer</CardTitle>
+                <CardTitle className="text-lg">
+                  Distribution Loop Timer
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <Label>Loop interval: {timerSeconds} seconds</Label>
-                    <span className="text-sm text-slate-500">1 - 300 seconds</span>
+                    <span className="text-sm text-slate-500">
+                      1 - 300 seconds
+                    </span>
                   </div>
                   <Slider
                     value={[timerSeconds]}
@@ -129,7 +153,10 @@ export default function AutoDistributor() {
             </Card>
 
             {/* Save button */}
-            <Button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={handleSave}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
               Save Settings
             </Button>
           </div>
@@ -158,11 +185,13 @@ export default function AutoDistributor() {
                     className="flex-1 cursor-pointer text-sm"
                   >
                     <div className="font-medium">{member.name}</div>
-                    <div className={`text-xs ${
-                      member.active
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-slate-500 dark:text-slate-400"
-                    }`}>
+                    <div
+                      className={`text-xs ${
+                        member.active
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-slate-500 dark:text-slate-400"
+                      }`}
+                    >
                       {member.active ? "Active" : "Inactive"}
                     </div>
                   </label>

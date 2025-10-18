@@ -116,7 +116,10 @@ export const handleCreateMember: RequestHandler = async (req, res) => {
 
     // Verify admin token and get admin details
     const jwt = require("jsonwebtoken");
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key-change-in-production") as any;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
 
     const admin = await User.findById(decoded.id);
     if (!admin || admin.role !== "admin") {

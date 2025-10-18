@@ -37,7 +37,9 @@ export function Navbar({ title = "Dashboard" }: NavbarProps) {
   return (
     <nav className="fixed top-0 right-0 left-0 md:left-64 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center justify-between px-6 shadow-sm">
       <div className="flex-1">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {title}
+        </h1>
       </div>
 
       <div className="flex items-center gap-4">

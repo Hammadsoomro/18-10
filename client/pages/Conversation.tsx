@@ -3,7 +3,15 @@ import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MessageCircle, Phone, Pin, Edit, Trash2, Search } from "lucide-react";
+import {
+  Plus,
+  MessageCircle,
+  Phone,
+  Pin,
+  Edit,
+  Trash2,
+  Search,
+} from "lucide-react";
 
 interface Contact {
   id: string;
@@ -30,12 +38,15 @@ export default function Conversation() {
       pinned: false,
     },
   ]);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(contacts[0]);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(
+    contacts[0],
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredContacts = contacts.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.phone.includes(searchQuery)
+  const filteredContacts = contacts.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone.includes(searchQuery),
   );
 
   return (
@@ -76,9 +87,13 @@ export default function Conversation() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold truncate">{contact.name}</p>
-                        {contact.pinned && <Pin className="h-3 w-3 text-yellow-500" />}
+                        {contact.pinned && (
+                          <Pin className="h-3 w-3 text-yellow-500" />
+                        )}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{contact.phone}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {contact.phone}
+                      </p>
                       <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-1">
                         {contact.lastMessage}
                       </p>
@@ -110,7 +125,11 @@ export default function Conversation() {
                     <Button size="sm" variant="outline">
                       <Pin className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-600">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

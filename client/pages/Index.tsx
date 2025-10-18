@@ -64,8 +64,8 @@ export default function Index() {
           </h1>
 
           <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-            Manage numbers, distribute contacts, and claim leads with real-time collaboration.
-            Built for teams that demand precision and speed.
+            Manage numbers, distribute contacts, and claim leads with real-time
+            collaboration. Built for teams that demand precision and speed.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -93,32 +93,38 @@ export default function Index() {
             {
               icon: Shield,
               title: "JWT Authentication",
-              description: "Secure token-based authentication with role-based access control",
+              description:
+                "Secure token-based authentication with role-based access control",
             },
             {
               icon: LayoutDashboard,
               title: "Intelligent Dashboard",
-              description: "Real-time indicators and live updates for all operations",
+              description:
+                "Real-time indicators and live updates for all operations",
             },
             {
               icon: MessageCircle,
               title: "SMS Conversations",
-              description: "Two-way SMS messaging with contact history and management",
+              description:
+                "Two-way SMS messaging with contact history and management",
             },
             {
               icon: SortAsc,
               title: "Numbers Sorter",
-              description: "Input, deduplicate, and organize contact information efficiently",
+              description:
+                "Input, deduplicate, and organize contact information efficiently",
             },
             {
               icon: Zap,
               title: "Auto Distributor",
-              description: "Automatic distribution of leads with customizable intervals",
+              description:
+                "Automatic distribution of leads with customizable intervals",
             },
             {
               icon: Users,
               title: "Team Management",
-              description: "Admin controls to manage team members and permissions",
+              description:
+                "Admin controls to manage team members and permissions",
             },
           ].map((feature) => (
             <div
@@ -126,7 +132,9 @@ export default function Index() {
               className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-colors"
             >
               <feature.icon className="h-10 w-10 text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {feature.title}
+              </h3>
               <p className="text-slate-400 text-sm">{feature.description}</p>
             </div>
           ))}
@@ -160,11 +168,17 @@ export default function Index() {
 
       {/* How It Works */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-4xl font-bold text-white mb-12 text-center">How It Works</h2>
+        <h2 className="text-4xl font-bold text-white mb-12 text-center">
+          How It Works
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { number: 1, title: "Sign Up", description: "Create your admin account" },
+            {
+              number: 1,
+              title: "Sign Up",
+              description: "Create your admin account",
+            },
             {
               number: 2,
               title: "Add Numbers",
@@ -185,7 +199,9 @@ export default function Index() {
               <div className="bg-gradient-to-br from-blue-600 to-cyan-500 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mb-4">
                 {step.number}
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {step.title}
+              </h3>
               <p className="text-slate-400 text-sm">{step.description}</p>
 
               {step.number < 4 && (
@@ -203,7 +219,8 @@ export default function Index() {
             Ready to revolutionize your contact management?
           </h2>
           <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-            Join teams already using J&A International to manage thousands of leads efficiently.
+            Join teams already using J&A International to manage thousands of
+            leads efficiently.
           </p>
           <Button
             size="lg"

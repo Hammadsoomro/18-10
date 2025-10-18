@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { UserData } from "@shared/api";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export function generateToken(user: Omit<UserData, "token">): string {
   return jwt.sign(user, JWT_SECRET, { expiresIn: "30d" });

@@ -2,7 +2,15 @@ import { useState } from "react";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,7 +71,9 @@ export default function QueuedList() {
 
   const truncateText = (text: string, maxWords: number = 20) => {
     const words = text.split(" ");
-    return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "..." : text;
+    return words.length > maxWords
+      ? words.slice(0, maxWords).join(" ") + "..."
+      : text;
   };
 
   const unclaimedCount = lines.filter((l) => !l.claimedBy).length;
@@ -80,7 +90,9 @@ export default function QueuedList() {
                 <p className="text-3xl font-bold text-slate-900 dark:text-white">
                   {lines.length}
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Total Lines</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                  Total Lines
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -91,7 +103,9 @@ export default function QueuedList() {
                 <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
                   {unclaimedCount}
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Unclaimed</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                  Unclaimed
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -102,7 +116,9 @@ export default function QueuedList() {
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {claimedCount}
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Claimed</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                  Claimed
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -122,11 +138,15 @@ export default function QueuedList() {
                 <AlertDialogContent>
                   <AlertDialogTitle>Clear all queued lines?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. All queued lines will be permanently deleted.
+                    This action cannot be undone. All queued lines will be
+                    permanently deleted.
                   </AlertDialogDescription>
                   <div className="flex gap-4 justify-end">
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAll} className="bg-red-600 hover:bg-red-700">
+                    <AlertDialogAction
+                      onClick={handleClearAll}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
                       Clear All
                     </AlertDialogAction>
                   </div>
@@ -139,7 +159,9 @@ export default function QueuedList() {
             {lines.length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                <p className="text-slate-600 dark:text-slate-400">No queued lines</p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  No queued lines
+                </p>
               </div>
             ) : (
               lines.map((line) => (
