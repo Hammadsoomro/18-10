@@ -82,8 +82,11 @@ export const ClaimSettings = mongoose.model("ClaimSettings", claimSettingsSchema
 
 export async function connectDB() {
   const mongoUri = process.env.MONGODB_URI;
+
+  // Optional MongoDB for development
   if (!mongoUri) {
-    throw new Error("MONGODB_URI environment variable is not set");
+    console.warn("⚠️  MONGODB_URI not set. Database features will not work.");
+    return;
   }
 
   if (mongoose.connection.readyState === 1) {
@@ -92,9 +95,8 @@ export async function connectDB() {
 
   try {
     await mongoose.connect(mongoUri);
-    console.log("MongoDB connected");
+    console.log("✅ MongoDB connected");
   } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error;
+    console.warn("⚠️  MongoDB connection failed. Some features may not work:", (error as Error).message);
   }
 }
