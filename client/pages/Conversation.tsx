@@ -1,0 +1,137 @@
+import { useState } from "react";
+import { Layout } from "@/components/Layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, MessageCircle, Phone, Pin, Edit, Trash2, Search } from "lucide-react";
+
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  lastMessage: string;
+  pinned: boolean;
+}
+
+export default function Conversation() {
+  const [contacts, setContacts] = useState<Contact[]>([
+    {
+      id: "1",
+      name: "John Doe",
+      phone: "+1 234 567 8900",
+      lastMessage: "Thanks for the update",
+      pinned: true,
+    },
+    {
+      id: "2",
+      name: "Jane Smith",
+      phone: "+1 234 567 8901",
+      lastMessage: "See you tomorrow",
+      pinned: false,
+    },
+  ]);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(contacts[0]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredContacts = contacts.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.phone.includes(searchQuery)
+  );
+
+  return (
+    <Layout title="Conversation">
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+          {/* Contacts List */}
+          <Card className="border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between mb-4">
+                <CardTitle>Contacts</CardTitle>
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto space-y-2">
+              {filteredContacts.map((contact) => (
+                <button
+                  key={contact.id}
+                  onClick={() => setSelectedContact(contact)}
+                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                    selectedContact?.id === contact.id
+                      ? "bg-blue-100 dark:bg-blue-950"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold truncate">{contact.name}</p>
+                        {contact.pinned && <Pin className="h-3 w-3 text-yellow-500" />}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{contact.phone}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-1">
+                        {contact.lastMessage}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Chat Area */}
+          {selectedContact && (
+            <Card className="border-slate-200 dark:border-slate-800 lg:col-span-2 flex flex-col">
+              <CardHeader className="pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Phone className="h-5 w-5 text-slate-500" />
+                      {selectedContact.name}
+                    </CardTitle>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {selectedContact.phone}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <Pin className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="text-center text-slate-500 dark:text-slate-400 py-8">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No messages yet</p>
+                </div>
+              </CardContent>
+              <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex gap-2">
+                  <Input placeholder="Type a message..." />
+                  <Button>Send</Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+}
