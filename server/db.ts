@@ -73,12 +73,13 @@ const claimSettingsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const User = mongoose.model("User", userSchema);
-export const Contact = mongoose.model("Contact", contactSchema);
-export const Message = mongoose.model("Message", messageSchema);
-export const NumberLine = mongoose.model("NumberLine", numberLineSchema);
-export const DistributorSettings = mongoose.model("DistributorSettings", distributorSettingsSchema);
-export const ClaimSettings = mongoose.model("ClaimSettings", claimSettingsSchema);
+// Prevent model re-definition on hot reload
+export const User = mongoose.models.User || mongoose.model("User", userSchema);
+export const Contact = mongoose.models.Contact || mongoose.model("Contact", contactSchema);
+export const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);
+export const NumberLine = mongoose.models.NumberLine || mongoose.model("NumberLine", numberLineSchema);
+export const DistributorSettings = mongoose.models.DistributorSettings || mongoose.model("DistributorSettings", distributorSettingsSchema);
+export const ClaimSettings = mongoose.models.ClaimSettings || mongoose.model("ClaimSettings", claimSettingsSchema);
 
 export async function connectDB() {
   const mongoUri = process.env.MONGODB_URI;
