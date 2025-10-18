@@ -1,10 +1,21 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { createServer as createHttpServer } from "http";
+import { Server as SocketServer } from "socket.io";
 import { handleDemo } from "./routes/demo";
+import { handleSignup, handleLogin, handleCreateMember } from "./routes/auth";
+import { connectDB } from "./db";
 
 export function createServer() {
   const app = express();
+  const httpServer = createHttpServer(app);
+  const io = new SocketServer(httpServer, {
+    cors: { origin: "*", methods: ["GET", "POST"] },
+  });
+
+  // Connect to MongoDB
+  connectDB().catch(console.error);
 
   // Middleware
   app.use(cors());
@@ -19,5 +30,36 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
-  return app;
+  // Auth routes
+  app.post("/api/auth/signup", handleSignup);
+  app.post("/api/auth/login", handleLogin);
+  app.post("/api/auth/create-member", handleCreateMember);
+
+  // WebSocket events
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+
+    socket.on("join_team", (teamId: string) => {
+      socket.join(`team_${teamId}`);
+    });
+
+    socket.on("claim_update", (data) => {
+      io.to(`team_${data.teamId}`).emit("claim_indicator", {
+        ready: data.ready,
+        cooldownRemaining: data.cooldownRemaining,
+      });
+    });
+
+    socket.on("distributor_update", (data) => {
+      io.to(`team_${data.teamId}`).emit("distributor_indicator", {
+        active: data.active,
+      });
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+  });
+
+  return { app, httpServer, io };
 }
