@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { User } from "../db";
 import { generateToken } from "../utils/jwt";
 import { AuthResponse, SignupRequest, LoginRequest } from "@shared/api";
