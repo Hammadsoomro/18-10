@@ -133,13 +133,13 @@ export default function Inbox() {
 
   const getClaimButtonColor = () => {
     if (claimCooldown > 0) return "bg-red-600 hover:bg-red-700";
-    if (claims.length === 0) return "bg-slate-400 cursor-not-allowed";
+    if (queuedLines.length === 0) return "bg-slate-400 cursor-not-allowed";
     return "bg-green-600 hover:bg-green-700";
   };
 
   const getClaimButtonText = () => {
     if (claimCooldown > 0) return `Cooldown: ${claimCooldown}s`;
-    if (claims.length === 0) return "No Lines Available";
+    if (queuedLines.length === 0) return "No Lines Available";
     return "Claim Next Line";
   };
 
