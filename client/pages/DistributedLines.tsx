@@ -14,6 +14,10 @@ interface DistributedLine {
   createdAt?: string;
   claimedBy?: string;
   claimedByName?: string;
+  claimedByUser?: {
+    name: string;
+    email: string;
+  };
   claimedAt?: string;
   distributedTo?: string[];
   status?: string;
