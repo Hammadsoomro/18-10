@@ -5,6 +5,15 @@ import { createServer as createHttpServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { handleDemo } from "./routes/demo";
 import { handleSignup, handleLogin, handleCreateMember } from "./routes/auth";
+import {
+  handleGetLines,
+  handleCreateLine,
+  handleCreateLines,
+  handleDeleteLine,
+  handleMoveToQueue,
+  handleMoveToDistributor,
+  handleGetQueuedLines,
+} from "./routes/numbers";
 import { connectDB } from "./db";
 
 export function createServer() {
@@ -30,6 +39,15 @@ export function createServer() {
   app.post("/api/auth/signup", handleSignup);
   app.post("/api/auth/login", handleLogin);
   app.post("/api/auth/create-member", handleCreateMember);
+
+  // Numbers routes
+  app.get("/api/numbers/lines", handleGetLines);
+  app.post("/api/numbers/line", handleCreateLine);
+  app.post("/api/numbers/lines", handleCreateLines);
+  app.delete("/api/numbers/line/:id", handleDeleteLine);
+  app.post("/api/numbers/move-to-queue", handleMoveToQueue);
+  app.post("/api/numbers/move-to-distributor", handleMoveToDistributor);
+  app.get("/api/numbers/queued", handleGetQueuedLines);
 
   return app;
 }
