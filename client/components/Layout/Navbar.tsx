@@ -37,9 +37,10 @@ export function Navbar({ title = "Dashboard", sidebarCollapsed = false }: Navbar
 
   return (
     <nav
-      className="fixed top-0 right-0 left-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center justify-between px-6 shadow-sm transition-all duration-300"
+      className="fixed top-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center justify-between px-6 shadow-sm transition-all duration-300 left-0 md:left-auto"
       style={{
-        left: `${sidebarCollapsed ? "80px" : "256px"}`,
+        marginLeft: `${sidebarCollapsed ? "80px" : "256px"}`,
+        width: `calc(100% - ${sidebarCollapsed ? "80px" : "256px"})`,
       }}
     >
       <div className="flex-1">
