@@ -20,14 +20,22 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ open = true, onClose }: SidebarProps) {
+export function Sidebar({ open = true, onClose, onCollapsedChange }: SidebarProps) {
   const [time, setTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isOpen, setIsOpen] = useState(open);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleCollapseToggle = (newCollapsedState: boolean) => {
+    setIsCollapsed(newCollapsedState);
+    if (onCollapsedChange) {
+      onCollapsedChange(newCollapsedState);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -96,7 +104,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
               </div>
             )}
             <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={() => handleCollapseToggle(!isCollapsed)}
               className="hidden md:block p-1 hover:bg-slate-800 rounded-lg transition"
             >
               <Menu className="h-4 w-4 text-slate-400" />
