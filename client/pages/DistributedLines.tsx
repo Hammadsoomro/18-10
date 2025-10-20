@@ -133,22 +133,17 @@ export default function DistributedLines() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          #{line.lineNumber}
-                        </span>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          {truncateText(line.content)}
-                        </span>
-                      </div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                        {truncateText(line.content)}
+                      </p>
+                      {line.claimedByUser && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mb-1">
+                          ✓ Claimed by {line.claimedByUser.name}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {line.createdAt}
                       </p>
-                      {line.claimedByName && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                          ✓ Claimed by {line.claimedByName} ({line.claimedAt})
-                        </p>
-                      )}
                       {line.distributedTo && line.distributedTo.length > 0 && (
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Distributed to {line.distributedTo.length} member(s)
