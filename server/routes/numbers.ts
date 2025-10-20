@@ -205,7 +205,7 @@ export const handleGetQueuedLines: RequestHandler = async (req, res) => {
 
     const lines = await NumberLine.find({
       teamId: decoded.teamId,
-      status: { $in: ["distributed", "claimed"] },
+      status: "queued",
     })
       .populate("claimedBy", "name email")
       .sort({ createdAt: -1 });
