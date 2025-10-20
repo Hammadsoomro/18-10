@@ -318,3 +318,114 @@ export const handleGetMembers: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to get members" });
   }
 };
+
+export const handleGetDistributorSettings: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const DistributorSettings = require("../db").DistributorSettings;
+    let settings = await DistributorSettings.findOne({
+      teamId: user.teamId,
+    }).populate("selectedMembers", "name email");
+
+    if (!settings) {
+      settings = new DistributorSettings({
+        teamId: user.teamId,
+        linesPerMember: 5,
+        timerSeconds: 60,
+        isActive: false,
+        selectedMembers: [],
+      });
+      await settings.save();
+    }
+
+    const formattedMembers = settings.selectedMembers.map((m: any) => ({
+      id: m._id.toString(),
+      name: m.name,
+      email: m.email,
+    }));
+
+    res.json({
+      linesPerMember: settings.linesPerMember,
+      timerSeconds: settings.timerSeconds,
+      isActive: settings.isActive,
+      selectedMembers: formattedMembers,
+    });
+  } catch (error) {
+    console.error("Get distributor settings error:", error);
+    res.status(500).json({ error: "Failed to get distributor settings" });
+  }
+};
+
+export const handleSaveDistributorSettings: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "Only admins can modify distributor settings" });
+    }
+
+    const { linesPerMember, timerSeconds, isActive, selectedMembers } =
+      req.body;
+
+    const DistributorSettings = require("../db").DistributorSettings;
+    let settings = await DistributorSettings.findOne({
+      teamId: user.teamId,
+    });
+
+    if (!settings) {
+      settings = new DistributorSettings({
+        teamId: user.teamId,
+        linesPerMember,
+        timerSeconds,
+        isActive,
+        selectedMembers,
+      });
+    } else {
+      settings.linesPerMember = linesPerMember;
+      settings.timerSeconds = timerSeconds;
+      settings.isActive = isActive;
+      settings.selectedMembers = selectedMembers;
+    }
+
+    await settings.save();
+
+    res.json({
+      message: "Distributor settings saved successfully",
+      linesPerMember: settings.linesPerMember,
+      timerSeconds: settings.timerSeconds,
+      isActive: settings.isActive,
+    });
+  } catch (error) {
+    console.error("Save distributor settings error:", error);
+    res.status(500).json({ error: "Failed to save distributor settings" });
+  }
+};
