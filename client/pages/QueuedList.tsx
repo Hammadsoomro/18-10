@@ -104,6 +104,16 @@ export default function QueuedList() {
   const unclaimedCount = lines.filter((l) => !l.claimedBy).length;
   const claimedCount = lines.filter((l) => l.claimedBy).length;
 
+  if (isLoading) {
+    return (
+      <Layout title="Queued List">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Queued List">
       <div className="p-6 space-y-6">
