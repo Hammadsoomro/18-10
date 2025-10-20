@@ -260,32 +260,42 @@ export default function Inbox() {
                     No claims yet
                   </p>
                 ) : (
-                  claims.map((claim) => (
-                    <div
-                      key={claim._id || claim.id}
-                      className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              #{claim.lineNumber}
-                            </span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                  claims.map((claim) => {
+                    const { time, dateFormatted } = formatDateTime(
+                      claim.claimedAt || claim.createdAt
+                    );
+                    return (
+                      <div
+                        key={claim._id || claim.id}
+                        className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                               {truncateText(claim.content)}
-                            </span>
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              <Clock className="h-3 w-3" />
+                              <span>{time}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {dateFormatted}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            <Clock className="h-3 w-3" />
-                            {claim.claimedAt || claim.createdAt}
-                          </div>
+                          <Button
+                            onClick={() =>
+                              handleMoveToDistributed(claim._id || claim.id || "")
+                            }
+                            size="sm"
+                            variant="outline"
+                            className="whitespace-nowrap"
+                          >
+                            Move
+                          </Button>
                         </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
-                          🟢 Claimed
-                        </span>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </CardContent>
             </Card>
