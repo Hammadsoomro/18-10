@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Zap, Users } from "lucide-react";
+import { Zap, Users, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface TeamMember {
@@ -23,11 +25,24 @@ interface TeamMember {
   active: boolean;
 }
 
+interface DistributedLine {
+  _id?: string;
+  id?: string;
+  content: string;
+  lineNumber: number;
+  createdAt?: string;
+  distributedTo?: string[];
+}
+
 export default function AutoDistributor() {
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [selectedMembers, setSelectedMembers] = useState<string[]>(["1"]);
+  const [distributedLines, setDistributedLines] = useState<DistributedLine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [members] = useState<TeamMember[]>([
     { id: "1", name: "John Doe", email: "john@example.com", active: true },
     { id: "2", name: "Jane Smith", email: "jane@example.com", active: true },
@@ -39,6 +54,38 @@ export default function AutoDistributor() {
       active: true,
     },
   ]);
+
+  useEffect(() => {
+    fetchDistributedLines();
+  }, [token]);
+
+  const fetchDistributedLines = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch distributed lines");
+      const data = await response.json();
+
+      // Show only lines with "distributed" status
+      const distributed = data.lines.filter(
+        (line: any) => line.status === "distributed"
+      );
+      setDistributedLines(distributed);
+    } catch (error) {
+      console.error("Error fetching distributed lines:", error);
+      toast.error("Failed to fetch distributed lines");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleToggleMember = (id: string) => {
     setSelectedMembers((prev) =>
