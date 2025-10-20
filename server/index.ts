@@ -28,6 +28,7 @@ import {
   handleMoveToQueue,
   handleMoveToDistributor,
   handleGetQueuedLines,
+  handleClaimLine,
 } from "./routes/numbers";
 import { connectDB } from "./db";
 
