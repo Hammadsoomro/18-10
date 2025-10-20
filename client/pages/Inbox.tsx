@@ -133,7 +133,10 @@ export default function Inbox() {
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
-      clearInterval(cooldownTimer);
+      if (cooldownTimerRef.current) {
+        window.clearInterval(cooldownTimerRef.current);
+        cooldownTimerRef.current = null;
+      }
     };
   }, [user]);
 
