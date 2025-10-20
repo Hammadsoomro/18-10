@@ -8,7 +8,10 @@ interface NavbarProps {
   sidebarCollapsed?: boolean;
 }
 
-export function Navbar({ title = "Dashboard", sidebarCollapsed = false }: NavbarProps) {
+export function Navbar({
+  title = "Dashboard",
+  sidebarCollapsed = false,
+}: NavbarProps) {
   const [isDark, setIsDark] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 

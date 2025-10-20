@@ -139,10 +139,13 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
 
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
-      { status: "distributed" }
+      { status: "distributed" },
     );
 
-    res.json({ message: "Lines moved to queue", modifiedCount: updatedLines.modifiedCount });
+    res.json({
+      message: "Lines moved to queue",
+      modifiedCount: updatedLines.modifiedCount,
+    });
   } catch (error) {
     console.error("Move to queue error:", error);
     res.status(500).json({ error: "Failed to move lines" });
@@ -168,10 +171,13 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
 
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
-      { status: "distributed" }
+      { status: "distributed" },
     );
 
-    res.json({ message: "Lines moved to distributor", modifiedCount: updatedLines.modifiedCount });
+    res.json({
+      message: "Lines moved to distributor",
+      modifiedCount: updatedLines.modifiedCount,
+    });
   } catch (error) {
     console.error("Move to distributor error:", error);
     res.status(500).json({ error: "Failed to move lines" });

@@ -41,7 +41,9 @@ export default function AutoDistributor() {
   const [linesPerMember, setLinesPerMember] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [selectedMembers, setSelectedMembers] = useState<string[]>(["1"]);
-  const [distributedLines, setDistributedLines] = useState<DistributedLine[]>([]);
+  const [distributedLines, setDistributedLines] = useState<DistributedLine[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [members] = useState<TeamMember[]>([
     { id: "1", name: "John Doe", email: "john@example.com", active: true },
@@ -76,7 +78,7 @@ export default function AutoDistributor() {
 
       // Show only lines with "distributed" status
       const distributed = data.lines.filter(
-        (line: any) => line.status === "distributed"
+        (line: any) => line.status === "distributed",
       );
       setDistributedLines(distributed);
     } catch (error) {

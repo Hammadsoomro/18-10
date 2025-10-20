@@ -219,8 +219,8 @@ export default function Index() {
             Ready to revolutionize your contact management?
           </h2>
           <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-            Join teams already using Line-Link to manage thousands of
-            leads efficiently.
+            Join teams already using Line-Link to manage thousands of leads
+            efficiently.
           </p>
           <Button
             size="lg"

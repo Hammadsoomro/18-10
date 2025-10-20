@@ -47,7 +47,9 @@ export default function NumbersSorter() {
       const data = await response.json();
 
       // Only show lines that are still in "queued" status (not moved yet)
-      const queuedLines = data.lines.filter((line: any) => line.status === "queued");
+      const queuedLines = data.lines.filter(
+        (line: any) => line.status === "queued",
+      );
       setLines(queuedLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
@@ -90,7 +92,7 @@ export default function NumbersSorter() {
       setLines([...lines, ...data.lines]);
       setInputValue("");
       toast.success(
-        `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`
+        `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`,
       );
     } catch (error) {
       console.error("Error adding lines:", error);
@@ -279,7 +281,9 @@ export default function NumbersSorter() {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleDeleteLine(line._id || line.id || "")}
+                        onClick={() =>
+                          handleDeleteLine(line._id || line.id || "")
+                        }
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 dark:hover:bg-red-950 rounded"
                       >
                         <Trash2 className="h-4 w-4 text-red-600" />

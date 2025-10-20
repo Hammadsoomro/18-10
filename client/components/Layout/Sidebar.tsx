@@ -23,7 +23,11 @@ interface SidebarProps {
   onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ open = true, onClose, onCollapsedChange }: SidebarProps) {
+export function Sidebar({
+  open = true,
+  onClose,
+  onCollapsedChange,
+}: SidebarProps) {
   const [time, setTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isOpen, setIsOpen] = useState(open);
