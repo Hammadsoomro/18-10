@@ -183,44 +183,60 @@ export default function Settings() {
                   <CardTitle>Claim Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <Label>Lines per claim: {claimLineCount}</Label>
-                      <span className="text-sm text-slate-500">
-                        1 - 10 lines
-                      </span>
+                  {isLoadingSettings ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                     </div>
-                    <Slider
-                      value={[claimLineCount]}
-                      onValueChange={(value) => setClaimLineCount(value[0])}
-                      min={1}
-                      max={10}
-                      step={1}
-                    />
-                  </div>
+                  ) : (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <Label>Lines per claim: {claimLineCount}</Label>
+                          <span className="text-sm text-slate-500">
+                            1 - 10 lines
+                          </span>
+                        </div>
+                        <Slider
+                          value={[claimLineCount]}
+                          onValueChange={(value) => setClaimLineCount(value[0])}
+                          min={1}
+                          max={10}
+                          step={1}
+                        />
+                      </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <Label>Cooldown period: {cooldownSeconds} seconds</Label>
-                      <span className="text-sm text-slate-500">
-                        10 - 300 seconds
-                      </span>
-                    </div>
-                    <Slider
-                      value={[cooldownSeconds]}
-                      onValueChange={(value) => setCooldownSeconds(value[0])}
-                      min={10}
-                      max={300}
-                      step={10}
-                    />
-                  </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <Label>Cooldown period: {cooldownSeconds} seconds</Label>
+                          <span className="text-sm text-slate-500">
+                            10 - 300 seconds
+                          </span>
+                        </div>
+                        <Slider
+                          value={[cooldownSeconds]}
+                          onValueChange={(value) => setCooldownSeconds(value[0])}
+                          min={10}
+                          max={300}
+                          step={10}
+                        />
+                      </div>
 
-                  <Button
-                    onClick={handleSaveSettings}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Save Claim Settings
-                  </Button>
+                      <Button
+                        onClick={handleSaveClaimSettings}
+                        disabled={isSavingSettings}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {isSavingSettings ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Claim Settings"
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             ) : (
