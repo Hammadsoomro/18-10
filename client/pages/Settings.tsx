@@ -38,6 +38,23 @@ export default function Settings() {
   useEffect(() => {
     if (user?.role === "admin" && token) {
       fetchClaimSettings();
+      // fetch members list on admin load
+      (async () => {
+        setIsLoadingMembers(true);
+        try {
+          const res = await fetch("/api/auth/members", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setMembers(data.members || []);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsLoadingMembers(false);
+        }
+      })();
     }
   }, [user, token]);
 
@@ -55,6 +72,11 @@ export default function Settings() {
       const data = await response.json();
       setClaimLineCount(data.claimLineCount);
       setCooldownSeconds(data.cooldownSeconds);
+      // propagate to other tabs/clients by storing default for new claims
+      try {
+        localStorage.setItem(`claim_settings_cooldown_${user?.teamId || 'global'}`, String(data.cooldownSeconds));
+        window.dispatchEvent(new CustomEvent('claim_settings_updated', { detail: { cooldownSeconds: data.cooldownSeconds } }));
+      } catch (e) {}
     } catch (error) {
       console.error("Error fetching claim settings:", error);
       toast.error("Failed to load claim settings");
@@ -86,6 +108,11 @@ export default function Settings() {
       if (!response.ok) throw new Error("Failed to save claim settings");
 
       toast.success("Claim settings saved successfully");
+      // update stored setting so other clients can pick it up
+      try {
+        localStorage.setItem(`claim_settings_cooldown_${user?.teamId || 'global'}`, String(cooldownSeconds));
+        window.dispatchEvent(new CustomEvent('claim_settings_updated', { detail: { cooldownSeconds } }));
+      } catch (e) {}
     } catch (error) {
       console.error("Error saving claim settings:", error);
       toast.error("Failed to save claim settings");
@@ -155,6 +182,16 @@ export default function Settings() {
       setMemberName("");
       setMemberEmail("");
       setMemberPassword("");
+      // reload members
+      try {
+        const res = await fetch("/api/auth/members", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const d = await res.json();
+          setMembers(d.members || []);
+        }
+      } catch (e) {}
     } catch (error) {
       console.error("Error creating member:", error);
       toast.error(
