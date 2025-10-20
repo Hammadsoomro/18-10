@@ -27,7 +27,37 @@ export default function NumbersSorter() {
   const [isAdding, setIsAdding] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
-  const handleAddLine = () => {
+  useEffect(() => {
+    fetchLines();
+  }, [token]);
+
+  const fetchLines = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch lines");
+      const data = await response.json();
+
+      // Only show lines that are still in "queued" status (not moved yet)
+      const queuedLines = data.lines.filter((line: any) => line.status === "queued");
+      setLines(queuedLines);
+    } catch (error) {
+      console.error("Error fetching lines:", error);
+      toast.error("Failed to fetch lines");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddLine = async () => {
     if (!inputValue.trim()) {
       toast.error("Please enter some content");
       return;
@@ -43,23 +73,110 @@ export default function NumbersSorter() {
       return;
     }
 
-    const newLines: NumberLine[] = lineTexts.map((content, index) => ({
-      id: Date.now().toString() + index,
-      content,
-      lineNumber: lines.length + index + 1,
-      createdAt: new Date().toLocaleString(),
-    }));
+    setIsAdding(true);
+    try {
+      const response = await fetch("/api/numbers/lines", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ contents: lineTexts }),
+      });
 
-    setLines([...lines, ...newLines]);
-    setInputValue("");
-    toast.success(
-      `${newLines.length} line${newLines.length > 1 ? "s" : ""} added`
-    );
+      if (!response.ok) throw new Error("Failed to add lines");
+      const data = await response.json();
+
+      setLines([...lines, ...data.lines]);
+      setInputValue("");
+      toast.success(
+        `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`
+      );
+    } catch (error) {
+      console.error("Error adding lines:", error);
+      toast.error("Failed to add lines");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
-  const handleDeleteLine = (id: string) => {
-    setLines(lines.filter((l) => l.id !== id));
-    toast.success("Line deleted");
+  const handleDeleteLine = async (id: string) => {
+    try {
+      const response = await fetch(`/api/numbers/line/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete line");
+
+      setLines(lines.filter((l) => l._id !== id && l.id !== id));
+      toast.success("Line deleted");
+    } catch (error) {
+      console.error("Error deleting line:", error);
+      toast.error("Failed to delete line");
+    }
+  };
+
+  const handleMoveToQueuedList = async () => {
+    if (lines.length === 0) {
+      toast.error("No lines to move");
+      return;
+    }
+
+    setIsMoving(true);
+    try {
+      const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
+      const response = await fetch("/api/numbers/move-to-queue", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lineIds }),
+      });
+
+      if (!response.ok) throw new Error("Failed to move lines");
+
+      toast.success(`${lines.length} line(s) moved to Queued List`);
+      setLines([]);
+      setTimeout(() => navigate("/queued-list"), 500);
+    } catch (error) {
+      console.error("Error moving lines:", error);
+      toast.error("Failed to move lines");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const handleMoveToAutoDistributor = async () => {
+    if (lines.length === 0) {
+      toast.error("No lines to move");
+      return;
+    }
+
+    setIsMoving(true);
+    try {
+      const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
+      const response = await fetch("/api/numbers/move-to-distributor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lineIds }),
+      });
+
+      if (!response.ok) throw new Error("Failed to move lines");
+
+      toast.success(`${lines.length} line(s) moved to Auto Distributor`);
+      setLines([]);
+      setTimeout(() => navigate("/auto-distributor"), 500);
+    } catch (error) {
+      console.error("Error moving lines:", error);
+      toast.error("Failed to move lines");
+    } finally {
+      setIsMoving(false);
+    }
   };
 
   const truncateText = (text: string, maxWords: number = 15) => {
