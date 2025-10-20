@@ -218,7 +218,7 @@ export default function Inbox() {
                 ) : (
                   claims.map((claim) => (
                     <div
-                      key={claim.id}
+                      key={claim._id || claim.id}
                       className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -233,23 +233,11 @@ export default function Inbox() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <Clock className="h-3 w-3" />
-                            {claim.claimedAt}
+                            {claim.claimedAt || claim.createdAt}
                           </div>
                         </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            claim.status === "ready"
-                              ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
-                              : claim.status === "cooldown"
-                                ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400"
-                                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                          }`}
-                        >
-                          {claim.status === "ready"
-                            ? "🟢 Ready"
-                            : claim.status === "cooldown"
-                              ? "🔴 Cooldown"
-                              : "⚪️ No Available"}
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                          🟢 Claimed
                         </span>
                       </div>
                     </div>
