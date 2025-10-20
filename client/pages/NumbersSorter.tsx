@@ -43,16 +43,28 @@ export default function NumbersSorter() {
       return;
     }
 
-    const newLine: NumberLine = {
-      id: Date.now().toString(),
-      content: inputValue.trim(),
-      lineNumber: lines.length + 1,
-      createdAt: new Date().toLocaleString(),
-    };
+    const lineTexts = inputValue
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
 
-    setLines([...lines, newLine]);
+    if (lineTexts.length === 0) {
+      toast.error("Please enter some content");
+      return;
+    }
+
+    const newLines: NumberLine[] = lineTexts.map((content, index) => ({
+      id: Date.now().toString() + index,
+      content,
+      lineNumber: lines.length + index + 1,
+      createdAt: new Date().toLocaleString(),
+    }));
+
+    setLines([...lines, ...newLines]);
     setInputValue("");
-    toast.success("Line added");
+    toast.success(
+      `${newLines.length} line${newLines.length > 1 ? "s" : ""} added`
+    );
   };
 
   const handleDeleteLine = (id: string) => {
