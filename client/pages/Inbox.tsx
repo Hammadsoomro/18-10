@@ -68,6 +68,15 @@ export default function Inbox() {
     }
   };
 
+  useEffect(() => {
+    const onSettings = (e: any) => {
+      const cs = e?.detail?.cooldownSeconds;
+      if (typeof cs === 'number') setClaimSettingCooldown(cs);
+    };
+    window.addEventListener('claim_settings_updated', onSettings as EventListener);
+    return () => window.removeEventListener('claim_settings_updated', onSettings as EventListener);
+  }, []);
+
   // Cooldown persistence helpers
   const getCooldownKey = () => `claim_cooldown_${user?.id ?? "global"}`;
   const cooldownTimerRef = useRef<number | null>(null);
