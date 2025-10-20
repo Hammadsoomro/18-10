@@ -143,7 +143,7 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
 
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
-      { status: "distributed" },
+      { status: "queued", claimedBy: null },
     );
 
     res.json({
@@ -214,6 +214,39 @@ export const handleGetQueuedLines: RequestHandler = async (req, res) => {
   }
 };
 
+export const handleGetClaimedLines: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const isAdmin = decoded.role === "admin";
+    const match: any = {
+      teamId: decoded.teamId,
+      status: { $in: ["claimed", "distributed"] },
+    };
+
+    if (!isAdmin) {
+      match.claimedBy = decoded.id;
+    }
+
+    const lines = await NumberLine.find(match)
+      .populate("claimedBy", "name email")
+      .sort({ updatedAt: -1 });
+
+    res.json({ lines });
+  } catch (error) {
+    console.error("Get claimed lines error:", error);
+    res.status(500).json({ error: "Failed to fetch claimed lines" });
+  }
+};
+
 export const handleClaimLine: RequestHandler = async (req, res) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
@@ -231,17 +264,14 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Line ID is required" });
     }
 
-    const line = await NumberLine.findByIdAndUpdate(
-      lineId,
-      {
-        status: "claimed",
-        claimedBy: decoded.id,
-      },
+    const line = await NumberLine.findOneAndUpdate(
+      { _id: lineId, teamId: decoded.teamId, status: "queued", claimedBy: null },
+      { $set: { status: "claimed", claimedBy: decoded.id, claimedAt: new Date() } },
       { new: true },
     );
 
     if (!line) {
-      return res.status(404).json({ error: "Line not found" });
+      return res.status(409).json({ error: "Line already claimed or unavailable" });
     }
 
     res.json(line);

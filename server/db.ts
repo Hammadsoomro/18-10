@@ -70,6 +70,7 @@ const numberLineSchema = new mongoose.Schema(
       default: null,
     },
     distributedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    claimedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

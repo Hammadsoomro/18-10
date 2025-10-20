@@ -134,12 +134,9 @@ export default function DistributedLines() {
                       </p>
                       {user?.role === "admin" && (
                         <div>
-                          {(line.claimedByUser || line.claimedByName) && (
+                          {(line as any).claimedBy && (
                             <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                              ✓ Claimed by{" "}
-                              {typeof line.claimedByUser === "object"
-                                ? line.claimedByUser.name
-                                : line.claimedByName}
+                              ✓ Claimed by {(line as any).claimedBy.name}
                             </p>
                           )}
                           <p className="text-xs text-slate-500 dark:text-slate-400">
