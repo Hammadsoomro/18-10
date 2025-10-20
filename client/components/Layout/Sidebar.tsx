@@ -89,7 +89,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             {!isCollapsed && (
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">J&A</span>
+                  <span className="text-white font-bold text-sm">LL</span>
                 </div>
                 <div className="text-white font-bold">Dashboard</div>
               </div>
