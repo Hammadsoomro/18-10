@@ -154,18 +154,6 @@ export default function QueuedList() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-800">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {claimedCount}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                  Claimed
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Lines List */}
