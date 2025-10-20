@@ -49,9 +49,24 @@ export default function Inbox() {
   );
   const [isLoading, setIsLoading] = useState(true);
 
+  const [claimSettingCooldown, setClaimSettingCooldown] = useState<number | null>(null);
+
   useEffect(() => {
     fetchData();
+    fetchClaimSettings();
   }, [token]);
+
+  const fetchClaimSettings = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/auth/claim-settings', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setClaimSettingCooldown(data.cooldownSeconds ?? null);
+    } catch (e) {
+      console.error('Failed to fetch claim settings', e);
+    }
+  };
 
   // Cooldown persistence helpers
   const getCooldownKey = () => `claim_cooldown_${user?.id ?? "global"}`;
