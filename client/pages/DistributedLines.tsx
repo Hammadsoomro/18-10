@@ -28,6 +28,20 @@ export default function DistributedLines() {
   const { token, user } = useAuth();
   const [lines, setLines] = useState<DistributedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const filteredLines = lines.filter((line) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    const content = (line.content || "").toLowerCase();
+    const claimedByName = ((line as any).claimedBy?.name || line.claimedByName || "").toLowerCase();
+    const lineNum = String(line.lineNumber || "");
+    return (
+      content.includes(q) ||
+      claimedByName.includes(q) ||
+      lineNum.includes(q)
+    );
+  });
 
   useEffect(() => {
     fetchDistributedLines();
