@@ -110,6 +110,23 @@ export default function AutoDistributor() {
     toast.success(isActive ? "Distributor stopped" : "Distributor started");
   };
 
+  const truncateText = (text: string, maxWords: number = 20) => {
+    const words = text.split(" ");
+    return words.length > maxWords
+      ? words.slice(0, maxWords).join(" ") + "..."
+      : text;
+  };
+
+  if (isLoading) {
+    return (
+      <Layout title="Auto Distributor">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Auto Distributor">
       <div className="p-6 space-y-6">
