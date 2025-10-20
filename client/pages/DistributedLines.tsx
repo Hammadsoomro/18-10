@@ -124,8 +124,16 @@ export default function DistributedLines() {
 
         {/* Lines List */}
         <Card className="border-slate-200 dark:border-slate-800">
-          <CardHeader>
+          <CardHeader className="flex items-center justify-between gap-4">
             <CardTitle>Lines Being Distributed</CardTitle>
+            <div className="w-72">
+              <Input
+                placeholder="Search by content, claimant, or line #"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full"
+              />
+            </div>
           </CardHeader>
 
           <CardContent className="space-y-3">
@@ -136,8 +144,14 @@ export default function DistributedLines() {
                   No distributed lines yet
                 </p>
               </div>
+            ) : filteredLines.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-600 dark:text-slate-400">
+                  No results for "{search}"
+                </p>
+              </div>
             ) : (
-              lines.map((line) => (
+              filteredLines.map((line) => (
                 <div
                   key={line._id || line.id}
                   className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
