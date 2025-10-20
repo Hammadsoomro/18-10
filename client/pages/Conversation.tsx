@@ -290,16 +290,20 @@ export default function Conversation() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Pin className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleTogglePin(selectedContact)}
+                    >
+                      <Pin
+                        className={`h-4 w-4 ${selectedContact.pinned ? "text-yellow-500" : ""}`}
+                      />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       className="text-red-600"
+                      onClick={() => handleDeleteContact(selectedContact.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
