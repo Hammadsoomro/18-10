@@ -20,7 +20,9 @@ export const handleGetLines: RequestHandler = async (req, res) => {
         { status: "queued" },
         { status: "claimed", claimedBy: decoded.id },
       ],
-    }).sort({ createdAt: -1 });
+    })
+      .populate("claimedBy", "name email")
+      .sort({ createdAt: -1 });
 
     res.json({ lines });
   } catch (error) {
