@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,37 +12,158 @@ import {
   Edit,
   Trash2,
   Search,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Contact {
   id: string;
   name: string;
   phone: string;
-  lastMessage: string;
+  lastMessage?: string;
   pinned: boolean;
 }
 
 export default function Conversation() {
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      phone: "+1 234 567 8900",
-      lastMessage: "Thanks for the update",
-      pinned: true,
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      phone: "+1 234 567 8901",
-      lastMessage: "See you tomorrow",
-      pinned: false,
-    },
-  ]);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(
-    contacts[0],
-  );
+  const { token } = useAuth();
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [token]);
+
+  useEffect(() => {
+    if (contacts.length > 0 && !selectedContact) {
+      setSelectedContact(contacts[0]);
+    }
+  }, [contacts, selectedContact]);
+
+  const fetchContacts = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/contacts", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch contacts");
+      const data = await response.json();
+      setContacts(data.contacts || []);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      toast.error("Failed to fetch contacts");
+      setContacts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddContact = async () => {
+    if (!newContactName.trim() || !newContactPhone.trim()) {
+      toast.error("Please enter name and phone");
+      return;
+    }
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newContactName,
+          phone: newContactPhone,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to add contact");
+      const data = await response.json();
+
+      setContacts([...contacts, data.contact]);
+      setNewContactName("");
+      setNewContactPhone("");
+      toast.success("Contact added");
+    } catch (error) {
+      console.error("Error adding contact:", error);
+      toast.error("Failed to add contact");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/contacts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete contact");
+
+      setContacts(contacts.filter((c) => c.id !== id));
+      if (selectedContact?.id === id) {
+        setSelectedContact(null);
+      }
+      toast.success("Contact deleted");
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      toast.error("Failed to delete contact");
+    }
+  };
+
+  const handleTogglePin = async (contact: Contact) => {
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/contacts/${contact.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pinned: !contact.pinned,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update contact");
+
+      setContacts(
+        contacts.map((c) =>
+          c.id === contact.id ? { ...c, pinned: !c.pinned } : c,
+        ),
+      );
+      toast.success(contact.pinned ? "Unpinned" : "Pinned");
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      toast.error("Failed to update contact");
+    }
+  };
 
   const filteredContacts = contacts.filter(
     (c) =>
