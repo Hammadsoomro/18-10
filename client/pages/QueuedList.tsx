@@ -153,7 +153,6 @@ export default function QueuedList() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Lines List */}

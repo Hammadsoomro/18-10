@@ -3,7 +3,13 @@ import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, Clock, Download, Loader2 } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Download,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -183,7 +189,6 @@ export default function Inbox() {
     return { time, dateFormatted };
   };
 
-
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
@@ -227,7 +232,9 @@ export default function Inbox() {
 
                 <Button
                   onClick={handleClaim}
-                  disabled={queuedLines.length === 0 || claimCooldown > 0 || isLoading}
+                  disabled={
+                    queuedLines.length === 0 || claimCooldown > 0 || isLoading
+                  }
                   className={`w-full text-white font-semibold py-6 ${getClaimButtonColor()}`}
                 >
                   {isLoading ? (
@@ -252,7 +259,7 @@ export default function Inbox() {
                 ) : (
                   claims.map((claim) => {
                     const { time, dateFormatted } = formatDateTime(
-                      claim.claimedAt || claim.createdAt
+                      claim.claimedAt || claim.createdAt,
                     );
                     return (
                       <div

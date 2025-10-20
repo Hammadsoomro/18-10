@@ -16,10 +16,7 @@ export const handleGetLines: RequestHandler = async (req, res) => {
 
     const lines = await NumberLine.find({
       teamId: decoded.teamId,
-      $or: [
-        { status: "queued" },
-        { status: "claimed", claimedBy: decoded.id },
-      ],
+      $or: [{ status: "queued" }, { status: "claimed", claimedBy: decoded.id }],
     })
       .populate("claimedBy", "name email")
       .sort({ createdAt: -1 });
