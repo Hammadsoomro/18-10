@@ -272,3 +272,49 @@ export const handleSaveClaimSettings: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to save claim settings" });
   }
 };
+
+export const handleGetMembers: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let members = [];
+
+    if (user.role === "admin") {
+      members = await User.find({ teamId: user.teamId, role: "member" }).select(
+        "_id id name email active",
+      );
+    } else {
+      const admin = await User.findById(user.adminId).select("teamId");
+      if (admin) {
+        members = await User.find({ teamId: admin.teamId, role: "member" }).select(
+          "_id id name email active",
+        );
+      }
+    }
+
+    const formattedMembers = members.map((member: any) => ({
+      id: member._id.toString(),
+      name: member.name,
+      email: member.email,
+      active: member.active ?? true,
+    }));
+
+    res.json({ members: formattedMembers });
+  } catch (error) {
+    console.error("Get members error:", error);
+    res.status(500).json({ error: "Failed to get members" });
+  }
+};
