@@ -1,17 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, Clock, Download } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ClaimItem {
-  id: string;
+  _id?: string;
+  id?: string;
   lineNumber: number;
   content: string;
-  claimedAt: string;
-  status: "ready" | "cooldown" | "no_available";
+  claimedAt?: string;
+  createdAt?: string;
+  status: string;
+}
+
+interface QueuedLine {
+  _id?: string;
+  id?: string;
+  lineNumber: number;
+  content: string;
+  status: string;
+  createdAt?: string;
 }
 
 interface DistributorItem {
@@ -22,28 +34,101 @@ interface DistributorItem {
 }
 
 export default function Inbox() {
+  const { token } = useAuth();
   const [claimCooldown, setClaimCooldown] = useState(0);
   const [claims, setClaims] = useState<ClaimItem[]>([]);
+  const [queuedLines, setQueuedLines] = useState<QueuedLine[]>([]);
   const [distributorItems, setDistributorItems] = useState<DistributorItem[]>(
     [],
   );
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleClaim = () => {
+  useEffect(() => {
+    fetchData();
+  }, [token]);
+
+  const fetchData = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch lines");
+      const data = await response.json();
+
+      // Filter queued lines (status: queued)
+      const queued = data.lines.filter(
+        (line: QueuedLine) => line.status === "queued",
+      );
+      setQueuedLines(queued);
+
+      // Filter claimed lines (status: claimed)
+      const claimed = data.lines.filter(
+        (line: ClaimItem) => line.status === "claimed",
+      );
+      setClaims(claimed);
+    } catch (error) {
+      console.error("Error fetching lines:", error);
+      toast.error("Failed to fetch lines");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClaim = async () => {
     if (claimCooldown > 0) {
       toast.error("Still in cooldown");
       return;
     }
-    setClaimCooldown(60);
-    const timer = setInterval(() => {
-      setClaimCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
+
+    if (queuedLines.length === 0) {
+      toast.error("No lines available to claim");
+      return;
+    }
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
+      const response = await fetch(`/api/numbers/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lineId: lineToClaimId }),
       });
-    }, 1000);
-    toast.success("Line claimed!");
+
+      if (!response.ok) throw new Error("Failed to claim line");
+
+      // Refetch data
+      await fetchData();
+
+      setClaimCooldown(60);
+      const timer = setInterval(() => {
+        setClaimCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      toast.success("Line claimed successfully!");
+    } catch (error) {
+      console.error("Error claiming line:", error);
+      toast.error("Failed to claim line");
+    }
   };
 
   const getClaimButtonColor = () => {
