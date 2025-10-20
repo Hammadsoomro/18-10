@@ -136,9 +136,12 @@ export default function DistributedLines() {
                       <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                         {truncateText(line.content)}
                       </p>
-                      {line.claimedByUser && (
+                      {(line.claimedByUser || line.claimedByName) && (
                         <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                          ✓ Claimed by {line.claimedByUser.name}
+                          ✓ Claimed by{" "}
+                          {typeof line.claimedByUser === "object"
+                            ? line.claimedByUser.name
+                            : line.claimedByName}
                         </p>
                       )}
                       <p className="text-xs text-slate-500 dark:text-slate-400">
