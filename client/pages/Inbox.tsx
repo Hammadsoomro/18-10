@@ -40,7 +40,7 @@ interface DistributorItem {
 }
 
 export default function Inbox() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [claimCooldown, setClaimCooldown] = useState(0);
   const [claims, setClaims] = useState<ClaimItem[]>([]);
   const [queuedLines, setQueuedLines] = useState<QueuedLine[]>([]);
@@ -52,6 +52,85 @@ export default function Inbox() {
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  // Cooldown persistence helpers
+  const getCooldownKey = () => `claim_cooldown_${user?.id ?? "global"}`;
+  let cooldownTimer: number | undefined;
+
+  const startCooldown = (seconds: number) => {
+    if (!user) return;
+    const expiry = Date.now() + seconds * 1000;
+    try {
+      localStorage.setItem(getCooldownKey(), String(expiry));
+      window.dispatchEvent(
+        new CustomEvent("claim_cooldown_updated", { detail: { expiry } }),
+      );
+    } catch (e) {
+      // ignore
+    }
+
+    setClaimCooldown(seconds);
+
+    clearInterval(cooldownTimer);
+    cooldownTimer = window.setInterval(() => {
+      setClaimCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownTimer);
+          try {
+            localStorage.removeItem(getCooldownKey());
+            window.dispatchEvent(new CustomEvent("claim_cooldown_updated", {}));
+          } catch (e) {}
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000) as unknown as number;
+  };
+
+  useEffect(() => {
+    // Initialize cooldown from localStorage
+    if (!user) return;
+    const key = getCooldownKey();
+    const value = localStorage.getItem(key);
+    if (!value) return;
+    const expiry = Number(value);
+    if (isNaN(expiry)) return;
+    const remaining = Math.ceil((expiry - Date.now()) / 1000);
+    if (remaining > 0) {
+      startCooldown(remaining);
+    } else {
+      localStorage.removeItem(key);
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === key) {
+        const v = localStorage.getItem(key);
+        if (!v) {
+          setClaimCooldown(0);
+        } else {
+          const exp = Number(v);
+          const rem = Math.ceil((exp - Date.now()) / 1000);
+          if (rem > 0) startCooldown(rem);
+        }
+      }
+    };
+
+    const onCustom = (e: any) => {
+      const detail = e?.detail;
+      if (!detail || !detail.expiry) return;
+      const rem = Math.ceil((detail.expiry - Date.now()) / 1000);
+      if (rem > 0) startCooldown(rem);
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("claim_cooldown_updated", onCustom as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
+      clearInterval(cooldownTimer);
+    };
+  }, [user]);
 
   const fetchData = async () => {
     if (!token) {
