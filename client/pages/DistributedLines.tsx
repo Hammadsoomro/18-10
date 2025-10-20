@@ -12,6 +12,9 @@ interface DistributedLine {
   content: string;
   lineNumber: number;
   createdAt?: string;
+  claimedBy?: string;
+  claimedByName?: string;
+  claimedAt?: string;
   distributedTo?: string[];
   status?: string;
 }
