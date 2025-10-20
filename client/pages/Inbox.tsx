@@ -244,8 +244,8 @@ export default function Inbox() {
       // Refetch data
       await fetchData();
 
-      // start persistent cooldown (60s)
-      startCooldown(60);
+      // start persistent cooldown using server setting (fallback 60s)
+      startCooldown(claimSettingCooldown ?? 60);
 
       toast.success("Line claimed successfully!");
     } catch (error) {
