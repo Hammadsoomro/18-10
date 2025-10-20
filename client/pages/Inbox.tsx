@@ -259,29 +259,17 @@ export default function Inbox() {
                         key={claim._id || claim.id}
                         className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                              {truncateText(claim.content)}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
-                              <Clock className="h-3 w-3" />
-                              <span>{time}</span>
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              {dateFormatted}
-                            </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                            {truncateText(claim.content)}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                            <Clock className="h-3 w-3" />
+                            <span>{time}</span>
                           </div>
-                          <Button
-                            onClick={() =>
-                              handleMoveToDistributed(claim._id || claim.id || "")
-                            }
-                            size="sm"
-                            variant="outline"
-                            className="whitespace-nowrap"
-                          >
-                            Move
-                          </Button>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {dateFormatted}
+                          </div>
                         </div>
                       </div>
                     );
