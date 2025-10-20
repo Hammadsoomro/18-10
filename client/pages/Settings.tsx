@@ -96,6 +96,67 @@ export default function Settings() {
     toast.success("Settings saved successfully");
   };
 
+  const handleCreateMember = async () => {
+    if (!memberName.trim()) {
+      toast.error("Please enter member name");
+      return;
+    }
+
+    if (!memberEmail.trim()) {
+      toast.error("Please enter member email");
+      return;
+    }
+
+    if (!memberPassword.trim()) {
+      toast.error("Please enter password");
+      return;
+    }
+
+    if (memberPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    setIsCreatingMember(true);
+    try {
+      const response = await fetch("/api/auth/create-member", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: memberName,
+          email: memberEmail,
+          password: memberPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create member");
+      }
+
+      toast.success(`Team member ${memberName} created successfully`);
+      setIsDialogOpen(false);
+      setMemberName("");
+      setMemberEmail("");
+      setMemberPassword("");
+    } catch (error) {
+      console.error("Error creating member:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create member",
+      );
+    } finally {
+      setIsCreatingMember(false);
+    }
+  };
+
   return (
     <Layout title="Settings">
       <div className="p-6 max-w-4xl">
