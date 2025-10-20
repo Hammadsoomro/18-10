@@ -138,10 +138,16 @@ export default function Settings() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create member");
+        try {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to create member");
+        } catch (e) {
+          const statusMessage = `${response.status}: ${response.statusText}`;
+          throw new Error(statusMessage);
+        }
       }
 
+      const data = await response.json();
       toast.success(`Team member ${memberName} created successfully`);
       setIsDialogOpen(false);
       setMemberName("");
