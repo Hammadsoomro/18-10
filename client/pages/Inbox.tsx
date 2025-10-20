@@ -221,16 +221,8 @@ export default function Inbox() {
       // Refetch data
       await fetchData();
 
-      setClaimCooldown(60);
-      const timer = setInterval(() => {
-        setClaimCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // start persistent cooldown (60s)
+      startCooldown(60);
 
       toast.success("Line claimed successfully!");
     } catch (error) {
