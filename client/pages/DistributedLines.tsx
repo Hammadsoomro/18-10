@@ -14,13 +14,17 @@ interface DistributedLine {
   createdAt?: string;
   claimedBy?: string;
   claimedByName?: string;
+  claimedByUser?: {
+    name: string;
+    email: string;
+  };
   claimedAt?: string;
   distributedTo?: string[];
   status?: string;
 }
 
 export default function DistributedLines() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [lines, setLines] = useState<DistributedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,21 +40,17 @@ export default function DistributedLines() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch("/api/numbers/claimed-lines", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch distributed lines");
+      if (!response.ok) throw new Error("Failed to fetch claimed lines");
       const data = await response.json();
 
-      // Show only lines with "distributed" status
-      const distributedLines = data.lines.filter(
-        (line: any) => line.status === "distributed",
-      );
-      setLines(distributedLines);
+      setLines(data.lines || []);
     } catch (error) {
-      console.error("Error fetching distributed lines:", error);
-      toast.error("Failed to fetch distributed lines");
+      console.error("Error fetching claimed lines:", error);
+      toast.error("Failed to fetch claimed lines");
     } finally {
       setIsLoading(false);
     }
@@ -129,20 +129,27 @@ export default function DistributedLines() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          #{line.lineNumber}
-                        </span>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          {truncateText(line.content)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {line.createdAt}
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                        {truncateText(line.content)}
                       </p>
-                      {line.claimedByName && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                          ✓ Claimed by {line.claimedByName} ({line.claimedAt})
+                      {user?.role === "admin" && (
+                        <div>
+                          {(line.claimedByUser || line.claimedByName) && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mb-1">
+                              ✓ Claimed by{" "}
+                              {typeof line.claimedByUser === "object"
+                                ? line.claimedByUser.name
+                                : line.claimedByName}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {line.claimedAt || line.createdAt}
+                          </p>
+                        </div>
+                      )}
+                      {user?.role === "member" && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {line.claimedAt || line.createdAt}
                         </p>
                       )}
                       {line.distributedTo && line.distributedTo.length > 0 && (

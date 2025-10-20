@@ -14,9 +14,13 @@ export const handleGetLines: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const lines = await NumberLine.find({ teamId: decoded.teamId }).sort({
-      createdAt: -1,
-    });
+    const lines = await NumberLine.find({
+      teamId: decoded.teamId,
+      $or: [{ status: "queued" }, { status: "claimed", claimedBy: decoded.id }],
+    })
+      .populate("claimedBy", "name email")
+      .sort({ createdAt: -1 });
+
     res.json({ lines });
   } catch (error) {
     console.error("Get lines error:", error);
@@ -198,12 +202,51 @@ export const handleGetQueuedLines: RequestHandler = async (req, res) => {
 
     const lines = await NumberLine.find({
       teamId: decoded.teamId,
-      status: { $in: ["distributed", "claimed"] },
-    }).sort({ createdAt: -1 });
+      status: "queued",
+    })
+      .populate("claimedBy", "name email")
+      .sort({ createdAt: -1 });
 
     res.json({ lines });
   } catch (error) {
     console.error("Get queued lines error:", error);
     res.status(500).json({ error: "Failed to fetch queued lines" });
+  }
+};
+
+export const handleClaimLine: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const { lineId } = req.body;
+    if (!lineId) {
+      return res.status(400).json({ error: "Line ID is required" });
+    }
+
+    const line = await NumberLine.findByIdAndUpdate(
+      lineId,
+      {
+        status: "claimed",
+        claimedBy: decoded.id,
+      },
+      { new: true },
+    );
+
+    if (!line) {
+      return res.status(404).json({ error: "Line not found" });
+    }
+
+    res.json(line);
+  } catch (error) {
+    console.error("Claim line error:", error);
+    res.status(500).json({ error: "Failed to claim line" });
   }
 };

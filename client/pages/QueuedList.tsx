@@ -22,6 +22,10 @@ interface QueuedLine {
   lineNumber: number;
   createdAt?: string;
   claimedBy?: string;
+  claimedByUser?: {
+    name: string;
+    email: string;
+  };
   claimedAt?: string;
   status?: string;
 }
@@ -33,6 +37,10 @@ export default function QueuedList() {
 
   useEffect(() => {
     fetchQueuedLines();
+
+    // Auto-refresh every 3 seconds to show claimed lines removal
+    const interval = setInterval(fetchQueuedLines, 3000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const fetchQueuedLines = async () => {
@@ -101,8 +109,9 @@ export default function QueuedList() {
       : text;
   };
 
-  const unclaimedCount = lines.filter((l) => !l.claimedBy).length;
-  const claimedCount = lines.filter((l) => l.claimedBy).length;
+  // Filter to show only unclaimed lines
+  const unclaimedLines = lines.filter((l) => !l.claimedBy);
+  const unclaimedCount = unclaimedLines.length;
 
   if (isLoading) {
     return (
@@ -144,19 +153,6 @@ export default function QueuedList() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-slate-200 dark:border-slate-800">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {claimedCount}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                  Claimed
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Lines List */}
@@ -191,7 +187,7 @@ export default function QueuedList() {
           </CardHeader>
 
           <CardContent className="space-y-3 pt-4">
-            {lines.length === 0 ? (
+            {unclaimedLines.length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                 <p className="text-slate-600 dark:text-slate-400">
@@ -199,36 +195,22 @@ export default function QueuedList() {
                 </p>
               </div>
             ) : (
-              lines.map((line) => (
+              unclaimedLines.map((line) => (
                 <div
                   key={line._id || line.id || `line-${line.lineNumber}`}
-                  className={`p-4 rounded-lg border transition-all ${
-                    line.claimedBy
-                      ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
-                      : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  } group`}
+                  className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          #{line.lineNumber}
-                        </span>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          {truncateText(line.content)}
-                        </span>
-                      </div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                        {truncateText(line.content)}
+                      </p>
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {line.createdAt}
                         </span>
-                        {line.claimedBy && (
-                          <span className="text-green-600 dark:text-green-400">
-                            ✓ Claimed by {line.claimedBy} ({line.claimedAt})
-                          </span>
-                        )}
                       </div>
                     </div>
 
