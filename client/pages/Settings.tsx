@@ -32,6 +32,8 @@ export default function Settings() {
   const [memberEmail, setMemberEmail] = useState("");
   const [memberPassword, setMemberPassword] = useState("");
   const [isCreatingMember, setIsCreatingMember] = useState(false);
+  const [members, setMembers] = useState<{ id: string; name: string; email: string; active: boolean }[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   useEffect(() => {
     if (user?.role === "admin" && token) {
