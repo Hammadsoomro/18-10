@@ -24,7 +24,9 @@ interface DistributorItem {
 export default function Inbox() {
   const [claimCooldown, setClaimCooldown] = useState(0);
   const [claims, setClaims] = useState<ClaimItem[]>([]);
-  const [distributorItems, setDistributorItems] = useState<DistributorItem[]>([]);
+  const [distributorItems, setDistributorItems] = useState<DistributorItem[]>(
+    [],
+  );
 
   const handleClaim = () => {
     if (claimCooldown > 0) {

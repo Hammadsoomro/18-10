@@ -189,7 +189,9 @@ export default function AutoDistributor() {
 
       if (!response.ok) throw new Error("Failed to update distributor status");
 
-      toast.success(newIsActive ? "Distributor started" : "Distributor stopped");
+      toast.success(
+        newIsActive ? "Distributor started" : "Distributor stopped",
+      );
     } catch (error) {
       console.error("Error toggling distributor:", error);
       setIsActive(!newIsActive);

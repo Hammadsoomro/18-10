@@ -4,8 +4,22 @@ import cors from "cors";
 import { createServer as createHttpServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { handleDemo } from "./routes/demo";
-import { handleSignup, handleLogin, handleCreateMember, handleGetClaimSettings, handleSaveClaimSettings, handleGetMembers, handleGetDistributorSettings, handleSaveDistributorSettings } from "./routes/auth";
-import { handleGetContacts, handleCreateContact, handleUpdateContact, handleDeleteContact } from "./routes/contacts";
+import {
+  handleSignup,
+  handleLogin,
+  handleCreateMember,
+  handleGetClaimSettings,
+  handleSaveClaimSettings,
+  handleGetMembers,
+  handleGetDistributorSettings,
+  handleSaveDistributorSettings,
+} from "./routes/auth";
+import {
+  handleGetContacts,
+  handleCreateContact,
+  handleUpdateContact,
+  handleDeleteContact,
+} from "./routes/contacts";
 import {
   handleGetLines,
   handleCreateLine,

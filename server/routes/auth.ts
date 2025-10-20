@@ -240,9 +240,7 @@ export const handleSaveClaimSettings: RequestHandler = async (req, res) => {
       typeof claimLineCount !== "number" ||
       typeof cooldownSeconds !== "number"
     ) {
-      return res
-        .status(400)
-        .json({ error: "Invalid claim settings values" });
+      return res.status(400).json({ error: "Invalid claim settings values" });
     }
 
     let claimSettings = await ClaimSettings.findOne({ teamId: user.teamId });
@@ -298,9 +296,10 @@ export const handleGetMembers: RequestHandler = async (req, res) => {
     } else {
       const admin = await User.findById(user.adminId).select("teamId");
       if (admin) {
-        members = await User.find({ teamId: admin.teamId, role: "member" }).select(
-          "_id id name email active",
-        );
+        members = await User.find({
+          teamId: admin.teamId,
+          role: "member",
+        }).select("_id id name email active");
       }
     }
 
@@ -318,7 +317,10 @@ export const handleGetMembers: RequestHandler = async (req, res) => {
   }
 };
 
-export const handleGetDistributorSettings: RequestHandler = async (req, res) => {
+export const handleGetDistributorSettings: RequestHandler = async (
+  req,
+  res,
+) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
     if (!token) {
@@ -369,7 +371,10 @@ export const handleGetDistributorSettings: RequestHandler = async (req, res) => 
   }
 };
 
-export const handleSaveDistributorSettings: RequestHandler = async (req, res) => {
+export const handleSaveDistributorSettings: RequestHandler = async (
+  req,
+  res,
+) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
     if (!token) {

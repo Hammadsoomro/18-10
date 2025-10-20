@@ -356,14 +356,18 @@ export default function Settings() {
 
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <Label>Cooldown period: {cooldownSeconds} seconds</Label>
+                          <Label>
+                            Cooldown period: {cooldownSeconds} seconds
+                          </Label>
                           <span className="text-sm text-slate-500">
                             10 - 300 seconds
                           </span>
                         </div>
                         <Slider
                           value={[cooldownSeconds]}
-                          onValueChange={(value) => setCooldownSeconds(value[0])}
+                          onValueChange={(value) =>
+                            setCooldownSeconds(value[0])
+                          }
                           min={10}
                           max={300}
                           step={10}

@@ -254,7 +254,9 @@ export default function Conversation() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold truncate">{contact.name}</p>
+                          <p className="font-semibold truncate">
+                            {contact.name}
+                          </p>
                           {contact.pinned && (
                             <Pin className="h-3 w-3 text-yellow-500" />
                           )}
