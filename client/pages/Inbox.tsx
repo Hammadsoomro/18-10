@@ -183,32 +183,6 @@ export default function Inbox() {
     return { time, dateFormatted };
   };
 
-  const handleMoveToDistributed = async (lineId: string) => {
-    if (!token) {
-      toast.error("Not authenticated");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/numbers/move-to-distributor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lineIds: [lineId] }),
-      });
-
-      if (!response.ok) throw new Error("Failed to move line");
-
-      // Refetch data
-      await fetchData();
-      toast.success("Line moved to distributed");
-    } catch (error) {
-      console.error("Error moving line:", error);
-      toast.error("Failed to move line");
-    }
-  };
 
   return (
     <Layout title="Numbers Inbox">
