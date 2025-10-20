@@ -65,13 +65,32 @@ export default function NumbersSorter() {
       return;
     }
 
-    const lineTexts = inputValue
+    let lineTexts = inputValue
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
     if (lineTexts.length === 0) {
       toast.error("Please enter some content");
+      return;
+    }
+
+    // Deduplicate lines within input
+    const duplicatesInInput = lineTexts.length - new Set(lineTexts).size;
+    lineTexts = Array.from(new Set(lineTexts));
+
+    // Check for duplicates with existing lines
+    const existingContents = new Set(lines.map((l) => l.content));
+    const beforeDedup = lineTexts.length;
+    lineTexts = lineTexts.filter((text) => !existingContents.has(text));
+    const duplicatesWithExisting = beforeDedup - lineTexts.length;
+
+    if (lineTexts.length === 0) {
+      if (duplicatesInInput > 0 || duplicatesWithExisting > 0) {
+        toast.error("All lines are duplicates");
+      } else {
+        toast.error("Please enter some content");
+      }
       return;
     }
 
@@ -91,9 +110,13 @@ export default function NumbersSorter() {
 
       setLines([...lines, ...data.lines]);
       setInputValue("");
-      toast.success(
-        `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`,
-      );
+
+      let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
+      const totalRemoved = duplicatesInInput + duplicatesWithExisting;
+      if (totalRemoved > 0) {
+        message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
+      }
+      toast.success(message);
     } catch (error) {
       console.error("Error adding lines:", error);
       toast.error("Failed to add lines");
