@@ -72,16 +72,29 @@ export function Navbar({
     };
 
     syncFromStorage();
-    if (claimCooldown > 0) startTimer();
+    // If storage has a cooldown, start the ticking interval immediately
+    const initial = localStorage.getItem(key);
+    if (initial) {
+      const expiry = Number(initial);
+      const rem = Math.ceil((expiry - Date.now()) / 1000);
+      if (rem > 0) startTimer();
+    }
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === key) syncFromStorage();
+      if (e.key === key) {
+        syncFromStorage();
+        const v = localStorage.getItem(key);
+        if (v) startTimer();
+      }
     };
     const onCustom = (e: any) => {
       const detail = e?.detail;
       if (!detail || !detail.expiry) return;
       const rem = Math.ceil((detail.expiry - Date.now()) / 1000);
-      if (rem > 0) setClaimCooldown(rem);
+      if (rem > 0) {
+        setClaimCooldown(rem);
+        startTimer();
+      }
     };
 
     window.addEventListener("storage", onStorage);
