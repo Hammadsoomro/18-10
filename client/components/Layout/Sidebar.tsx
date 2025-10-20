@@ -50,6 +50,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
     { icon: SortAsc, label: "Numbers Sorter", path: "/numbers-sorter" },
     { icon: Zap, label: "Auto Distributor", path: "/auto-distributor" },
     { icon: ListTodo, label: "Queued List", path: "/queued-list" },
+    { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
     { icon: Inbox, label: "Inbox", path: "/inbox" },
   ];
 
