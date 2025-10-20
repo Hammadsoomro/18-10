@@ -171,6 +171,16 @@ export default function Conversation() {
       c.phone.includes(searchQuery),
   );
 
+  if (isLoading) {
+    return (
+      <Layout title="Conversation">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Conversation">
       <div className="p-6">
@@ -178,11 +188,42 @@ export default function Conversation() {
           {/* Contacts List */}
           <Card className="border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col">
             <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-4">
-                <CardTitle>Contacts</CardTitle>
-                <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="space-y-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Contacts</CardTitle>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Contact name..."
+                    value={newContactName}
+                    onChange={(e) => setNewContactName(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Phone number..."
+                    value={newContactPhone}
+                    onChange={(e) => setNewContactPhone(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Button
+                    onClick={handleAddContact}
+                    disabled={isAdding}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="sm"
+                  >
+                    {isAdding ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add Contact
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -195,34 +236,42 @@ export default function Conversation() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto space-y-2">
-              {filteredContacts.map((contact) => (
-                <button
-                  key={contact.id}
-                  onClick={() => setSelectedContact(contact)}
-                  className={`w-full p-3 rounded-lg text-left transition-colors ${
-                    selectedContact?.id === contact.id
-                      ? "bg-blue-100 dark:bg-blue-950"
-                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold truncate">{contact.name}</p>
-                        {contact.pinned && (
-                          <Pin className="h-3 w-3 text-yellow-500" />
+              {filteredContacts.length === 0 ? (
+                <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                  No contacts yet
+                </p>
+              ) : (
+                filteredContacts.map((contact) => (
+                  <button
+                    key={contact.id}
+                    onClick={() => setSelectedContact(contact)}
+                    className={`w-full p-3 rounded-lg text-left transition-colors ${
+                      selectedContact?.id === contact.id
+                        ? "bg-blue-100 dark:bg-blue-950"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold truncate">{contact.name}</p>
+                          {contact.pinned && (
+                            <Pin className="h-3 w-3 text-yellow-500" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {contact.phone}
+                        </p>
+                        {contact.lastMessage && (
+                          <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-1">
+                            {contact.lastMessage}
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {contact.phone}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-1">
-                        {contact.lastMessage}
-                      </p>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </CardContent>
           </Card>
 
