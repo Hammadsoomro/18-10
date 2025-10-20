@@ -31,14 +31,67 @@ export default function QueuedList() {
   const [lines, setLines] = useState<QueuedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleDeleteLine = (id: string) => {
-    setLines(lines.filter((l) => l.id !== id));
-    toast.success("Line removed");
+  useEffect(() => {
+    fetchQueuedLines();
+  }, [token]);
+
+  const fetchQueuedLines = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/queued", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch queued lines");
+      const data = await response.json();
+      setLines(data.lines);
+    } catch (error) {
+      console.error("Error fetching queued lines:", error);
+      toast.error("Failed to fetch queued lines");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleClearAll = () => {
-    setLines([]);
-    toast.success("All queued lines cleared");
+  const handleDeleteLine = async (id: string) => {
+    try {
+      const response = await fetch(`/api/numbers/line/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete line");
+
+      setLines(lines.filter((l) => l._id !== id && l.id !== id));
+      toast.success("Line removed");
+    } catch (error) {
+      console.error("Error deleting line:", error);
+      toast.error("Failed to delete line");
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      // Delete all lines
+      const deletePromises = lines.map((line) =>
+        fetch(`/api/numbers/line/${line._id || line.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      );
+
+      await Promise.all(deletePromises);
+      setLines([]);
+      toast.success("All queued lines cleared");
+    } catch (error) {
+      console.error("Error clearing lines:", error);
+      toast.error("Failed to clear lines");
+    }
   };
 
   const truncateText = (text: string, maxWords: number = 20) => {
