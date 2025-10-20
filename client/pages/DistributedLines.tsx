@@ -132,17 +132,26 @@ export default function DistributedLines() {
                       <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                         {truncateText(line.content)}
                       </p>
-                      {(line.claimedByUser || line.claimedByName) && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                          ✓ Claimed by{" "}
-                          {typeof line.claimedByUser === "object"
-                            ? line.claimedByUser.name
-                            : line.claimedByName}
+                      {user?.role === "admin" && (
+                        <div>
+                          {(line.claimedByUser || line.claimedByName) && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mb-1">
+                              ✓ Claimed by{" "}
+                              {typeof line.claimedByUser === "object"
+                                ? line.claimedByUser.name
+                                : line.claimedByName}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {line.claimedAt || line.createdAt}
+                          </p>
+                        </div>
+                      )}
+                      {user?.role === "member" && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {line.claimedAt || line.createdAt}
                         </p>
                       )}
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {line.createdAt}
-                      </p>
                       {line.distributedTo && line.distributedTo.length > 0 && (
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Distributed to {line.distributedTo.length} member(s)
