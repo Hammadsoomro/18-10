@@ -40,26 +40,34 @@ export default function AutoDistributor() {
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(60);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(["1"]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [distributedLines, setDistributedLines] = useState<DistributedLine[]>(
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [members] = useState<TeamMember[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", active: true },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", active: true },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", active: false },
-    {
-      id: "4",
-      name: "Sarah Williams",
-      email: "sarah@example.com",
-      active: true,
-    },
-  ]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
 
   useEffect(() => {
+    fetchMembers();
     fetchDistributedLines();
   }, [token]);
+
+  const fetchMembers = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch("/api/auth/members", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch members");
+      const data = await response.json();
+      setMembers(data.members || []);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setMembers([]);
+    }
+  };
 
   const fetchDistributedLines = async () => {
     if (!token) {
