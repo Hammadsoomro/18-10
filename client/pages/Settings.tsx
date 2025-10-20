@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,15 +8,76 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Users, Clock, Bell, Lock } from "lucide-react";
+import { Users, Clock, Bell, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [claimLineCount, setClaimLineCount] = useState(1);
   const [cooldownSeconds, setCooldownSeconds] = useState(60);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === "admin" && token) {
+      fetchClaimSettings();
+    }
+  }, [user, token]);
+
+  const fetchClaimSettings = async () => {
+    if (!token) return;
+
+    try {
+      setIsLoadingSettings(true);
+      const response = await fetch("/api/auth/claim-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch claim settings");
+
+      const data = await response.json();
+      setClaimLineCount(data.claimLineCount);
+      setCooldownSeconds(data.cooldownSeconds);
+    } catch (error) {
+      console.error("Error fetching claim settings:", error);
+      toast.error("Failed to load claim settings");
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
+  const handleSaveClaimSettings = async () => {
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      setIsSavingSettings(true);
+      const response = await fetch("/api/auth/claim-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          claimLineCount,
+          cooldownSeconds,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save claim settings");
+
+      toast.success("Claim settings saved successfully");
+    } catch (error) {
+      console.error("Error saving claim settings:", error);
+      toast.error("Failed to save claim settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const handleSaveSettings = () => {
     toast.success("Settings saved successfully");
