@@ -1,41 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Copy } from "lucide-react";
+import { Plus, Trash2, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface NumberLine {
-  id: string;
+  _id?: string;
+  id?: string;
   content: string;
   lineNumber: number;
-  createdAt: string;
+  createdAt?: string;
+  status?: string;
 }
 
 export default function NumbersSorter() {
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
-  const [lines, setLines] = useState<NumberLine[]>([
-    {
-      id: "1",
-      content: "John Doe - Sales - Premium Package",
-      lineNumber: 1,
-      createdAt: "2024-01-15 10:30 AM",
-    },
-    {
-      id: "2",
-      content: "Jane Smith - Support - Billing Inquiry",
-      lineNumber: 2,
-      createdAt: "2024-01-15 10:35 AM",
-    },
-    {
-      id: "3",
-      content: "Mike Johnson - Sales - Quote Request",
-      lineNumber: 3,
-      createdAt: "2024-01-15 10:40 AM",
-    },
-  ]);
+  const [lines, setLines] = useState<NumberLine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
 
   const handleAddLine = () => {
     if (!inputValue.trim()) {
