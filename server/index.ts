@@ -41,6 +41,7 @@ export function createServer() {
   app.post("/api/auth/create-member", handleCreateMember);
   app.get("/api/auth/claim-settings", handleGetClaimSettings);
   app.post("/api/auth/claim-settings", handleSaveClaimSettings);
+  app.get("/api/auth/members", handleGetMembers);
 
   // Numbers routes
   app.get("/api/numbers/lines", handleGetLines);
