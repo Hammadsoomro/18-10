@@ -27,6 +27,11 @@ export default function Settings() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [memberName, setMemberName] = useState("");
+  const [memberEmail, setMemberEmail] = useState("");
+  const [memberPassword, setMemberPassword] = useState("");
+  const [isCreatingMember, setIsCreatingMember] = useState(false);
 
   useEffect(() => {
     if (user?.role === "admin" && token) {
