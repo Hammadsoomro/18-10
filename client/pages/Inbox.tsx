@@ -150,6 +150,50 @@ export default function Inbox() {
       : text;
   };
 
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    const dateFormatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+    return { time, dateFormatted };
+  };
+
+  const handleMoveToDistributed = async (lineId: string) => {
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/numbers/move-to-distributor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lineIds: [lineId] }),
+      });
+
+      if (!response.ok) throw new Error("Failed to move line");
+
+      // Refetch data
+      await fetchData();
+      toast.success("Line moved to distributed");
+    } catch (error) {
+      console.error("Error moving line:", error);
+      toast.error("Failed to move line");
+    }
+  };
+
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
