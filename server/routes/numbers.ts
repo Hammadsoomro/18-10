@@ -207,3 +207,40 @@ export const handleGetQueuedLines: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch queued lines" });
   }
 };
+
+export const handleClaimLine: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const { lineId } = req.body;
+    if (!lineId) {
+      return res.status(400).json({ error: "Line ID is required" });
+    }
+
+    const line = await NumberLine.findByIdAndUpdate(
+      lineId,
+      {
+        status: "claimed",
+        claimedBy: decoded.userId,
+      },
+      { new: true },
+    );
+
+    if (!line) {
+      return res.status(404).json({ error: "Line not found" });
+    }
+
+    res.json(line);
+  } catch (error) {
+    console.error("Claim line error:", error);
+    res.status(500).json({ error: "Failed to claim line" });
+  }
+};
