@@ -22,6 +22,10 @@ interface QueuedLine {
   lineNumber: number;
   createdAt?: string;
   claimedBy?: string;
+  claimedByUser?: {
+    name: string;
+    email: string;
+  };
   claimedAt?: string;
   status?: string;
 }
@@ -33,6 +37,10 @@ export default function QueuedList() {
 
   useEffect(() => {
     fetchQueuedLines();
+
+    // Auto-refresh every 3 seconds to show claimed lines removal
+    const interval = setInterval(fetchQueuedLines, 3000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const fetchQueuedLines = async () => {
