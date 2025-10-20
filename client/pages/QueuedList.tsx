@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,53 +12,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Clock, AlertCircle } from "lucide-react";
+import { Trash2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface QueuedLine {
-  id: string;
+  _id?: string;
+  id?: string;
   content: string;
   lineNumber: number;
-  createdAt: string;
+  createdAt?: string;
   claimedBy?: string;
   claimedAt?: string;
+  status?: string;
 }
 
 export default function QueuedList() {
-  const [lines, setLines] = useState<QueuedLine[]>([
-    {
-      id: "1",
-      content: "John Doe - Sales - Premium Package",
-      lineNumber: 1,
-      createdAt: "2024-01-15 10:30 AM",
-    },
-    {
-      id: "2",
-      content: "Jane Smith - Support - Billing Inquiry",
-      lineNumber: 2,
-      createdAt: "2024-01-15 10:35 AM",
-    },
-    {
-      id: "3",
-      content: "Mike Johnson - Sales - Quote Request",
-      lineNumber: 3,
-      createdAt: "2024-01-15 10:40 AM",
-    },
-    {
-      id: "4",
-      content: "Sarah Williams - Partnership - New Opportunity",
-      lineNumber: 4,
-      createdAt: "2024-01-15 10:45 AM",
-      claimedBy: "John Doe",
-      claimedAt: "2024-01-15 11:00 AM",
-    },
-    {
-      id: "5",
-      content: "Tom Anderson - Support - Technical Issue",
-      lineNumber: 5,
-      createdAt: "2024-01-15 10:50 AM",
-    },
-  ]);
+  const { token } = useAuth();
+  const [lines, setLines] = useState<QueuedLine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleDeleteLine = (id: string) => {
     setLines(lines.filter((l) => l.id !== id));
