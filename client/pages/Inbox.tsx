@@ -55,7 +55,7 @@ export default function Inbox() {
 
   // Cooldown persistence helpers
   const getCooldownKey = () => `claim_cooldown_${user?.id ?? "global"}`;
-  let cooldownTimer: number | undefined;
+  const cooldownTimerRef = useRef<number | null>(null);
 
   const startCooldown = (seconds: number) => {
     if (!user) return;
@@ -71,11 +71,16 @@ export default function Inbox() {
 
     setClaimCooldown(seconds);
 
-    clearInterval(cooldownTimer);
-    cooldownTimer = window.setInterval(() => {
+    if (cooldownTimerRef.current) {
+      window.clearInterval(cooldownTimerRef.current);
+    }
+    cooldownTimerRef.current = window.setInterval(() => {
       setClaimCooldown((prev) => {
         if (prev <= 1) {
-          clearInterval(cooldownTimer);
+          if (cooldownTimerRef.current) {
+            window.clearInterval(cooldownTimerRef.current);
+            cooldownTimerRef.current = null;
+          }
           try {
             localStorage.removeItem(getCooldownKey());
             window.dispatchEvent(new CustomEvent("claim_cooldown_updated", {}));
