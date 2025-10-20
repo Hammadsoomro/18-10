@@ -109,8 +109,9 @@ export default function QueuedList() {
       : text;
   };
 
-  const unclaimedCount = lines.filter((l) => !l.claimedBy).length;
-  const claimedCount = lines.filter((l) => l.claimedBy).length;
+  // Filter to show only unclaimed lines
+  const unclaimedLines = lines.filter((l) => !l.claimedBy);
+  const unclaimedCount = unclaimedLines.length;
 
   if (isLoading) {
     return (
