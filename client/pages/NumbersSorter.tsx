@@ -186,6 +186,16 @@ export default function NumbersSorter() {
       : text;
   };
 
+  if (isLoading) {
+    return (
+      <Layout title="Numbers Sorter">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Numbers Sorter">
       <div className="p-6">
@@ -211,10 +221,20 @@ export default function NumbersSorter() {
 
               <Button
                 onClick={handleAddLine}
+                disabled={isAdding}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Line
+                {isAdding ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Line
+                  </>
+                )}
               </Button>
 
               <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
@@ -241,7 +261,7 @@ export default function NumbersSorter() {
               ) : (
                 lines.map((line) => (
                   <div
-                    key={line.id}
+                    key={line._id || line.id}
                     className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -259,7 +279,7 @@ export default function NumbersSorter() {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleDeleteLine(line.id)}
+                        onClick={() => handleDeleteLine(line._id || line.id || "")}
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 dark:hover:bg-red-950 rounded"
                       >
                         <Trash2 className="h-4 w-4 text-red-600" />
@@ -277,15 +297,31 @@ export default function NumbersSorter() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
             <Button
               className="bg-cyan-600 hover:bg-cyan-700"
-              onClick={() => toast.success("Added to Queued List")}
+              disabled={isMoving}
+              onClick={handleMoveToQueuedList}
             >
-              Add to Queued List
+              {isMoving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Moving...
+                </>
+              ) : (
+                "Add to Queued List"
+              )}
             </Button>
             <Button
               className="bg-purple-600 hover:bg-purple-700"
-              onClick={() => toast.success("Added to Auto Distributor")}
+              disabled={isMoving}
+              onClick={handleMoveToAutoDistributor}
             >
-              Add to Auto Distributor
+              {isMoving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Moving...
+                </>
+              ) : (
+                "Add to Auto Distributor"
+              )}
             </Button>
           </div>
         )}
