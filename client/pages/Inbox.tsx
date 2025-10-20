@@ -186,17 +186,21 @@ export default function Inbox() {
                       {claimCooldown > 0 ? "Cooldown Active" : "Ready to Claim"}
                     </p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {claims.length} line(s) available
+                      {queuedLines.length} line(s) available
                     </p>
                   </div>
                 </div>
 
                 <Button
                   onClick={handleClaim}
-                  disabled={claims.length === 0 || claimCooldown > 0}
+                  disabled={queuedLines.length === 0 || claimCooldown > 0 || isLoading}
                   className={`w-full text-white font-semibold py-6 ${getClaimButtonColor()}`}
                 >
-                  {getClaimButtonText()}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    getClaimButtonText()
+                  )}
                 </Button>
               </CardContent>
             </Card>
