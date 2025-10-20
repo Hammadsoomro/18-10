@@ -130,7 +130,14 @@ export default function Inbox() {
         body: JSON.stringify({ lineId: lineToClaimId }),
       });
 
-      if (!claimResponse.ok) throw new Error("Failed to claim line");
+      if (!claimResponse.ok) {
+        if (claimResponse.status === 409) {
+          toast.error("Another member just claimed that line. Try again.");
+          await fetchData();
+          return;
+        }
+        throw new Error("Failed to claim line");
+      }
 
       // Refetch data
       await fetchData();
