@@ -229,7 +229,7 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
       lineId,
       {
         status: "claimed",
-        claimedBy: decoded.userId,
+        claimedBy: decoded.id,
       },
       { new: true },
     );
