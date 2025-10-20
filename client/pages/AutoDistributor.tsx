@@ -158,13 +158,43 @@ export default function AutoDistributor() {
     }
   };
 
-  const handleToggleDistributor = () => {
+  const handleToggleDistributor = async () => {
     if (!isActive && selectedMembers.length === 0) {
       toast.error("Select members first");
       return;
     }
-    setIsActive(!isActive);
-    toast.success(isActive ? "Distributor stopped" : "Distributor started");
+
+    const newIsActive = !isActive;
+    setIsActive(newIsActive);
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          linesPerMember,
+          timerSeconds,
+          isActive: newIsActive,
+          selectedMembers,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update distributor status");
+
+      toast.success(newIsActive ? "Distributor started" : "Distributor stopped");
+    } catch (error) {
+      console.error("Error toggling distributor:", error);
+      setIsActive(!newIsActive);
+      toast.error("Failed to update distributor status");
+    }
   };
 
   const truncateText = (text: string, maxWords: number = 20) => {
