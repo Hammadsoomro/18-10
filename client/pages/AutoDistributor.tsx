@@ -123,12 +123,39 @@ export default function AutoDistributor() {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedMembers.length === 0) {
       toast.error("Select at least one member");
       return;
     }
-    toast.success("Settings saved");
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          linesPerMember,
+          timerSeconds,
+          isActive,
+          selectedMembers,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save distributor settings");
+
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving distributor settings:", error);
+      toast.error("Failed to save settings");
+    }
   };
 
   const handleToggleDistributor = () => {
