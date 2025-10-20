@@ -24,7 +24,7 @@ interface DistributedLine {
 }
 
 export default function DistributedLines() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [lines, setLines] = useState<DistributedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,21 +40,17 @@ export default function DistributedLines() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch("/api/numbers/claimed-lines", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch distributed lines");
+      if (!response.ok) throw new Error("Failed to fetch claimed lines");
       const data = await response.json();
 
-      // Show only lines with "distributed" status
-      const distributedLines = data.lines.filter(
-        (line: any) => line.status === "distributed",
-      );
-      setLines(distributedLines);
+      setLines(data.lines || []);
     } catch (error) {
-      console.error("Error fetching distributed lines:", error);
-      toast.error("Failed to fetch distributed lines");
+      console.error("Error fetching claimed lines:", error);
+      toast.error("Failed to fetch claimed lines");
     } finally {
       setIsLoading(false);
     }
