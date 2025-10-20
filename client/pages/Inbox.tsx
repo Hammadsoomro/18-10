@@ -23,54 +23,10 @@ interface DistributorItem {
 
 export default function Inbox() {
   const [claimCooldown, setClaimCooldown] = useState(0);
-  const [claims, setClaims] = useState<ClaimItem[]>([
-    {
-      id: "1",
-      lineNumber: 1,
-      content: "John Doe - Sales - Premium Package",
-      claimedAt: "2024-01-15 11:00 AM",
-      status: "ready",
-    },
-    {
-      id: "2",
-      lineNumber: 2,
-      content: "Jane Smith - Support - Billing Inquiry",
-      claimedAt: "2024-01-15 11:05 AM",
-      status: "ready",
-    },
-    {
-      id: "3",
-      lineNumber: 3,
-      content: "Mike Johnson - Sales - Quote Request",
-      claimedAt: "2024-01-15 10:30 AM",
-      status: "cooldown",
-    },
-  ]);
-
-  const [distributorItems, setDistributorItems] = useState<DistributorItem[]>([
-    {
-      id: "1",
-      lines: [
-        "Sarah Williams - Partnership",
-        "Tom Anderson - Support",
-        "Lisa Davis - Sales",
-        "Robert Brown - Support",
-        "Emma Wilson - Sales",
-      ],
-      assignedTo: "Team A",
-      distributedAt: "2024-01-15 10:45 AM",
-    },
-    {
-      id: "2",
-      lines: [
-        "Chris Martin - Sales",
-        "Diana Prince - Partnership",
-        "Edward Norton - Support",
-      ],
-      assignedTo: "Team B",
-      distributedAt: "2024-01-15 10:50 AM",
-    },
-  ]);
+  const [claims, setClaims] = useState<ClaimItem[]>([]);
+  const [distributorItems, setDistributorItems] = useState<DistributorItem[]>(
+    [],
+  );
 
   const handleClaim = () => {
     if (claimCooldown > 0) {

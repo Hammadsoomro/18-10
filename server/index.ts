@@ -4,7 +4,22 @@ import cors from "cors";
 import { createServer as createHttpServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { handleDemo } from "./routes/demo";
-import { handleSignup, handleLogin, handleCreateMember } from "./routes/auth";
+import {
+  handleSignup,
+  handleLogin,
+  handleCreateMember,
+  handleGetClaimSettings,
+  handleSaveClaimSettings,
+  handleGetMembers,
+  handleGetDistributorSettings,
+  handleSaveDistributorSettings,
+} from "./routes/auth";
+import {
+  handleGetContacts,
+  handleCreateContact,
+  handleUpdateContact,
+  handleDeleteContact,
+} from "./routes/contacts";
 import {
   handleGetLines,
   handleCreateLine,
@@ -39,6 +54,11 @@ export function createServer() {
   app.post("/api/auth/signup", handleSignup);
   app.post("/api/auth/login", handleLogin);
   app.post("/api/auth/create-member", handleCreateMember);
+  app.get("/api/auth/claim-settings", handleGetClaimSettings);
+  app.post("/api/auth/claim-settings", handleSaveClaimSettings);
+  app.get("/api/auth/members", handleGetMembers);
+  app.get("/api/auth/distributor-settings", handleGetDistributorSettings);
+  app.post("/api/auth/distributor-settings", handleSaveDistributorSettings);
 
   // Numbers routes
   app.get("/api/numbers/lines", handleGetLines);
@@ -48,6 +68,12 @@ export function createServer() {
   app.post("/api/numbers/move-to-queue", handleMoveToQueue);
   app.post("/api/numbers/move-to-distributor", handleMoveToDistributor);
   app.get("/api/numbers/queued", handleGetQueuedLines);
+
+  // Contacts routes
+  app.get("/api/contacts", handleGetContacts);
+  app.post("/api/contacts", handleCreateContact);
+  app.put("/api/contacts/:id", handleUpdateContact);
+  app.delete("/api/contacts/:id", handleDeleteContact);
 
   return app;
 }

@@ -201,7 +201,7 @@ export default function QueuedList() {
             ) : (
               lines.map((line) => (
                 <div
-                  key={line.id}
+                  key={line._id || line.id || `line-${line.lineNumber}`}
                   className={`p-4 rounded-lg border transition-all ${
                     line.claimedBy
                       ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900"

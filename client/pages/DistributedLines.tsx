@@ -12,6 +12,9 @@ interface DistributedLine {
   content: string;
   lineNumber: number;
   createdAt?: string;
+  claimedBy?: string;
+  claimedByName?: string;
+  claimedAt?: string;
   distributedTo?: string[];
   status?: string;
 }
@@ -137,8 +140,13 @@ export default function DistributedLines() {
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {line.createdAt}
                       </p>
-                      {line.distributedTo && line.distributedTo.length > 0 && (
+                      {line.claimedByName && (
                         <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                          ✓ Claimed by {line.claimedByName} ({line.claimedAt})
+                        </p>
+                      )}
+                      {line.distributedTo && line.distributedTo.length > 0 && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Distributed to {line.distributedTo.length} member(s)
                         </p>
                       )}

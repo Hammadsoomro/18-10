@@ -40,26 +40,54 @@ export default function AutoDistributor() {
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(60);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(["1"]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [distributedLines, setDistributedLines] = useState<DistributedLine[]>(
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [members] = useState<TeamMember[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", active: true },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", active: true },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", active: false },
-    {
-      id: "4",
-      name: "Sarah Williams",
-      email: "sarah@example.com",
-      active: true,
-    },
-  ]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
 
   useEffect(() => {
+    fetchMembers();
+    fetchDistributorSettings();
     fetchDistributedLines();
   }, [token]);
+
+  const fetchMembers = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch("/api/auth/members", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch members");
+      const data = await response.json();
+      setMembers(data.members || []);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setMembers([]);
+    }
+  };
+
+  const fetchDistributorSettings = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch distributor settings");
+      const data = await response.json();
+      setLinesPerMember(data.linesPerMember);
+      setTimerSeconds(data.timerSeconds);
+      setIsActive(data.isActive);
+      setSelectedMembers(data.selectedMembers.map((m: any) => m.id));
+    } catch (error) {
+      console.error("Error fetching distributor settings:", error);
+    }
+  };
 
   const fetchDistributedLines = async () => {
     if (!token) {
@@ -95,21 +123,80 @@ export default function AutoDistributor() {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedMembers.length === 0) {
       toast.error("Select at least one member");
       return;
     }
-    toast.success("Settings saved");
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          linesPerMember,
+          timerSeconds,
+          isActive,
+          selectedMembers,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save distributor settings");
+
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving distributor settings:", error);
+      toast.error("Failed to save settings");
+    }
   };
 
-  const handleToggleDistributor = () => {
+  const handleToggleDistributor = async () => {
     if (!isActive && selectedMembers.length === 0) {
       toast.error("Select members first");
       return;
     }
-    setIsActive(!isActive);
-    toast.success(isActive ? "Distributor stopped" : "Distributor started");
+
+    const newIsActive = !isActive;
+    setIsActive(newIsActive);
+
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          linesPerMember,
+          timerSeconds,
+          isActive: newIsActive,
+          selectedMembers,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update distributor status");
+
+      toast.success(
+        newIsActive ? "Distributor started" : "Distributor stopped",
+      );
+    } catch (error) {
+      console.error("Error toggling distributor:", error);
+      setIsActive(!newIsActive);
+      toast.error("Failed to update distributor status");
+    }
   };
 
   const truncateText = (text: string, maxWords: number = 20) => {

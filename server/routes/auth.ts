@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import bcrypt from "bcryptjs";
-import { User } from "../db";
+import jwt from "jsonwebtoken";
+import { User, ClaimSettings } from "../db";
 import { generateToken } from "../utils/jwt";
 import { AuthResponse, SignupRequest, LoginRequest } from "@shared/api";
 
@@ -115,7 +116,6 @@ export const handleCreateMember: RequestHandler = async (req, res) => {
     }
 
     // Verify admin token and get admin details
-    const jwt = require("jsonwebtoken");
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || "your-secret-key-change-in-production",
@@ -169,5 +169,267 @@ export const handleCreateMember: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Create member error:", error);
     res.status(500).json({ error: "Failed to create member" });
+  }
+};
+
+export const handleGetClaimSettings: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let claimSettings = await ClaimSettings.findOne({ teamId: user.teamId });
+
+    if (!claimSettings) {
+      claimSettings = new ClaimSettings({
+        teamId: user.teamId,
+        adminId: user.role === "admin" ? user._id : user.adminId,
+        claimLineCount: 1,
+        cooldownSeconds: 60,
+      });
+      await claimSettings.save();
+    }
+
+    res.json({
+      claimLineCount: claimSettings.claimLineCount,
+      cooldownSeconds: claimSettings.cooldownSeconds,
+    });
+  } catch (error) {
+    console.error("Get claim settings error:", error);
+    res.status(500).json({ error: "Failed to get claim settings" });
+  }
+};
+
+export const handleSaveClaimSettings: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "Only admins can modify claim settings" });
+    }
+
+    const { claimLineCount, cooldownSeconds } = req.body;
+
+    if (
+      typeof claimLineCount !== "number" ||
+      typeof cooldownSeconds !== "number"
+    ) {
+      return res.status(400).json({ error: "Invalid claim settings values" });
+    }
+
+    let claimSettings = await ClaimSettings.findOne({ teamId: user.teamId });
+
+    if (!claimSettings) {
+      claimSettings = new ClaimSettings({
+        teamId: user.teamId,
+        adminId: user._id,
+        claimLineCount,
+        cooldownSeconds,
+      });
+    } else {
+      claimSettings.claimLineCount = claimLineCount;
+      claimSettings.cooldownSeconds = cooldownSeconds;
+    }
+
+    await claimSettings.save();
+
+    res.json({
+      message: "Claim settings saved successfully",
+      claimLineCount: claimSettings.claimLineCount,
+      cooldownSeconds: claimSettings.cooldownSeconds,
+    });
+  } catch (error) {
+    console.error("Save claim settings error:", error);
+    res.status(500).json({ error: "Failed to save claim settings" });
+  }
+};
+
+export const handleGetMembers: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let members = [];
+
+    if (user.role === "admin") {
+      members = await User.find({ teamId: user.teamId, role: "member" }).select(
+        "_id id name email active",
+      );
+    } else {
+      const admin = await User.findById(user.adminId).select("teamId");
+      if (admin) {
+        members = await User.find({
+          teamId: admin.teamId,
+          role: "member",
+        }).select("_id id name email active");
+      }
+    }
+
+    const formattedMembers = members.map((member: any) => ({
+      id: member._id.toString(),
+      name: member.name,
+      email: member.email,
+      active: member.active ?? true,
+    }));
+
+    res.json({ members: formattedMembers });
+  } catch (error) {
+    console.error("Get members error:", error);
+    res.status(500).json({ error: "Failed to get members" });
+  }
+};
+
+export const handleGetDistributorSettings: RequestHandler = async (
+  req,
+  res,
+) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const DistributorSettings = require("../db").DistributorSettings;
+    let settings = await DistributorSettings.findOne({
+      teamId: user.teamId,
+    }).populate("selectedMembers", "name email");
+
+    if (!settings) {
+      settings = new DistributorSettings({
+        teamId: user.teamId,
+        linesPerMember: 5,
+        timerSeconds: 60,
+        isActive: false,
+        selectedMembers: [],
+      });
+      await settings.save();
+    }
+
+    const formattedMembers = settings.selectedMembers.map((m: any) => ({
+      id: m._id.toString(),
+      name: m.name,
+      email: m.email,
+    }));
+
+    res.json({
+      linesPerMember: settings.linesPerMember,
+      timerSeconds: settings.timerSeconds,
+      isActive: settings.isActive,
+      selectedMembers: formattedMembers,
+    });
+  } catch (error) {
+    console.error("Get distributor settings error:", error);
+    res.status(500).json({ error: "Failed to get distributor settings" });
+  }
+};
+
+export const handleSaveDistributorSettings: RequestHandler = async (
+  req,
+  res,
+) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "Only admins can modify distributor settings" });
+    }
+
+    const { linesPerMember, timerSeconds, isActive, selectedMembers } =
+      req.body;
+
+    const DistributorSettings = require("../db").DistributorSettings;
+    let settings = await DistributorSettings.findOne({
+      teamId: user.teamId,
+    });
+
+    if (!settings) {
+      settings = new DistributorSettings({
+        teamId: user.teamId,
+        linesPerMember,
+        timerSeconds,
+        isActive,
+        selectedMembers,
+      });
+    } else {
+      settings.linesPerMember = linesPerMember;
+      settings.timerSeconds = timerSeconds;
+      settings.isActive = isActive;
+      settings.selectedMembers = selectedMembers;
+    }
+
+    await settings.save();
+
+    res.json({
+      message: "Distributor settings saved successfully",
+      linesPerMember: settings.linesPerMember,
+      timerSeconds: settings.timerSeconds,
+      isActive: settings.isActive,
+    });
+  } catch (error) {
+    console.error("Save distributor settings error:", error);
+    res.status(500).json({ error: "Failed to save distributor settings" });
   }
 };
