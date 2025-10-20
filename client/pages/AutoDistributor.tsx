@@ -49,6 +49,7 @@ export default function AutoDistributor() {
 
   useEffect(() => {
     fetchMembers();
+    fetchDistributorSettings();
     fetchDistributedLines();
   }, [token]);
 
@@ -66,6 +67,25 @@ export default function AutoDistributor() {
     } catch (error) {
       console.error("Error fetching members:", error);
       setMembers([]);
+    }
+  };
+
+  const fetchDistributorSettings = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch("/api/auth/distributor-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch distributor settings");
+      const data = await response.json();
+      setLinesPerMember(data.linesPerMember);
+      setTimerSeconds(data.timerSeconds);
+      setIsActive(data.isActive);
+      setSelectedMembers(data.selectedMembers.map((m: any) => m.id));
+    } catch (error) {
+      console.error("Error fetching distributor settings:", error);
     }
   };
 
