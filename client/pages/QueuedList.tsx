@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,62 +12,86 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Clock, AlertCircle } from "lucide-react";
+import { Trash2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface QueuedLine {
-  id: string;
+  _id?: string;
+  id?: string;
   content: string;
   lineNumber: number;
-  createdAt: string;
+  createdAt?: string;
   claimedBy?: string;
   claimedAt?: string;
+  status?: string;
 }
 
 export default function QueuedList() {
-  const [lines, setLines] = useState<QueuedLine[]>([
-    {
-      id: "1",
-      content: "John Doe - Sales - Premium Package",
-      lineNumber: 1,
-      createdAt: "2024-01-15 10:30 AM",
-    },
-    {
-      id: "2",
-      content: "Jane Smith - Support - Billing Inquiry",
-      lineNumber: 2,
-      createdAt: "2024-01-15 10:35 AM",
-    },
-    {
-      id: "3",
-      content: "Mike Johnson - Sales - Quote Request",
-      lineNumber: 3,
-      createdAt: "2024-01-15 10:40 AM",
-    },
-    {
-      id: "4",
-      content: "Sarah Williams - Partnership - New Opportunity",
-      lineNumber: 4,
-      createdAt: "2024-01-15 10:45 AM",
-      claimedBy: "John Doe",
-      claimedAt: "2024-01-15 11:00 AM",
-    },
-    {
-      id: "5",
-      content: "Tom Anderson - Support - Technical Issue",
-      lineNumber: 5,
-      createdAt: "2024-01-15 10:50 AM",
-    },
-  ]);
+  const { token } = useAuth();
+  const [lines, setLines] = useState<QueuedLine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleDeleteLine = (id: string) => {
-    setLines(lines.filter((l) => l.id !== id));
-    toast.success("Line removed");
+  useEffect(() => {
+    fetchQueuedLines();
+  }, [token]);
+
+  const fetchQueuedLines = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/queued", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch queued lines");
+      const data = await response.json();
+      setLines(data.lines);
+    } catch (error) {
+      console.error("Error fetching queued lines:", error);
+      toast.error("Failed to fetch queued lines");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleClearAll = () => {
-    setLines([]);
-    toast.success("All queued lines cleared");
+  const handleDeleteLine = async (id: string) => {
+    try {
+      const response = await fetch(`/api/numbers/line/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete line");
+
+      setLines(lines.filter((l) => l._id !== id && l.id !== id));
+      toast.success("Line removed");
+    } catch (error) {
+      console.error("Error deleting line:", error);
+      toast.error("Failed to delete line");
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      // Delete all lines
+      const deletePromises = lines.map((line) =>
+        fetch(`/api/numbers/line/${line._id || line.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+
+      await Promise.all(deletePromises);
+      setLines([]);
+      toast.success("All queued lines cleared");
+    } catch (error) {
+      console.error("Error clearing lines:", error);
+      toast.error("Failed to clear lines");
+    }
   };
 
   const truncateText = (text: string, maxWords: number = 20) => {
@@ -78,6 +103,16 @@ export default function QueuedList() {
 
   const unclaimedCount = lines.filter((l) => !l.claimedBy).length;
   const claimedCount = lines.filter((l) => l.claimedBy).length;
+
+  if (isLoading) {
+    return (
+      <Layout title="Queued List">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Queued List">
@@ -198,7 +233,9 @@ export default function QueuedList() {
                     </div>
 
                     <button
-                      onClick={() => handleDeleteLine(line.id)}
+                      onClick={() =>
+                        handleDeleteLine(line._id || line.id || "")
+                      }
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-100 dark:hover:bg-red-950 rounded"
                     >
                       <Trash2 className="h-4 w-4 text-red-600" />

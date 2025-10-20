@@ -29,9 +29,9 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">J&A</span>
+              <span className="text-white font-bold text-sm">LL</span>
             </div>
-            <span className="text-white font-bold text-lg">International</span>
+            <span className="text-white font-bold text-lg">Line-Link</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -145,7 +145,7 @@ export default function Index() {
       <section className="bg-slate-800/20 border-y border-slate-800 py-20 mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-white mb-12 text-center">
-            Why Choose J&A International?
+            Why Choose Line-Link?
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -219,8 +219,8 @@ export default function Index() {
             Ready to revolutionize your contact management?
           </h2>
           <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-            Join teams already using J&A International to manage thousands of
-            leads efficiently.
+            Join teams already using Line-Link to manage thousands of leads
+            efficiently.
           </p>
           <Button
             size="lg"
@@ -235,7 +235,7 @@ export default function Index() {
       {/* Footer */}
       <footer className="border-t border-slate-800 py-8 mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400">
-          <p>&copy; 2024 J&A International Karachi. All rights reserved.</p>
+          <p>&copy; 2024 Line-Link. All rights reserved.</p>
         </div>
       </footer>
     </div>

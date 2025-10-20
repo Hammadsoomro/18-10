@@ -17,6 +17,7 @@ import Conversation from "./pages/Conversation";
 import NumbersSorter from "./pages/NumbersSorter";
 import AutoDistributor from "./pages/AutoDistributor";
 import QueuedList from "./pages/QueuedList";
+import DistributedLines from "./pages/DistributedLines";
 import Inbox from "./pages/Inbox";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
@@ -76,6 +77,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <QueuedList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/distributed-lines"
+              element={
+                <ProtectedRoute>
+                  <DistributedLines />
                 </ProtectedRoute>
               }
             />

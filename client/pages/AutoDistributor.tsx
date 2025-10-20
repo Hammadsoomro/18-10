@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Zap, Users } from "lucide-react";
+import { Zap, Users, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface TeamMember {
@@ -23,11 +25,26 @@ interface TeamMember {
   active: boolean;
 }
 
+interface DistributedLine {
+  _id?: string;
+  id?: string;
+  content: string;
+  lineNumber: number;
+  createdAt?: string;
+  distributedTo?: string[];
+}
+
 export default function AutoDistributor() {
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [selectedMembers, setSelectedMembers] = useState<string[]>(["1"]);
+  const [distributedLines, setDistributedLines] = useState<DistributedLine[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState(true);
   const [members] = useState<TeamMember[]>([
     { id: "1", name: "John Doe", email: "john@example.com", active: true },
     { id: "2", name: "Jane Smith", email: "jane@example.com", active: true },
@@ -39,6 +56,38 @@ export default function AutoDistributor() {
       active: true,
     },
   ]);
+
+  useEffect(() => {
+    fetchDistributedLines();
+  }, [token]);
+
+  const fetchDistributedLines = async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/numbers/lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch distributed lines");
+      const data = await response.json();
+
+      // Show only lines with "distributed" status
+      const distributed = data.lines.filter(
+        (line: any) => line.status === "distributed",
+      );
+      setDistributedLines(distributed);
+    } catch (error) {
+      console.error("Error fetching distributed lines:", error);
+      toast.error("Failed to fetch distributed lines");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleToggleMember = (id: string) => {
     setSelectedMembers((prev) =>
@@ -62,6 +111,23 @@ export default function AutoDistributor() {
     setIsActive(!isActive);
     toast.success(isActive ? "Distributor stopped" : "Distributor started");
   };
+
+  const truncateText = (text: string, maxWords: number = 20) => {
+    const words = text.split(" ");
+    return words.length > maxWords
+      ? words.slice(0, maxWords).join(" ") + "..."
+      : text;
+  };
+
+  if (isLoading) {
+    return (
+      <Layout title="Auto Distributor">
+        <div className="p-6 flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Auto Distributor">
@@ -199,6 +265,72 @@ export default function AutoDistributor() {
               ))}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Distributed Lines Section */}
+        <div className="mt-8">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Lines in Distribution
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400">
+              {distributedLines.length} line(s) being distributed
+            </p>
+          </div>
+
+          {distributedLines.length > 0 && (
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardContent className="pt-6 space-y-3">
+                {distributedLines.slice(0, 5).map((line) => (
+                  <div
+                    key={line._id || line.id}
+                    className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            #{line.lineNumber}
+                          </span>
+                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                            {truncateText(line.content)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {line.createdAt}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {distributedLines.length > 5 && (
+                  <Button
+                    onClick={() => navigate("/distributed-lines")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    View all {distributedLines.length} distributed lines
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {distributedLines.length === 0 && (
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardContent className="pt-12 pb-12">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                  <p className="text-slate-600 dark:text-slate-400">
+                    No lines in distribution yet
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
+                    Lines will appear here when you add them from Numbers Sorter
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </Layout>

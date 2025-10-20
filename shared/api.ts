@@ -53,14 +53,16 @@ export interface Message {
 
 // Numbers types
 export interface NumberLine {
-  id: string;
+  _id?: string;
+  id?: string;
   content: string;
   lineNumber: number;
-  createdAt: string;
+  createdAt?: string;
   status: "queued" | "distributed" | "claimed";
   claimedBy?: string;
+  claimedAt?: string;
   distributedTo?: string[];
-  teamId: string;
+  teamId?: string;
 }
 
 export interface QueuedLine {
@@ -68,6 +70,18 @@ export interface QueuedLine {
   lineNumber: number;
   content: string;
   teamId: string;
+}
+
+export interface GetLinesResponse {
+  lines: NumberLine[];
+}
+
+export interface MoveLinesToQueueRequest {
+  lineIds: string[];
+}
+
+export interface MoveLinesToDistributorRequest {
+  lineIds: string[];
 }
 
 // Auto Distributor types
