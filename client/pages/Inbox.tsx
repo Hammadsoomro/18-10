@@ -243,11 +243,27 @@ export default function Inbox() {
 
       if (!claimResponse.ok) {
         if (claimResponse.status === 409) {
-          toast.error("Another member just claimed that line. Try again.");
+          // Try to parse error message for better UX
+          try {
+            const err = await claimResponse.json();
+            const message = err?.error || 'Another member just claimed that line. Try again.';
+            toast.error(message);
+          } catch (e) {
+            toast.error('Another member just claimed that line. Try again.');
+          }
           await fetchData();
           return;
         }
         throw new Error("Failed to claim line");
+      }
+
+      // Parse response to show how many lines were claimed (backend may return { lines: [...] })
+      let claimedCount = 1;
+      try {
+        const data = await claimResponse.json();
+        if (Array.isArray(data.lines)) claimedCount = data.lines.length;
+      } catch (e) {
+        // ignore parse errors and default to 1
       }
 
       // Refetch data
@@ -256,7 +272,7 @@ export default function Inbox() {
       // start persistent cooldown using server setting (fallback 60s)
       startCooldown(claimSettingCooldown ?? 60);
 
-      toast.success("Line claimed successfully!");
+      toast.success(`${claimedCount} line${claimedCount > 1 ? 's' : ''} claimed successfully!`);
     } catch (error) {
       console.error("Error claiming line:", error);
       toast.error("Failed to claim line");
