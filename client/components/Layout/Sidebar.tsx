@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
@@ -96,45 +97,56 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-800 z-40 transition-all duration-300 flex flex-col",
+          "fixed left-0 top-0 h-screen bg-gradient-to-b from-indigo-700 via-purple-600 to-pink-500 border-r border-transparent z-40 transition-all duration-300 flex flex-col shadow-xl",
           isCollapsed ? "w-20" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
-        <div className="p-4 border-b border-slate-800">
+        <div className="p-4 border-b border-transparent">
           <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-md">
-                  <span className="text-white font-bold text-sm">LL</span>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg">
+                {/* Professional SVG logo */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="6" fill="url(#g)" />
+                  <path d="M6 12h12M12 6v12" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <defs>
+                    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" />
+                      <stop offset="100%" stopColor="#7c3aed" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
-            )}
-            <button
-              onClick={() => handleCollapseToggle(!isCollapsed)}
-              className="hidden md:block p-1 hover:bg-slate-800 rounded-lg transition"
-            >
-              <Menu className="h-4 w-4 text-slate-400" />
-            </button>
+              {!isCollapsed && (
+                <div>
+                  <div className="text-white font-extrabold tracking-tight text-lg">Line-Link</div>
+                  <div className="text-xs text-white/70">Admin Panel</div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isCollapsed && (
+                <div className="flex items-center gap-2 text-white">
+                  <span className="text-sm font-mono font-bold">
+                    {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={() => handleCollapseToggle(!isCollapsed)}
+                className="hidden md:block p-1 hover:bg-white/10 rounded-lg transition"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="h-4 w-4 text-white/80" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Clock and Date */}
-        {!isCollapsed && (
-          <div className="p-4 border-b border-slate-800 bg-slate-800/30 text-center">
-            <div className="text-sm text-slate-300 uppercase tracking-wider mb-2">Line Link</div>
-            <div className="flex items-center justify-center mb-1">
-              <Clock className="h-5 w-5 text-cyan-300 mr-2" />
-              <span className="text-2xl md:text-3xl lg:text-4xl font-mono font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 animate-pulse">
-                {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              {time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-            </p>
-          </div>
-        )}
 
         {/* Account Info */}
         {!isCollapsed && user && (
