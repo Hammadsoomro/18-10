@@ -159,7 +159,7 @@ export function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <button
               key={item.path}
               onClick={() => handleNavigate(item.path)}
