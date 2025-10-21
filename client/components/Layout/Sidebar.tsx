@@ -165,24 +165,28 @@ export function Sidebar({
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {visibleNavItems.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => handleNavigate(item.path)}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
-                isCollapsed && "justify-center",
-              )}
-              title={isCollapsed ? item.label : ""}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
-            </button>
-          ))}
-        </nav>
+        <div className="flex-1 overflow-hidden">
+          <nav className="h-full p-4 space-y-3 overflow-y-auto">
+            {visibleNavItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => handleNavigate(item.path)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:scale-[1.02] transform-gpu transition-all duration-200",
+                  isCollapsed && "justify-center",
+                )}
+                title={isCollapsed ? item.label : ""}
+              >
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <item.icon className="h-5 w-5 text-white" />
+                </div>
+                {!isCollapsed && (
+                  <span className="text-sm font-semibold">{item.label}</span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-800 space-y-2">
