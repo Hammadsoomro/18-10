@@ -221,6 +221,20 @@ export default function NumbersSorter() {
     );
   }
 
+  // Hide page UI for non-admin users
+  if (user && user.role !== "admin") {
+    return (
+      <Layout title="Numbers Sorter">
+        <div className="p-6">
+          <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+            <p className="text-lg font-semibold">Not available</p>
+            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Numbers Sorter">
       <div className="p-6">
