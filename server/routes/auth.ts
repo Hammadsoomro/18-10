@@ -318,6 +318,73 @@ export const handleGetMembers: RequestHandler = async (req, res) => {
   }
 };
 
+export const handleUpdateMember: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const admin = await User.findById(decoded.id);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ error: "Only admins can update members" });
+    }
+
+    const memberId = req.params.id;
+    const { active } = req.body;
+    if (typeof active !== "boolean") {
+      return res.status(400).json({ error: "Invalid active value" });
+    }
+
+    const member = await User.findById(memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+    if (String(member.teamId) !== String(admin.teamId)) {
+      return res.status(403).json({ error: "Cannot modify member from another team" });
+    }
+
+    member.active = active;
+    await member.save();
+
+    res.json({ message: "Member updated", member: { id: member._id.toString(), name: member.name, email: member.email, active: member.active } });
+  } catch (error) {
+    console.error("Update member error:", error);
+    res.status(500).json({ error: "Failed to update member" });
+  }
+};
+
+export const handleDeleteMember: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const admin = await User.findById(decoded.id);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ error: "Only admins can delete members" });
+    }
+
+    const memberId = req.params.id;
+    const member = await User.findById(memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+    if (String(member.teamId) !== String(admin.teamId)) {
+      return res.status(403).json({ error: "Cannot delete member from another team" });
+    }
+
+    await User.findByIdAndDelete(memberId);
+    res.json({ message: "Member deleted" });
+  } catch (error) {
+    console.error("Delete member error:", error);
+    res.status(500).json({ error: "Failed to delete member" });
+  }
+};
+
 export const handleGetDistributorSettings: RequestHandler = async (
   req,
   res,
