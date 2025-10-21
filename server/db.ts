@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     name: { type: String, required: true },
     role: { type: String, enum: ["admin", "member"], required: true },
+    active: { type: Boolean, default: true },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
