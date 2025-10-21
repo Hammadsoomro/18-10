@@ -150,14 +150,18 @@ export function Sidebar({
         </div>
 
 
-        {/* Account Info */}
+        {/* Account Info (slim) */}
         {!isCollapsed && user && (
-          <div className="p-4 border-b border-slate-800">
-            <p className="text-xs text-slate-400 uppercase tracking-wider">
-              Account
-            </p>
-            <p className="text-white font-semibold mt-1">{user.name}</p>
-            <p className="text-xs text-slate-400 capitalize">{user.role}</p>
+          <div className="px-4 py-2 border-b border-transparent">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] text-white/80 uppercase tracking-wider">Account</p>
+                <p className="text-sm text-white font-semibold truncate">{user.name}</p>
+              </div>
+              <div className="text-right ml-2">
+                <p className="text-[10px] text-white/70 capitalize">{user.role}</p>
+              </div>
+            </div>
           </div>
         )}
 
