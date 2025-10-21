@@ -23,22 +23,36 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Fetch dashboard stats
+    let mounted = true;
+    let interval: number | undefined;
+
     const fetchStats = async () => {
       try {
-        // Mock stats - replace with actual API call
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        const data = await res.json();
+        if (!mounted) return;
         setStats({
-          totalNumbers: 1250,
-          queuedLines: 45,
-          activeMembers: 8,
-          claimedToday: 324,
+          totalNumbers: data.totalNumbers || 0,
+          queuedLines: data.queuedLines || 0,
+          activeMembers: data.activeMembers || 0,
+          claimedToday: data.claimedToday || 0,
         });
       } catch (error) {
-        console.error("Failed to fetch stats:", error);
+        console.error('Failed to fetch stats:', error);
       }
     };
 
     fetchStats();
+    // poll every 10 seconds
+    interval = window.setInterval(fetchStats, 10000) as unknown as number;
+
+    return () => {
+      mounted = false;
+      if (interval) window.clearInterval(interval);
+    };
   }, []);
 
   return (
