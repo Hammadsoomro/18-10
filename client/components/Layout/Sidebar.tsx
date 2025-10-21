@@ -102,51 +102,44 @@ export function Sidebar({
         )}
       >
         {/* Header */}
-        <div className="p-4 border-b border-transparent">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-2xl overflow-hidden">
-                {/* Modern circular monogram logo */}
-                <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="-mt-0.5">
-                  <defs>
-                    <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#34d399" />
-                      <stop offset="50%" stopColor="#06b6d4" />
-                      <stop offset="100%" stopColor="#7c3aed" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="24" cy="24" r="22" fill="url(#lg2)" />
-                  <path d="M15 30c0-6 6-10 9-10s9 4 9 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M15 18h18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+        <div className="px-4 pt-4 pb-2 border-b border-transparent">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+              {/* logo */}
+              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                  </linearGradient>
+                </defs>
+                <circle cx="24" cy="24" r="22" fill="url(#lg3)" />
+                <path d="M16 28c0-5 5-9 8-9s8 4 8 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-white font-extrabold tracking-tight text-lg truncate">Line-Link</div>
+                  <button
+                    onClick={() => handleCollapseToggle(!isCollapsed)}
+                    className="md:hidden p-1 hover:bg-white/10 rounded-lg transition"
+                    aria-label="Toggle sidebar"
+                  >
+                    <Menu className="h-4 w-4 text-white/80" />
+                  </button>
+                </div>
               </div>
-              {!isCollapsed && (
-                <div>
-                  <div className="text-white font-extrabold tracking-tight text-lg">Line-Link</div>
-                  <div className="text-xs text-white/80">Admin Panel</div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {!isCollapsed && (
-                <div className="flex items-center gap-2 text-white">
-                  <span className="text-lg md:text-xl lg:text-2xl font-mono font-extrabold tracking-tight">
-                    {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-white/90 shadow pulse hidden sm:inline-block" aria-hidden />
-                </div>
-              )}
-
-              <button
-                onClick={() => handleCollapseToggle(!isCollapsed)}
-                className="hidden md:block p-1 hover:bg-white/10 rounded-lg transition"
-                aria-label="Toggle sidebar"
-              >
-                <Menu className="h-4 w-4 text-white/80" />
-              </button>
-            </div>
+            )}
           </div>
+
+          {!isCollapsed && (
+            <div className="mt-3">
+              <div className="text-white font-mono text-lg font-semibold">{time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
+              <div className="text-xs text-white/80 mt-0.5">{time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+            </div>
+          )}
         </div>
 
 
