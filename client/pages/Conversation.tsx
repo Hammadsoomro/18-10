@@ -60,6 +60,23 @@ export default function Conversation() {
   }, [contacts, selectedContact]);
 
   useEffect(() => {
+    const fetchMessages = async () => {
+      if (!token || !selectedContact) return;
+      try {
+        const res = await fetch(`/api/contacts/${selectedContact.id}/messages`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch messages');
+        const data = await res.json();
+        setMessages(data.messages || []);
+      } catch (e) {
+        console.error('Messages fetch error', e);
+      }
+    };
+    fetchMessages();
+  }, [selectedContact, token]);
+
+  useEffect(() => {
     if (!token) return;
     // connect socket
     const tokenRaw = localStorage.getItem("auth_token");
