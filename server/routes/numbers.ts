@@ -260,25 +260,40 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const { lineId } = req.body;
-    if (!lineId) {
-      return res.status(400).json({ error: "Line ID is required" });
+    // Determine how many lines to claim from team settings
+    const claimSettings = await require('../db').ClaimSettings.findOne({ teamId: decoded.teamId });
+    const linesToClaim = (claimSettings && typeof claimSettings.claimLineCount === 'number') ? claimSettings.claimLineCount : 1;
+
+    // Fetch the next queued lines for this team (ordered by createdAt ascending to claim oldest first)
+    const queuedLines = await NumberLine.find({ teamId: decoded.teamId, status: 'queued' })
+      .sort({ createdAt: 1 })
+      .limit(linesToClaim)
+      .select('_id');
+
+    if (!queuedLines || queuedLines.length === 0) {
+      return res.status(409).json({ error: 'No queued lines available to claim' });
     }
 
-    const line = await NumberLine.findOneAndUpdate(
-      { _id: lineId, teamId: decoded.teamId, status: "queued", claimedBy: null },
-      { $set: { status: "claimed", claimedBy: decoded.id, claimedAt: new Date() } },
-      { new: true },
+    const ids = queuedLines.map((l: any) => l._id);
+
+    // Attempt to atomically claim the selected lines (only those still queued and unclaimed will be updated)
+    const updateResult = await NumberLine.updateMany(
+      { _id: { $in: ids }, teamId: decoded.teamId, status: 'queued', claimedBy: null },
+      { $set: { status: 'claimed', claimedBy: decoded.id, claimedAt: new Date() } },
     );
 
-    if (!line) {
-      return res.status(409).json({ error: "Line already claimed or unavailable" });
+    if (updateResult.modifiedCount === 0) {
+      // Nothing was claimed (race condition) - inform client to retry
+      return res.status(409).json({ error: 'Failed to claim lines, they may have been claimed by others' });
     }
 
-    res.json(line);
+    // Return the lines that were successfully claimed by this user
+    const claimedLines = await NumberLine.find({ _id: { $in: ids }, claimedBy: decoded.id });
+
+    res.json({ lines: claimedLines });
   } catch (error) {
-    console.error("Claim line error:", error);
-    res.status(500).json({ error: "Failed to claim line" });
+    console.error('Claim line error:', error);
+    res.status(500).json({ error: 'Failed to claim line(s)' });
   }
 };
 
