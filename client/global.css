@@ -110,6 +110,12 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rounding" 1;
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(1200px 600px at 0% 0%, hsl(var(--accent)/0.25), transparent 60%),
+      radial-gradient(1200px 600px at 100% 100%, hsl(var(--primary)/0.25), transparent 60%);
+    background-size: 200% 200%, 200% 200%;
+    animation: gradient-move 18s ease-in-out infinite alternate;
   }
 
   :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
