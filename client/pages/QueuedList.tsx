@@ -31,7 +31,7 @@ interface QueuedLine {
 }
 
 export default function QueuedList() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [lines, setLines] = useState<QueuedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
