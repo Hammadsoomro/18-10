@@ -78,13 +78,21 @@ export default function DistributedLines() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to delete line");
+      if (!response.ok) {
+        let body = await response.text();
+        try {
+          const json = JSON.parse(body);
+          toast.error(json.error || 'Failed to delete line');
+        } catch (e) {
+          toast.error(`Failed to delete line: ${response.status}`);
+        }
+        throw new Error(`Failed to delete line: ${response.status}`);
+      }
 
       setLines(lines.filter((l) => l._id !== id && l.id !== id));
       toast.success("Line removed");
     } catch (error) {
       console.error("Error deleting line:", error);
-      toast.error("Failed to delete line");
     }
   };
 
