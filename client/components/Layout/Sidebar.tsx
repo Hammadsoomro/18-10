@@ -59,12 +59,17 @@ export function Sidebar({
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Conversation", path: "/conversation" },
-    { icon: SortAsc, label: "Numbers Sorter", path: "/numbers-sorter" },
-    { icon: Zap, label: "Auto Distributor", path: "/auto-distributor" },
-    { icon: ListTodo, label: "Queued List", path: "/queued-list" },
+    { icon: SortAsc, label: "Numbers Sorter", path: "/numbers-sorter", adminOnly: true },
+    { icon: Zap, label: "Auto Distributor", path: "/auto-distributor", adminOnly: true },
+    { icon: ListTodo, label: "Queued List", path: "/queued-list", adminOnly: true },
     { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
     { icon: Inbox, label: "Inbox", path: "/inbox" },
   ];
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.adminOnly && user?.role !== "admin") return false;
+    return true;
+  });
 
   return (
     <>
