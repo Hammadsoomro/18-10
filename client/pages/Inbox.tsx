@@ -81,6 +81,12 @@ export default function Inbox() {
         // always refresh distributor assignments and, if relevant, inbox data
         try {
           fetchDistributorAssignments();
+          if (tab !== "distributor") {
+            setUnreadDistributor((prev) => {
+              const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
+              return prev + inc;
+            });
+          }
         } catch (e) {}
 
         try {
