@@ -180,6 +180,43 @@ export const handleDeleteContact: RequestHandler = async (req, res) => {
   }
 };
 
+export const handleGetMessages: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+    ) as any;
+
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const { id } = req.params;
+    const contact = await Contact.findOne({ _id: id, userId: user._id });
+    if (!contact) return res.status(404).json({ error: "Contact not found" });
+
+    const { Message } = require('../db');
+    const messages = await Message.find({ contactId: contact._id, userId: user._id })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    const formatted = messages.map((m: any) => ({
+      id: m._id.toString(),
+      content: m.content,
+      sender: m.sender,
+      read: m.read,
+      createdAt: m.createdAt,
+    }));
+
+    res.json({ messages: formatted });
+  } catch (error) {
+    console.error('Get messages error:', error);
+    res.status(500).json({ error: 'Failed to get messages' });
+  }
+};
+
 export const handleSendMessage: RequestHandler = async (req, res) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
