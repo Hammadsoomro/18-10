@@ -189,32 +189,36 @@ export function Sidebar({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-4 border-t border-transparent bg-gradient-to-t from-black/5 to-transparent">
           <button
             onClick={() => handleNavigate("/settings")}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all",
               isCollapsed && "justify-center",
             )}
             title={isCollapsed ? "Settings" : ""}
           >
-            <Settings className="h-5 w-5 flex-shrink-0" />
+            <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+              <Settings className="h-5 w-5 text-white" />
+            </div>
             {!isCollapsed && (
-              <span className="text-sm font-medium">Settings</span>
+              <span className="text-sm font-semibold">Settings</span>
             )}
           </button>
 
           <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors",
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all",
               isCollapsed && "justify-center",
             )}
             title={isCollapsed ? "Logout" : ""}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+              <LogOut className="h-5 w-5 text-red-400" />
+            </div>
             {!isCollapsed && (
-              <span className="text-sm font-medium">Logout</span>
+              <span className="text-sm font-semibold">Logout</span>
             )}
           </button>
         </div>
