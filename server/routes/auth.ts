@@ -535,7 +535,7 @@ export const handleSaveDistributorSettings: RequestHandler = async (
             // emit real-time update to team room
             try {
               if (io) {
-                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l._id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy })) });
+                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l._id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy, distributedTo: l.distributedTo || [], status: l.status })) });
                 io.to(`team_${teamKey}`).emit('distributor_indicator', { active: true });
               }
             } catch (e) {
