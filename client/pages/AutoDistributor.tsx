@@ -49,6 +49,8 @@ export default function AutoDistributor() {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
     fetchMembers();
     fetchDistributorSettings();
@@ -67,9 +69,47 @@ export default function AutoDistributor() {
     };
     window.addEventListener('storage', onStorage);
 
+    // socket connection for real-time distribution events
+    if (token) {
+      try {
+        const tokenRaw = localStorage.getItem('auth_token');
+        const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split('.')[1])) : null;
+        const teamId = payload?.teamId;
+        const s = io(undefined, { autoConnect: true });
+        socketRef.current = s;
+        s.on('connect', () => {
+          if (teamId) s.emit('join_team', teamId);
+        });
+
+        s.on('distributed_lines', (data: any) => {
+          // server informs which lines were moved from 'Lines in Distribution'
+          // refresh the distributed list so UI updates immediately
+          fetchDistributedLines();
+          try {
+            const count = Array.isArray(data.lines) ? data.lines.length : 0;
+            if (count > 0) {
+              // small toast
+              // @ts-ignore
+              import('sonner').then(({ toast }) => toast.success(`${count} line(s) distributed`)).catch(() => {});
+            }
+          } catch (e) {}
+        });
+
+        s.on('distributor_indicator', (data: any) => {
+          // could update UI indicator if needed
+        });
+      } catch (e) {
+        console.error('Socket error', e);
+      }
+    }
+
     return () => {
       window.removeEventListener('distributor_updated', onDistributorUpdated as EventListener);
       window.removeEventListener('storage', onStorage);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, [token]);
 
