@@ -51,6 +51,24 @@ export default function AutoDistributor() {
     fetchMembers();
     fetchDistributorSettings();
     fetchDistributedLines();
+
+    const onDistributorUpdated = () => {
+      // small debounce to ensure server-side update committed
+      setTimeout(() => fetchDistributedLines(), 300);
+    };
+
+    window.addEventListener('distributor_updated', onDistributorUpdated as EventListener);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'distributor_updated') {
+        onDistributorUpdated();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('distributor_updated', onDistributorUpdated as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [token]);
 
   const fetchMembers = async () => {
