@@ -96,13 +96,10 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen border-r border-transparent z-40 transition-all duration-300 flex flex-col shadow-xl",
+          "fixed left-0 top-0 h-screen border-r border-transparent z-40 transition-all duration-300 flex flex-col shadow-xl sidebar-gradient",
           isCollapsed ? "w-20" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
-        style={{
-          background: "linear-gradient(135deg, #06b6d4 0%, #7c3aed 40%, #ec4899 100%)",
-        }}
       >
         {/* Header */}
         <div className="p-4 border-b border-transparent">
