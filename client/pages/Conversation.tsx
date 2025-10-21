@@ -46,6 +46,7 @@ export default function Conversation() {
   const [newContactPhone, setNewContactPhone] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [messages, setMessages] = useState<Array<{id:string,content:string,sender:string,createdAt:string}>>([]);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
