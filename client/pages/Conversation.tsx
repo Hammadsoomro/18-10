@@ -466,10 +466,21 @@ export default function Conversation() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="text-center text-slate-500 dark:text-slate-400 py-8">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No messages yet</p>
-                </div>
+                {messages.length === 0 ? (
+                  <div className="text-center text-slate-500 dark:text-slate-400 py-8">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No messages yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((m) => (
+                      <div key={m.id} className={`max-w-[80%] p-3 rounded-lg ${m.sender === 'user' ? 'ml-auto bg-blue-600 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                        <div className="text-sm">{m.content}</div>
+                        <div className="text-xs text-slate-400 mt-1 text-right">{new Date(m.createdAt).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
               <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex gap-2">
