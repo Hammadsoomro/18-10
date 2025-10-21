@@ -75,6 +75,7 @@ export function createServer() {
   app.post("/api/numbers/move-to-distributor", handleMoveToDistributor);
   app.get("/api/numbers/queued", handleGetQueuedLines);
   app.get("/api/numbers/claimed-lines", handleGetClaimedLines);
+  app.get("/api/numbers/stats", handleGetStats);
   app.post("/api/numbers/claim", handleClaimLine);
 
   // Contacts routes
