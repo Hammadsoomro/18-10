@@ -35,7 +35,7 @@ interface DistributedLine {
 }
 
 export default function AutoDistributor() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
