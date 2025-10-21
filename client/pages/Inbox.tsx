@@ -71,7 +71,11 @@ export default function Inbox() {
       });
 
       s.on('distributed_lines', (data: any) => {
-        // if any line distributed to current user, refresh inbox
+        // always refresh distributor assignments and, if relevant, inbox data
+        try {
+          fetchDistributorAssignments();
+        } catch (e) {}
+
         try {
           const lines = Array.isArray(data.lines) ? data.lines : [];
           const forMe = lines.some((l: any) => {
