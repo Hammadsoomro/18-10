@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2,
   AlertCircle,
@@ -49,6 +50,8 @@ export default function Inbox() {
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<"claims" | "distributor">("claims");
+  const [unreadDistributor, setUnreadDistributor] = useState<number>(0);
 
   const [claimSettingCooldown, setClaimSettingCooldown] = useState<
     number | null
@@ -78,6 +81,12 @@ export default function Inbox() {
         // always refresh distributor assignments and, if relevant, inbox data
         try {
           fetchDistributorAssignments();
+          if (tab !== "distributor") {
+            setUnreadDistributor((prev) => {
+              const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
+              return prev + inc;
+            });
+          }
         } catch (e) {}
 
         try {
@@ -129,6 +138,29 @@ export default function Inbox() {
     }
   };
 
+  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+
+  const markDistributorRead = () => {
+    try {
+      localStorage.setItem(getDistributorLastReadKey(), String(Date.now()));
+      setUnreadDistributor(0);
+    } catch {}
+  };
+
+  const computeUnreadForDistributor = (items: DistributorItem[]) => {
+    try {
+      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      if (!last) return items.length;
+      const count = items.filter((it) => {
+        const t = Date.parse(it.distributedAt);
+        return isNaN(t) ? false : t > last;
+      }).length;
+      return count;
+    } catch {
+      return items.length;
+    }
+  };
+
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
@@ -173,6 +205,9 @@ export default function Inbox() {
         lines: map[k].lines,
       }));
       setDistributorItems(items);
+      if (tab !== "distributor") {
+        setUnreadDistributor(computeUnreadForDistributor(items));
+      }
     } catch (e) {
       console.error("Failed to fetch distributor assignments", e);
     }
@@ -447,10 +482,21 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs defaultValue="claims" className="w-full">
+        <Tabs value={tab} onValueChange={(v) => {
+            const nv = (v as any) as "claims" | "distributor";
+            setTab(nv);
+            if (nv === "distributor") markDistributorRead();
+          }} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
-            <TabsTrigger value="distributor">Auto Distributor</TabsTrigger>
+            <TabsTrigger value="distributor">
+              <span className="relative inline-flex items-center gap-2">
+                Auto Distributor
+                {unreadDistributor > 0 && (
+                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                )}
+              </span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Claims Tab */}

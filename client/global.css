@@ -110,6 +110,15 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rounding" 1;
+    background-color: hsl(var(--background));
+    background-image:
+      url('/robotic.svg'),
+      radial-gradient(1200px 600px at 0% 0%, hsl(var(--accent)/0.15), transparent 60%),
+      radial-gradient(1200px 600px at 100% 100%, hsl(var(--primary)/0.08), transparent 60%);
+    background-size: cover, 200% 200%, 200% 200%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    animation: gradient-move 18s ease-in-out infinite alternate;
   }
 
   :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
@@ -165,5 +174,30 @@
   textarea,
   select {
     @apply transition-colors;
+  }
+
+  @keyframes gradient-move {
+    0% {
+      background-position: 0% 0%, 100% 100%;
+    }
+    100% {
+      background-position: 100% 0%, 0% 100%;
+    }
+  }
+
+  /* small pulse utility for sidebar indicator */
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Sidebar gradient - static (no animation) */
+  .sidebar-gradient {
+    background: linear-gradient(120deg, #0ea5a4 0%, #7c3aed 33%, #f97316 66%, #ef476f 100%);
   }
 }

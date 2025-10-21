@@ -8,6 +8,7 @@ import {
   handleSignup,
   handleLogin,
   handleCreateMember,
+  handleChangePassword,
   handleGetClaimSettings,
   handleSaveClaimSettings,
   handleGetMembers,
@@ -21,6 +22,7 @@ import {
   handleCreateContact,
   handleUpdateContact,
   handleDeleteContact,
+  handleGetMessages,
   handleSendMessage,
 } from "./routes/contacts";
 import {
@@ -86,6 +88,7 @@ export function createServer() {
   app.post("/api/contacts", handleCreateContact);
   app.put("/api/contacts/:id", handleUpdateContact);
   app.delete("/api/contacts/:id", handleDeleteContact);
+  app.get("/api/contacts/:id/messages", handleGetMessages);
   app.post("/api/contacts/:id/message", handleSendMessage);
 
   return app;

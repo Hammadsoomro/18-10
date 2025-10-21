@@ -96,117 +96,110 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-800 z-40 transition-all duration-300 flex flex-col",
+          "fixed left-0 top-0 h-screen border-r border-transparent z-40 transition-all duration-300 flex flex-col shadow-xl sidebar-gradient",
           isCollapsed ? "w-20" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
-        <div className="p-4 border-b border-slate-800">
-          <div className="flex items-center justify-between">
+        <div className="px-4 pt-4 pb-2 border-b border-transparent">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+              {/* logo */}
+              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                  </linearGradient>
+                </defs>
+                <circle cx="24" cy="24" r="22" fill="url(#lg3)" />
+                <path d="M16 28c0-5 5-9 8-9s8 4 8 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">LL</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-white font-extrabold tracking-tight text-lg truncate">Line-Link</div>
+                  <button
+                    onClick={() => handleCollapseToggle(!isCollapsed)}
+                    className="md:hidden p-1 hover:bg-white/10 rounded-lg transition"
+                    aria-label="Toggle sidebar"
+                  >
+                    <Menu className="h-4 w-4 text-white/80" />
+                  </button>
                 </div>
-                <div className="text-white font-bold">Dashboard</div>
               </div>
             )}
-            <button
-              onClick={() => handleCollapseToggle(!isCollapsed)}
-              className="hidden md:block p-1 hover:bg-slate-800 rounded-lg transition"
-            >
-              <Menu className="h-4 w-4 text-slate-400" />
-            </button>
           </div>
-        </div>
 
-        {/* Clock and Date */}
-        {!isCollapsed && (
-          <div className="p-4 border-b border-slate-800 bg-slate-800/30">
-            <div className="flex items-center gap-2 mb-2 text-blue-400">
-              <Clock className="h-4 w-4" />
-              <span className="text-xl font-mono font-bold">
-                {time.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })}
-              </span>
+          {!isCollapsed && (
+            <div className="mt-3">
+              <div className="text-white font-mono text-lg font-semibold">{time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
+              <div className="text-xs text-white/80 mt-0.5">{time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
             </div>
-            <p className="text-sm text-slate-400">
-              {time.toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </div>
-        )}
-
-        {/* Account Info */}
-        {!isCollapsed && user && (
-          <div className="p-4 border-b border-slate-800">
-            <p className="text-xs text-slate-400 uppercase tracking-wider">
-              Account
-            </p>
-            <p className="text-white font-semibold mt-1">{user.name}</p>
-            <p className="text-xs text-slate-400 capitalize">{user.role}</p>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {visibleNavItems.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => handleNavigate(item.path)}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
-                isCollapsed && "justify-center",
-              )}
-              title={isCollapsed ? item.label : ""}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
-          <button
-            onClick={() => handleNavigate("/settings")}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors",
-              isCollapsed && "justify-center",
-            )}
-            title={isCollapsed ? "Settings" : ""}
-          >
-            <Settings className="h-5 w-5 flex-shrink-0" />
-            {!isCollapsed && (
-              <span className="text-sm font-medium">Settings</span>
-            )}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors",
-              isCollapsed && "justify-center",
-            )}
-            title={isCollapsed ? "Logout" : ""}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!isCollapsed && (
-              <span className="text-sm font-medium">Logout</span>
-            )}
-          </button>
+          )}
         </div>
+
+
+        {/* Account Info (slim) moved below header */}
+        {!isCollapsed && user && (
+          <div className="px-4 py-2 border-b border-transparent">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] text-white/80 uppercase tracking-wider">Account</p>
+                <p className="text-sm text-white font-semibold truncate">{user.name}</p>
+              </div>
+              <div className="text-right ml-2">
+                <p className="text-[10px] text-white/70 capitalize">{user.role}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation - fills remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <nav className="flex-1 p-3 space-y-3 overflow-y-auto">
+            {visibleNavItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => handleNavigate(item.path)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:scale-[1.02] transform-gpu transition-all duration-200",
+                  isCollapsed && "justify-center",
+                )}
+                title={isCollapsed ? item.label : ""}
+              >
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <item.icon className="h-5 w-5 text-white" />
+                </div>
+                {!isCollapsed && (
+                  <span className="text-sm font-semibold">{item.label}</span>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Footer should remain visible */}
+          <div className="px-3 pb-4">
+            <div className="space-y-2">
+              <button onClick={() => handleNavigate("/settings")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all">
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <Settings className="h-5 w-5 text-white" />
+                </div>
+                {!isCollapsed && <span className="text-sm font-semibold">Settings</span>}
+              </button>
+              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all">
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <LogOut className="h-5 w-5 text-red-400" />
+                </div>
+                {!isCollapsed && <span className="text-sm font-semibold">Logout</span>}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </aside>
 
       {/* Content offset */}

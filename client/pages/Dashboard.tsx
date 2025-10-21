@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout/Layout";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,12 +11,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { io, Socket } from "socket.io-client";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
   const [stats, setStats] = useState({
     totalNumbers: 0,
     queuedLines: 0,
@@ -30,7 +32,6 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
         if (!token) return;
         const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch stats');
@@ -47,15 +48,50 @@ export default function Dashboard() {
       }
     };
 
+    const fetchDistributorActive = async () => {
+      try {
+        if (!token) return;
+        const res = await fetch('/api/auth/distributor-settings', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        setDistributorActive(Boolean(data.isActive));
+      } catch (e) {
+        console.error('Failed to fetch distributor settings', e);
+      }
+    };
+
     fetchStats();
+    fetchDistributorActive();
+
+    // socket for real-time distributor indicator
+    try {
+      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      const teamId = payload?.teamId;
+      const s = io(undefined, { autoConnect: true });
+      socketRef.current = s;
+      s.on('connect', () => {
+        if (teamId) s.emit('join_team', teamId);
+      });
+      s.on('distributor_indicator', (data: any) => {
+        if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
+      });
+    } catch (e) {
+      console.error('Dashboard socket init error', e);
+    }
+
     // poll every 10 seconds
     interval = window.setInterval(fetchStats, 10000) as unknown as number;
 
     return () => {
       mounted = false;
       if (interval) window.clearInterval(interval);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, []);
+  }, [token]);
 
   return (
     <Layout title="Dashboard">

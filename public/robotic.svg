@@ -1,0 +1,22 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200' viewBox='0 0 1200 1200'>
+  <defs>
+    <linearGradient id='rg' x1='0' x2='1'>
+      <stop offset='0' stop-color='#0ea5a4' stop-opacity='0.3'/>
+      <stop offset='0.5' stop-color='#7c3aed' stop-opacity='0.18'/>
+      <stop offset='1' stop-color='#ef476f' stop-opacity='0.12'/>
+    </linearGradient>
+  </defs>
+  <rect width='1200' height='1200' fill='url(#rg)' />
+  <g fill='none' stroke='#ffffff' stroke-opacity='0.03' stroke-width='2'>
+    <circle cx='300' cy='300' r='180' />
+    <circle cx='900' cy='900' r='260' />
+    <rect x='450' y='200' width='300' height='200' rx='24' />
+    <path d='M200 900 L400 700 L600 900' stroke-linecap='round' stroke-linejoin='round' />
+  </g>
+  <!-- subtle moving element -->
+  <g>
+    <circle cx='900' cy='300' r='60' fill='#06b6d4' fill-opacity='0.06'>
+      <animate attributeName='cx' values='900;1000;900' dur='16s' repeatCount='indefinite' />
+    </circle>
+  </g>
+</svg>
