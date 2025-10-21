@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
