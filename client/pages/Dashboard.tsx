@@ -225,7 +225,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/numbers-sorter')} className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
                 <div className="font-semibold text-blue-900 dark:text-blue-400">
                   Add Numbers
                 </div>
@@ -234,7 +234,7 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/inbox')} className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
                 <div className="font-semibold text-cyan-900 dark:text-cyan-400">
                   View Inbox
                 </div>
@@ -243,7 +243,7 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/settings')} className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
                 <div className="font-semibold text-green-900 dark:text-green-400">
                   Team Settings
                 </div>
