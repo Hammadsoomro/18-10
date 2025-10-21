@@ -110,6 +110,32 @@ export default function Inbox() {
     }
   };
 
+  const fetchDistributorAssignments = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/numbers/claimed-lines', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      const lines = data.lines || [];
+      // only include lines that were distributed by Auto Distributor (distributedTo populated)
+      const distributed = lines.filter((l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0);
+      // group by claimedBy (assigned member)
+      const map: Record<string, any> = {};
+      for (const l of distributed) {
+        const memberId = (l.claimedBy && (l.claimedBy._id || l.claimedBy)) || String((l as any).claimedBy || 'unknown');
+        const memberName = (l.claimedBy && (l.claimedBy.name || l.claimedByName)) || ((l as any).claimedByName) || 'Member';
+        if (!map[memberId]) {
+          map[memberId] = { assignedTo: memberName, distributedAt: l.claimedAt || l.updatedAt || l.createdAt || new Date().toISOString(), lines: [] };
+        }
+        map[memberId].lines.push(l.content || l);
+      }
+      const items = Object.keys(map).map((k) => ({ id: k + '_' + map[k].distributedAt, assignedTo: map[k].assignedTo, distributedAt: map[k].distributedAt, lines: map[k].lines }));
+      setDistributorItems(items);
+    } catch (e) {
+      console.error('Failed to fetch distributor assignments', e);
+    }
+  };
+
   useEffect(() => {
     const onSettings = (e: any) => {
       const cs = e?.detail?.cooldownSeconds;
