@@ -19,7 +19,7 @@ interface NumberLine {
 }
 
 export default function NumbersSorter() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [lines, setLines] = useState<NumberLine[]>([]);
