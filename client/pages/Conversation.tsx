@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,17 +16,28 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface Contact {
   id: string;
   name: string;
   phone: string;
-  lastMessage?: string;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
   pinned: boolean;
+  unreadCount?: number;
 }
 
 export default function Conversation() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +45,8 @@ export default function Conversation() {
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     fetchContacts();
@@ -43,6 +57,62 @@ export default function Conversation() {
       setSelectedContact(contacts[0]);
     }
   }, [contacts, selectedContact]);
+
+  useEffect(() => {
+    if (!token) return;
+    // connect socket
+    const tokenRaw = localStorage.getItem("auth_token");
+    try {
+      const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split(".")[1])) : null;
+      const teamId = payload?.teamId;
+      const s = io(undefined, { autoConnect: true });
+      socketRef.current = s;
+      s.on("connect", () => {
+        if (teamId) s.emit("join_team", teamId);
+      });
+
+      s.on("sms_received", (data: any) => {
+        // data: contactId, phone, name, message, direction, timestamp
+        setContacts((prev) => {
+          const idx = prev.findIndex((c) => c.id === data.contactId || c.phone === data.phone);
+          let updated = [...prev];
+          if (idx !== -1) {
+            const contact = { ...updated[idx] };
+            contact.lastMessage = data.message;
+            contact.lastMessageAt = data.timestamp;
+            if (selectedContact?.id !== contact.id) {
+              contact.unreadCount = (contact.unreadCount || 0) + 1;
+            }
+            // move to top
+            updated.splice(idx, 1);
+            updated.unshift(contact);
+          } else {
+            // new contact
+            const contact = {
+              id: data.contactId || `phone_${data.phone}`,
+              name: data.name || data.phone,
+              phone: data.phone,
+              lastMessage: data.message,
+              lastMessageAt: data.timestamp,
+              pinned: false,
+              unreadCount: 1,
+            } as Contact;
+            updated.unshift(contact);
+          }
+          return updated;
+        });
+
+        // toast notification
+        toast(`${data.name || data.phone}: ${data.message}`);
+      });
+
+      return () => {
+        s.disconnect();
+      };
+    } catch (e) {
+      console.error(e);
+    }
+  }, [token, selectedContact]);
 
   const fetchContacts = async () => {
     if (!token) {
@@ -69,8 +139,8 @@ export default function Conversation() {
   };
 
   const handleAddContact = async () => {
-    if (!newContactName.trim() || !newContactPhone.trim()) {
-      toast.error("Please enter name and phone");
+    if (!newContactPhone.trim()) {
+      toast.error("Please enter phone");
       return;
     }
 
@@ -88,7 +158,7 @@ export default function Conversation() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: newContactName,
+          name: newContactName || undefined,
           phone: newContactPhone,
         }),
       });
@@ -96,7 +166,7 @@ export default function Conversation() {
       if (!response.ok) throw new Error("Failed to add contact");
       const data = await response.json();
 
-      setContacts([...contacts, data.contact]);
+      setContacts((prev) => [data.contact, ...prev]);
       setNewContactName("");
       setNewContactPhone("");
       toast.success("Contact added");
@@ -153,15 +223,47 @@ export default function Conversation() {
 
       if (!response.ok) throw new Error("Failed to update contact");
 
-      setContacts(
-        contacts.map((c) =>
-          c.id === contact.id ? { ...c, pinned: !c.pinned } : c,
-        ),
+      setContacts((prev) =>
+        prev.map((c) => (c.id === contact.id ? { ...c, pinned: !c.pinned } : c)),
       );
       toast.success(contact.pinned ? "Unpinned" : "Pinned");
     } catch (error) {
       console.error("Error updating contact:", error);
       toast.error("Failed to update contact");
+    }
+  };
+
+  const handleSendMessage = async (contact: Contact) => {
+    if (!messageText.trim()) return;
+    if (!token) return toast.error('Not authenticated');
+
+    try {
+      // send message to server which will emit to team
+      const res = await fetch(`/api/contacts/${contact.id}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: messageText, direction: 'outgoing' }),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+
+      // optimistic update
+      setContacts(prev => {
+        const idx = prev.findIndex(c => c.id === contact.id);
+        const updated = [...prev];
+        if (idx !== -1) {
+          const ct = { ...updated[idx] };
+          ct.lastMessage = messageText;
+          ct.lastMessageAt = new Date().toISOString();
+          updated.splice(idx,1);
+          updated.unshift(ct);
+        }
+        return updated;
+      });
+
+      setMessageText('');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to send message');
     }
   };
 
@@ -186,7 +288,7 @@ export default function Conversation() {
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           {/* Contacts List */}
-          <Card className="border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col">
+          <Card className="border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col sticky top-24 max-h-[calc(100vh-200px)]">
             <CardHeader className="pb-4">
               <div className="space-y-4 mb-4">
                 <div className="flex items-center justify-between">
@@ -244,7 +346,11 @@ export default function Conversation() {
                 filteredContacts.map((contact) => (
                   <button
                     key={contact.id}
-                    onClick={() => setSelectedContact(contact)}
+                    onClick={() => {
+                      setSelectedContact(contact);
+                      // clear unread
+                      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, unreadCount: 0 } : c));
+                    }}
                     className={`w-full p-3 rounded-lg text-left transition-colors ${
                       selectedContact?.id === contact.id
                         ? "bg-blue-100 dark:bg-blue-950"
@@ -262,13 +368,42 @@ export default function Conversation() {
                           )}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {contact.phone}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button className="underline text-xs">{contact.phone}</button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Contact</DialogTitle>
+                                <DialogDescription>Details</DialogDescription>
+                              </DialogHeader>
+                              <div>
+                                <p className="font-semibold">{contact.name}</p>
+                                <p className="text-sm text-slate-500">{contact.phone}</p>
+                                {contact.lastMessage && <p className="mt-2">Last: {contact.lastMessage}</p>}
+                              </div>
+                              <DialogFooter className="mt-4">
+                                <Button variant="outline" onClick={() => navigator.clipboard.writeText(contact.phone)}>Copy Phone</Button>
+                                <Button onClick={() => setSelectedContact(contact)}>Open Chat</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                         </p>
                         {contact.lastMessage && (
                           <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-1">
                             {contact.lastMessage}
                           </p>
                         )}
+                      </div>
+                      <div className="flex flex-col items-end">
+                        {contact.unreadCount && contact.unreadCount > 0 && (
+                          <div className="bg-red-600 text-white text-xs px-2 py-1 rounded-full mb-2">
+                            {contact.unreadCount}
+                          </div>
+                        )}
+                        <div className="text-xs text-slate-400">
+                          {contact.lastMessageAt ? new Date(contact.lastMessageAt).toLocaleTimeString() : ''}
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -320,8 +455,8 @@ export default function Conversation() {
               </CardContent>
               <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex gap-2">
-                  <Input placeholder="Type a message..." />
-                  <Button>Send</Button>
+                  <Input placeholder="Type a message..." value={messageText} onChange={(e)=>setMessageText(e.target.value)} />
+                  <Button onClick={()=>handleSendMessage(selectedContact)}>Send</Button>
                 </div>
               </div>
             </Card>
