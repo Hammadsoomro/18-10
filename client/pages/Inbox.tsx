@@ -258,6 +258,9 @@ export default function Inbox() {
         (line: ClaimItem) => line.status === "claimed",
       );
       setClaims(claimed);
+
+      // also refresh distributor assignments
+      fetchDistributorAssignments();
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
