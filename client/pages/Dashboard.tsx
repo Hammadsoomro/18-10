@@ -32,7 +32,6 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
         if (!token) return;
         const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error('Failed to fetch stats');
