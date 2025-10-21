@@ -134,9 +134,10 @@ export function Sidebar({
             <div className="flex items-center gap-2">
               {!isCollapsed && (
                 <div className="flex items-center gap-2 text-white">
-                  <span className="text-sm font-mono font-bold">
-                    {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
+                  <span className="text-lg md:text-xl lg:text-2xl font-mono font-extrabold tracking-tight">
+                    {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
                   </span>
+                  <span className="w-2 h-2 rounded-full bg-white/90 shadow pulse hidden sm:inline-block" aria-hidden />
                 </div>
               )}
 
