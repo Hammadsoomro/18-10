@@ -107,18 +107,8 @@ export function Sidebar({
         <div className="px-4 pt-4 pb-2 border-b border-transparent">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
-              {/* logo */}
-              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="50%" stopColor="#06b6d4" />
-                    <stop offset="100%" stopColor="#7c3aed" />
-                  </linearGradient>
-                </defs>
-                <circle cx="24" cy="24" r="22" fill="url(#lg3)" />
-                <path d="M16 28c0-5 5-9 8-9s8 4 8 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* logo (external asset) */}
+              <img src="https://cdn.builder.io/o/assets%2F13331b2ed0834c738201e986b4f369af%2Fecd70b64eebe4d40acd0af01614f0b02?alt=media&token=c167c7c3-d78b-4c39-ae58-8c2c3be041cb&apiKey=13331b2ed0834c738201e986b4f369af" alt="Line-Link logo" className="w-full h-full object-cover" />
             </div>
             {!isCollapsed && (
               <div className="flex-1">
@@ -185,7 +175,16 @@ export function Sidebar({
 
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
-            <div className="mb-3 hidden md:flex items-center justify-center">
+            <div className="px-4 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleNavigate("/settings")} aria-label="Settings" title="Settings" className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition">
+                <Settings className="h-5 w-5" />
+              </button>
+              <button onClick={handleLogout} aria-label="Logout" title="Logout" className="p-2 rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition">
+                <LogOut className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="hidden md:flex items-center">
               <button
                 onClick={() => handleCollapseToggle(!isCollapsed)}
                 className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
@@ -195,20 +194,7 @@ export function Sidebar({
                 {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
               </button>
             </div>
-            <div className="space-y-2">
-              <button onClick={() => handleNavigate("/settings")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all">
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <Settings className="h-5 w-5 text-white" />
-                </div>
-                {!isCollapsed && <span className="text-sm font-semibold">Settings</span>}
-              </button>
-              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all">
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <LogOut className="h-5 w-5 text-red-400" />
-                </div>
-                {!isCollapsed && <span className="text-sm font-semibold">Logout</span>}
-              </button>
-            </div>
+          </div>
           </div>
         </div>
 
