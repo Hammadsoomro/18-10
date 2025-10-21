@@ -106,10 +106,9 @@ export function Sidebar({
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-md">
                   <span className="text-white font-bold text-sm">LL</span>
                 </div>
-                <div className="text-white font-bold">Dashboard</div>
               </div>
             )}
             <button
@@ -123,25 +122,16 @@ export function Sidebar({
 
         {/* Clock and Date */}
         {!isCollapsed && (
-          <div className="p-4 border-b border-slate-800 bg-slate-800/30">
-            <div className="flex items-center gap-2 mb-2 text-blue-400">
-              <Clock className="h-4 w-4" />
-              <span className="text-xl font-mono font-bold">
-                {time.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })}
+          <div className="p-4 border-b border-slate-800 bg-slate-800/30 text-center">
+            <div className="text-sm text-slate-300 uppercase tracking-wider mb-2">Line Link</div>
+            <div className="flex items-center justify-center mb-1">
+              <Clock className="h-5 w-5 text-cyan-300 mr-2" />
+              <span className="text-2xl md:text-3xl lg:text-4xl font-mono font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 animate-pulse">
+                {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
               </span>
             </div>
-            <p className="text-sm text-slate-400">
-              {time.toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+            <p className="text-xs text-slate-400">
+              {time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
             </p>
           </div>
         )}
