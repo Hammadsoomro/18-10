@@ -50,7 +50,6 @@ export default function Dashboard() {
 
     const fetchDistributorActive = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
         if (!token) return;
         const res = await fetch('/api/auth/distributor-settings', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) return;
@@ -67,8 +66,7 @@ export default function Dashboard() {
 
     // socket for real-time distributor indicator
     try {
-      const tokenRaw = localStorage.getItem('auth_token');
-      const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split('.')[1])) : null;
+      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const teamId = payload?.teamId;
       const s = io(undefined, { autoConnect: true });
       socketRef.current = s;
