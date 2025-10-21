@@ -50,6 +50,8 @@ export default function Inbox() {
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<"claims" | "distributor">("claims");
+  const [unreadDistributor, setUnreadDistributor] = useState<number>(0);
 
   const [claimSettingCooldown, setClaimSettingCooldown] = useState<
     number | null
