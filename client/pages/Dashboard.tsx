@@ -10,9 +10,11 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
   const [stats, setStats] = useState({
