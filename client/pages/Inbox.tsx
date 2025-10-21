@@ -132,6 +132,29 @@ export default function Inbox() {
     }
   };
 
+  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+
+  const markDistributorRead = () => {
+    try {
+      localStorage.setItem(getDistributorLastReadKey(), String(Date.now()));
+      setUnreadDistributor(0);
+    } catch {}
+  };
+
+  const computeUnreadForDistributor = (items: DistributorItem[]) => {
+    try {
+      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      if (!last) return items.length;
+      const count = items.filter((it) => {
+        const t = Date.parse(it.distributedAt);
+        return isNaN(t) ? false : t > last;
+      }).length;
+      return count;
+    } catch {
+      return items.length;
+    }
+  };
+
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
