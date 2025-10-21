@@ -482,10 +482,21 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs defaultValue="claims" className="w-full">
+        <Tabs value={tab} onValueChange={(v) => {
+            const nv = (v as any) as "claims" | "distributor";
+            setTab(nv);
+            if (nv === "distributor") markDistributorRead();
+          }} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
-            <TabsTrigger value="distributor">Auto Distributor</TabsTrigger>
+            <TabsTrigger value="distributor">
+              <span className="relative inline-flex items-center gap-2">
+                Auto Distributor
+                {unreadDistributor > 0 && (
+                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                )}
+              </span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Claims Tab */}
