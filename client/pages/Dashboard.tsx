@@ -10,9 +10,11 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
   const [stats, setStats] = useState({
@@ -23,22 +25,36 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Fetch dashboard stats
+    let mounted = true;
+    let interval: number | undefined;
+
     const fetchStats = async () => {
       try {
-        // Mock stats - replace with actual API call
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        const data = await res.json();
+        if (!mounted) return;
         setStats({
-          totalNumbers: 1250,
-          queuedLines: 45,
-          activeMembers: 8,
-          claimedToday: 324,
+          totalNumbers: data.totalNumbers || 0,
+          queuedLines: data.queuedLines || 0,
+          activeMembers: data.activeMembers || 0,
+          claimedToday: data.claimedToday || 0,
         });
       } catch (error) {
-        console.error("Failed to fetch stats:", error);
+        console.error('Failed to fetch stats:', error);
       }
     };
 
     fetchStats();
+    // poll every 10 seconds
+    interval = window.setInterval(fetchStats, 10000) as unknown as number;
+
+    return () => {
+      mounted = false;
+      if (interval) window.clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -209,7 +225,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/numbers-sorter')} className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
                 <div className="font-semibold text-blue-900 dark:text-blue-400">
                   Add Numbers
                 </div>
@@ -218,7 +234,7 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/inbox')} className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
                 <div className="font-semibold text-cyan-900 dark:text-cyan-400">
                   View Inbox
                 </div>
@@ -227,7 +243,7 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
+              <button onClick={()=>navigate('/settings')} className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
                 <div className="font-semibold text-green-900 dark:text-green-400">
                   Team Settings
                 </div>

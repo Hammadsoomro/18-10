@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Zap, Users, Loader2, AlertCircle } from "lucide-react";
+import { io, Socket } from "socket.io-client";
+import { useRef } from "react";
 import { toast } from "sonner";
 
 interface TeamMember {
@@ -35,7 +37,7 @@ interface DistributedLine {
 }
 
 export default function AutoDistributor() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [linesPerMember, setLinesPerMember] = useState(5);
@@ -47,10 +49,80 @@ export default function AutoDistributor() {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
     fetchMembers();
     fetchDistributorSettings();
     fetchDistributedLines();
+
+    const onDistributorUpdated = () => {
+      // small debounce to ensure server-side update committed
+      setTimeout(() => fetchDistributedLines(), 300);
+    };
+
+    window.addEventListener(
+      "distributor_updated",
+      onDistributorUpdated as EventListener,
+    );
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "distributor_updated") {
+        onDistributorUpdated();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // socket connection for real-time distribution events
+    if (token) {
+      try {
+        const tokenRaw = localStorage.getItem("auth_token");
+        const payload = tokenRaw
+          ? JSON.parse(atob(tokenRaw.split(".")[1]))
+          : null;
+        const teamId = payload?.teamId;
+        const s = io(undefined, { autoConnect: true });
+        socketRef.current = s;
+        s.on("connect", () => {
+          if (teamId) s.emit("join_team", teamId);
+        });
+
+        s.on("distributed_lines", (data: any) => {
+          // server informs which lines were moved from 'Lines in Distribution'
+          // refresh the distributed list so UI updates immediately
+          fetchDistributedLines();
+          try {
+            const count = Array.isArray(data.lines) ? data.lines.length : 0;
+            if (count > 0) {
+              // small toast
+              // @ts-ignore
+              import("sonner")
+                .then(({ toast }) =>
+                  toast.success(`${count} line(s) distributed`),
+                )
+                .catch(() => {});
+            }
+          } catch (e) {}
+        });
+
+        s.on("distributor_indicator", (data: any) => {
+          // could update UI indicator if needed
+        });
+      } catch (e) {
+        console.error("Socket error", e);
+      }
+    }
+
+    return () => {
+      window.removeEventListener(
+        "distributor_updated",
+        onDistributorUpdated as EventListener,
+      );
+      window.removeEventListener("storage", onStorage);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
   }, [token]);
 
   const fetchMembers = async () => {
@@ -97,14 +169,15 @@ export default function AutoDistributor() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      // Use the claimed-lines endpoint which includes distributed items
+      const response = await fetch("/api/numbers/claimed-lines", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to fetch distributed lines");
       const data = await response.json();
 
-      // Show only lines with "distributed" status
+      // Show only lines with "distributed" status (endpoint returns claimed + distributed)
       const distributed = data.lines.filter(
         (line: any) => line.status === "distributed",
       );
@@ -211,6 +284,22 @@ export default function AutoDistributor() {
       <Layout title="Auto Distributor">
         <div className="p-6 flex items-center justify-center min-h-96">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Hide UI from non-admins
+  if (user && user.role !== "admin") {
+    return (
+      <Layout title="Auto Distributor">
+        <div className="p-6">
+          <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+            <p className="text-lg font-semibold">Not available</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
+          </div>
         </div>
       </Layout>
     );

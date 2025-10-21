@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     name: { type: String, required: true },
     role: { type: String, enum: ["admin", "member"], required: true },
+    active: { type: Boolean, default: true },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -29,6 +30,9 @@ const contactSchema = new mongoose.Schema(
     name: { type: String, default: "" },
     phone: { type: String, required: true },
     pinned: { type: Boolean, default: false },
+    lastMessage: { type: String, default: null },
+    lastMessageAt: { type: Date, default: null },
+    unreadCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
@@ -70,6 +74,7 @@ const numberLineSchema = new mongoose.Schema(
       default: null,
     },
     distributedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    claimedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

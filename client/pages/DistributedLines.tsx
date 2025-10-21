@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Trash2, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,6 +28,20 @@ export default function DistributedLines() {
   const { token, user } = useAuth();
   const [lines, setLines] = useState<DistributedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const filteredLines = lines.filter((line) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    const content = (line.content || "").toLowerCase();
+    const claimedByName = ((line as any).claimedBy?.name || line.claimedByName || "").toLowerCase();
+    const lineNum = String(line.lineNumber || "");
+    return (
+      content.includes(q) ||
+      claimedByName.includes(q) ||
+      lineNum.includes(q)
+    );
+  });
 
   useEffect(() => {
     fetchDistributedLines();
@@ -63,13 +78,21 @@ export default function DistributedLines() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to delete line");
+      if (!response.ok) {
+        let body = await response.text();
+        try {
+          const json = JSON.parse(body);
+          toast.error(json.error || 'Failed to delete line');
+        } catch (e) {
+          toast.error(`Failed to delete line: ${response.status}`);
+        }
+        throw new Error(`Failed to delete line: ${response.status}`);
+      }
 
       setLines(lines.filter((l) => l._id !== id && l.id !== id));
       toast.success("Line removed");
     } catch (error) {
       console.error("Error deleting line:", error);
-      toast.error("Failed to delete line");
     }
   };
 
@@ -109,8 +132,16 @@ export default function DistributedLines() {
 
         {/* Lines List */}
         <Card className="border-slate-200 dark:border-slate-800">
-          <CardHeader>
+          <CardHeader className="flex items-center justify-between gap-4">
             <CardTitle>Lines Being Distributed</CardTitle>
+            <div className="w-72">
+              <Input
+                placeholder="Search by content, claimant, or line #"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full"
+              />
+            </div>
           </CardHeader>
 
           <CardContent className="space-y-3">
@@ -121,8 +152,14 @@ export default function DistributedLines() {
                   No distributed lines yet
                 </p>
               </div>
+            ) : filteredLines.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-600 dark:text-slate-400">
+                  No results for "{search}"
+                </p>
+              </div>
             ) : (
-              lines.map((line) => (
+              filteredLines.map((line) => (
                 <div
                   key={line._id || line.id}
                   className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
@@ -134,12 +171,9 @@ export default function DistributedLines() {
                       </p>
                       {user?.role === "admin" && (
                         <div>
-                          {(line.claimedByUser || line.claimedByName) && (
+                          {(line as any).claimedBy && (
                             <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                              ✓ Claimed by{" "}
-                              {typeof line.claimedByUser === "object"
-                                ? line.claimedByUser.name
-                                : line.claimedByName}
+                              ✓ Claimed by {(line as any).claimedBy.name}
                             </p>
                           )}
                           <p className="text-xs text-slate-500 dark:text-slate-400">

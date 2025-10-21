@@ -31,7 +31,7 @@ interface QueuedLine {
 }
 
 export default function QueuedList() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [lines, setLines] = useState<QueuedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -118,6 +118,19 @@ export default function QueuedList() {
       <Layout title="Queued List">
         <div className="p-6 flex items-center justify-center min-h-96">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (user && user.role !== "admin") {
+    return (
+      <Layout title="Queued List">
+        <div className="p-6">
+          <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+            <p className="text-lg font-semibold">Not available</p>
+            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+          </div>
         </div>
       </Layout>
     );

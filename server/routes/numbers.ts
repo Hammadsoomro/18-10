@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { RequestHandler } from "express";
 import { NumberLine } from "../db";
 import { verifyToken } from "../utils/jwt";
 
@@ -143,7 +144,7 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
 
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
-      { status: "distributed" },
+      { status: "queued", claimedBy: null },
     );
 
     res.json({
@@ -214,6 +215,39 @@ export const handleGetQueuedLines: RequestHandler = async (req, res) => {
   }
 };
 
+export const handleGetClaimedLines: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const isAdmin = decoded.role === "admin";
+    const match: any = {
+      teamId: decoded.teamId,
+      status: { $in: ["claimed", "distributed"] },
+    };
+
+    if (!isAdmin) {
+      match.claimedBy = decoded.id;
+    }
+
+    const lines = await NumberLine.find(match)
+      .populate("claimedBy", "name email")
+      .sort({ updatedAt: -1 });
+
+    res.json({ lines });
+  } catch (error) {
+    console.error("Get claimed lines error:", error);
+    res.status(500).json({ error: "Failed to fetch claimed lines" });
+  }
+};
+
 export const handleClaimLine: RequestHandler = async (req, res) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
@@ -226,27 +260,71 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const { lineId } = req.body;
-    if (!lineId) {
-      return res.status(400).json({ error: "Line ID is required" });
+    // Determine how many lines to claim from team settings
+    const claimSettings = await require('../db').ClaimSettings.findOne({ teamId: decoded.teamId });
+    const linesToClaim = (claimSettings && typeof claimSettings.claimLineCount === 'number') ? claimSettings.claimLineCount : 1;
+
+    // Fetch the next queued lines for this team (ordered by createdAt ascending to claim oldest first)
+    const queuedLines = await NumberLine.find({ teamId: decoded.teamId, status: 'queued' })
+      .sort({ createdAt: 1 })
+      .limit(linesToClaim)
+      .select('_id');
+
+    if (!queuedLines || queuedLines.length === 0) {
+      return res.status(409).json({ error: 'No queued lines available to claim' });
     }
 
-    const line = await NumberLine.findByIdAndUpdate(
-      lineId,
-      {
-        status: "claimed",
-        claimedBy: decoded.id,
-      },
-      { new: true },
+    const ids = queuedLines.map((l: any) => l._id);
+
+    // Attempt to atomically claim the selected lines (only those still queued and unclaimed will be updated)
+    const updateResult = await NumberLine.updateMany(
+      { _id: { $in: ids }, teamId: decoded.teamId, status: 'queued', claimedBy: null },
+      { $set: { status: 'claimed', claimedBy: decoded.id, claimedAt: new Date() } },
     );
 
-    if (!line) {
-      return res.status(404).json({ error: "Line not found" });
+    if (updateResult.modifiedCount === 0) {
+      // Nothing was claimed (race condition) - inform client to retry
+      return res.status(409).json({ error: 'Failed to claim lines, they may have been claimed by others' });
     }
 
-    res.json(line);
+    // Return the lines that were successfully claimed by this user
+    const claimedLines = await NumberLine.find({ _id: { $in: ids }, claimedBy: decoded.id });
+
+    res.json({ lines: claimedLines });
   } catch (error) {
-    console.error("Claim line error:", error);
-    res.status(500).json({ error: "Failed to claim line" });
+    console.error('Claim line error:', error);
+    res.status(500).json({ error: 'Failed to claim line(s)' });
+  }
+};
+
+export const handleGetStats: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ error: "Invalid token" });
+
+    const teamId = decoded.teamId;
+
+    // Total numbers for team
+    const totalNumbers = await NumberLine.countDocuments({ teamId });
+
+    // Queued lines
+    const queuedLines = await NumberLine.countDocuments({ teamId, status: 'queued' });
+
+    // Active members count
+    const { User } = require('../db');
+    const activeMembers = await User.countDocuments({ teamId, role: 'member', active: true });
+
+    // Claimed today (since midnight)
+    const startOfDay = new Date();
+    startOfDay.setHours(0,0,0,0);
+    const claimedToday = await NumberLine.countDocuments({ teamId, status: 'claimed', claimedAt: { $gte: startOfDay } });
+
+    res.json({ totalNumbers, queuedLines, activeMembers, claimedToday });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
   }
 };

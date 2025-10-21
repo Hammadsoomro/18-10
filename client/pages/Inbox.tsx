@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ interface DistributorItem {
 }
 
 export default function Inbox() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [claimCooldown, setClaimCooldown] = useState(0);
   const [claims, setClaims] = useState<ClaimItem[]>([]);
   const [queuedLines, setQueuedLines] = useState<QueuedLine[]>([]);
@@ -49,9 +50,242 @@ export default function Inbox() {
   );
   const [isLoading, setIsLoading] = useState(true);
 
+  const [claimSettingCooldown, setClaimSettingCooldown] = useState<
+    number | null
+  >(null);
+
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
     fetchData();
+    fetchClaimSettings();
+
+    if (!token) return;
+    try {
+      const tokenRaw = localStorage.getItem("auth_token");
+      const payload = tokenRaw
+        ? JSON.parse(atob(tokenRaw.split(".")[1]))
+        : null;
+      const teamId = payload?.teamId;
+      const userId = payload?.id;
+      const s = io(undefined, { autoConnect: true });
+      socketRef.current = s;
+      s.on("connect", () => {
+        if (teamId) s.emit("join_team", teamId);
+      });
+
+      s.on("distributed_lines", (data: any) => {
+        // always refresh distributor assignments and, if relevant, inbox data
+        try {
+          fetchDistributorAssignments();
+        } catch (e) {}
+
+        try {
+          const lines = Array.isArray(data.lines) ? data.lines : [];
+          const forMe = lines.some((l: any) => {
+            const dt = Array.isArray(l.distributedTo)
+              ? l.distributedTo.map(String)
+              : [];
+            return (
+              dt.includes(String(userId)) ||
+              String(l.claimedBy) === String(userId)
+            );
+          });
+          if (forMe) {
+            fetchData();
+            // small toast
+            // @ts-ignore
+            import("sonner")
+              .then(({ toast }) =>
+                toast.success("You received new lines from Auto Distributor"),
+              )
+              .catch(() => {});
+          }
+        } catch (e) {}
+      });
+
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
+      };
+    } catch (e) {
+      console.error("Socket init error", e);
+    }
   }, [token]);
+
+  const fetchClaimSettings = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/auth/claim-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setClaimSettingCooldown(data.cooldownSeconds ?? null);
+    } catch (e) {
+      console.error("Failed to fetch claim settings", e);
+    }
+  };
+
+  const fetchDistributorAssignments = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/numbers/claimed-lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const lines = data.lines || [];
+      // only include lines that were distributed by Auto Distributor (distributedTo populated)
+      const distributed = lines.filter(
+        (l: any) =>
+          Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
+      );
+      // group by claimedBy (assigned member)
+      const map: Record<string, any> = {};
+      for (const l of distributed) {
+        const memberId =
+          (l.claimedBy && (l.claimedBy._id || l.claimedBy)) ||
+          String((l as any).claimedBy || "unknown");
+        const memberName =
+          (l.claimedBy && (l.claimedBy.name || l.claimedByName)) ||
+          (l as any).claimedByName ||
+          "Member";
+        if (!map[memberId]) {
+          map[memberId] = {
+            assignedTo: memberName,
+            distributedAt:
+              l.claimedAt ||
+              l.updatedAt ||
+              l.createdAt ||
+              new Date().toISOString(),
+            lines: [],
+          };
+        }
+        map[memberId].lines.push(l.content || l);
+      }
+      const items = Object.keys(map).map((k) => ({
+        id: k + "_" + map[k].distributedAt,
+        assignedTo: map[k].assignedTo,
+        distributedAt: map[k].distributedAt,
+        lines: map[k].lines,
+      }));
+      setDistributorItems(items);
+    } catch (e) {
+      console.error("Failed to fetch distributor assignments", e);
+    }
+  };
+
+  useEffect(() => {
+    const onSettings = (e: any) => {
+      const cs = e?.detail?.cooldownSeconds;
+      if (typeof cs === "number") setClaimSettingCooldown(cs);
+    };
+    window.addEventListener(
+      "claim_settings_updated",
+      onSettings as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "claim_settings_updated",
+        onSettings as EventListener,
+      );
+  }, []);
+
+  // Cooldown persistence helpers
+  const getCooldownKey = () => `claim_cooldown_${user?.id ?? "global"}`;
+  const cooldownTimerRef = useRef<number | null>(null);
+
+  const startCooldown = (seconds: number) => {
+    if (!user) return;
+    const expiry = Date.now() + seconds * 1000;
+    try {
+      localStorage.setItem(getCooldownKey(), String(expiry));
+      window.dispatchEvent(
+        new CustomEvent("claim_cooldown_updated", { detail: { expiry } }),
+      );
+    } catch (e) {
+      // ignore
+    }
+
+    setClaimCooldown(seconds);
+
+    if (cooldownTimerRef.current) {
+      window.clearInterval(cooldownTimerRef.current);
+    }
+    cooldownTimerRef.current = window.setInterval(() => {
+      setClaimCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownTimerRef.current) {
+            window.clearInterval(cooldownTimerRef.current);
+            cooldownTimerRef.current = null;
+          }
+          try {
+            localStorage.removeItem(getCooldownKey());
+            window.dispatchEvent(new CustomEvent("claim_cooldown_updated", {}));
+          } catch (e) {}
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000) as unknown as number;
+  };
+
+  useEffect(() => {
+    // Initialize cooldown from localStorage
+    if (!user) return;
+    const key = getCooldownKey();
+    const value = localStorage.getItem(key);
+    if (!value) return;
+    const expiry = Number(value);
+    if (isNaN(expiry)) return;
+    const remaining = Math.ceil((expiry - Date.now()) / 1000);
+    if (remaining > 0) {
+      startCooldown(remaining);
+    } else {
+      localStorage.removeItem(key);
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === key) {
+        const v = localStorage.getItem(key);
+        if (!v) {
+          setClaimCooldown(0);
+        } else {
+          const exp = Number(v);
+          const rem = Math.ceil((exp - Date.now()) / 1000);
+          if (rem > 0) startCooldown(rem);
+        }
+      }
+    };
+
+    const onCustom = (e: any) => {
+      const detail = e?.detail;
+      if (!detail || !detail.expiry) return;
+      const rem = Math.ceil((detail.expiry - Date.now()) / 1000);
+      if (rem > 0) startCooldown(rem);
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(
+      "claim_cooldown_updated",
+      onCustom as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(
+        "claim_cooldown_updated",
+        onCustom as EventListener,
+      );
+      if (cooldownTimerRef.current) {
+        window.clearInterval(cooldownTimerRef.current);
+        cooldownTimerRef.current = null;
+      }
+    };
+  }, [user]);
 
   const fetchData = async () => {
     if (!token) {
@@ -79,6 +313,9 @@ export default function Inbox() {
         (line: ClaimItem) => line.status === "claimed",
       );
       setClaims(claimed);
+
+      // also refresh distributor assignments
+      fetchDistributorAssignments();
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
@@ -130,23 +367,41 @@ export default function Inbox() {
         body: JSON.stringify({ lineId: lineToClaimId }),
       });
 
-      if (!claimResponse.ok) throw new Error("Failed to claim line");
+      if (!claimResponse.ok) {
+        if (claimResponse.status === 409) {
+          // Try to parse error message for better UX
+          try {
+            const err = await claimResponse.json();
+            const message =
+              err?.error || "Another member just claimed that line. Try again.";
+            toast.error(message);
+          } catch (e) {
+            toast.error("Another member just claimed that line. Try again.");
+          }
+          await fetchData();
+          return;
+        }
+        throw new Error("Failed to claim line");
+      }
+
+      // Parse response to show how many lines were claimed (backend may return { lines: [...] })
+      let claimedCount = 1;
+      try {
+        const data = await claimResponse.json();
+        if (Array.isArray(data.lines)) claimedCount = data.lines.length;
+      } catch (e) {
+        // ignore parse errors and default to 1
+      }
 
       // Refetch data
       await fetchData();
 
-      setClaimCooldown(60);
-      const timer = setInterval(() => {
-        setClaimCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // start persistent cooldown using server setting (fallback 60s)
+      startCooldown(claimSettingCooldown ?? 60);
 
-      toast.success("Line claimed successfully!");
+      toast.success(
+        `${claimedCount} line${claimedCount > 1 ? "s" : ""} claimed successfully!`,
+      );
     } catch (error) {
       console.error("Error claiming line:", error);
       toast.error("Failed to claim line");

@@ -11,6 +11,8 @@ import {
   handleGetClaimSettings,
   handleSaveClaimSettings,
   handleGetMembers,
+  handleUpdateMember,
+  handleDeleteMember,
   handleGetDistributorSettings,
   handleSaveDistributorSettings,
 } from "./routes/auth";
@@ -19,6 +21,7 @@ import {
   handleCreateContact,
   handleUpdateContact,
   handleDeleteContact,
+  handleSendMessage,
 } from "./routes/contacts";
 import {
   handleGetLines,
@@ -28,6 +31,8 @@ import {
   handleMoveToQueue,
   handleMoveToDistributor,
   handleGetQueuedLines,
+  handleGetClaimedLines,
+  handleGetStats,
   handleClaimLine,
 } from "./routes/numbers";
 import { connectDB } from "./db";
@@ -55,9 +60,12 @@ export function createServer() {
   app.post("/api/auth/signup", handleSignup);
   app.post("/api/auth/login", handleLogin);
   app.post("/api/auth/create-member", handleCreateMember);
+  app.post("/api/auth/change-password", handleChangePassword);
   app.get("/api/auth/claim-settings", handleGetClaimSettings);
   app.post("/api/auth/claim-settings", handleSaveClaimSettings);
   app.get("/api/auth/members", handleGetMembers);
+  app.put("/api/auth/member/:id", handleUpdateMember);
+  app.delete("/api/auth/member/:id", handleDeleteMember);
   app.get("/api/auth/distributor-settings", handleGetDistributorSettings);
   app.post("/api/auth/distributor-settings", handleSaveDistributorSettings);
 
@@ -69,6 +77,8 @@ export function createServer() {
   app.post("/api/numbers/move-to-queue", handleMoveToQueue);
   app.post("/api/numbers/move-to-distributor", handleMoveToDistributor);
   app.get("/api/numbers/queued", handleGetQueuedLines);
+  app.get("/api/numbers/claimed-lines", handleGetClaimedLines);
+  app.get("/api/numbers/stats", handleGetStats);
   app.post("/api/numbers/claim", handleClaimLine);
 
   // Contacts routes
@@ -76,6 +86,7 @@ export function createServer() {
   app.post("/api/contacts", handleCreateContact);
   app.put("/api/contacts/:id", handleUpdateContact);
   app.delete("/api/contacts/:id", handleDeleteContact);
+  app.post("/api/contacts/:id/message", handleSendMessage);
 
   return app;
 }
@@ -86,6 +97,9 @@ export function createServerWithSocket() {
   const io = new SocketServer(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] },
   });
+
+  // expose io to request handlers
+  app.set("io", io);
 
   // WebSocket events
   io.on("connection", (socket) => {

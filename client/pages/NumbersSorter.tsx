@@ -19,7 +19,7 @@ interface NumberLine {
 }
 
 export default function NumbersSorter() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [lines, setLines] = useState<NumberLine[]>([]);
@@ -194,6 +194,15 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
+      // notify other pages to refresh distributed lines
+      try {
+        localStorage.setItem("distributor_updated", String(Date.now()));
+        window.dispatchEvent(
+          new CustomEvent("distributor_updated", {
+            detail: { teamId: user?.teamId },
+          }),
+        );
+      } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
     } catch (error) {
@@ -216,6 +225,22 @@ export default function NumbersSorter() {
       <Layout title="Numbers Sorter">
         <div className="p-6 flex items-center justify-center min-h-96">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Hide page UI for non-admin users
+  if (user && user.role !== "admin") {
+    return (
+      <Layout title="Numbers Sorter">
+        <div className="p-6">
+          <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+            <p className="text-lg font-semibold">Not available</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
+          </div>
         </div>
       </Layout>
     );
@@ -292,9 +317,6 @@ export default function NumbersSorter() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-slate-900 dark:text-white text-sm">
-                            #{line.lineNumber}
-                          </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {truncateText(line.content)}
                           </span>
