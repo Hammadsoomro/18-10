@@ -97,17 +97,16 @@ export default function AutoDistributor() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      // Use the claimed-lines endpoint which includes distributed items
+      const response = await fetch("/api/numbers/claimed-lines", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to fetch distributed lines");
       const data = await response.json();
 
-      // Show only lines with "distributed" status
-      const distributed = data.lines.filter(
-        (line: any) => line.status === "distributed",
-      );
+      // Show only lines with "distributed" status (endpoint returns claimed + distributed)
+      const distributed = data.lines.filter((line: any) => line.status === "distributed");
       setDistributedLines(distributed);
     } catch (error) {
       console.error("Error fetching distributed lines:", error);
