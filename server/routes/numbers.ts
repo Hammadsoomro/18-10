@@ -280,3 +280,35 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to claim line" });
   }
 };
+
+export const handleGetStats: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ error: "Invalid token" });
+
+    const teamId = decoded.teamId;
+
+    // Total numbers for team
+    const totalNumbers = await NumberLine.countDocuments({ teamId });
+
+    // Queued lines
+    const queuedLines = await NumberLine.countDocuments({ teamId, status: 'queued' });
+
+    // Active members count
+    const { User } = require('../db');
+    const activeMembers = await User.countDocuments({ teamId, role: 'member', active: true });
+
+    // Claimed today (since midnight)
+    const startOfDay = new Date();
+    startOfDay.setHours(0,0,0,0);
+    const claimedToday = await NumberLine.countDocuments({ teamId, status: 'claimed', claimedAt: { $gte: startOfDay } });
+
+    res.json({ totalNumbers, queuedLines, activeMembers, claimedToday });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+};
