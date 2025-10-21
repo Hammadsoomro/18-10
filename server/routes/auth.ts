@@ -526,8 +526,19 @@ export const handleSaveDistributorSettings: RequestHandler = async (
                 { $set: { status: 'claimed', claimedBy: member._id, claimedAt: new Date() }, $push: { distributedTo: member._id } },
                 { new: true, sort: { createdAt: 1 } },
               );
-              if (claimed) claimedLines.push(claimed);
-              else break; // no more lines for this member
+              if (claimed) {
+                // attach assigned member name for client display
+                claimedLines.push({
+                  id: claimed._id,
+                  lineNumber: claimed.lineNumber,
+                  content: claimed.content,
+                  claimedAt: claimed.claimedAt,
+                  claimedBy: member._id,
+                  claimedByName: member.name,
+                  distributedTo: claimed.distributedTo || [],
+                  status: 'claimed',
+                });
+              } else break; // no more lines for this member
             }
           }
 
@@ -535,7 +546,7 @@ export const handleSaveDistributorSettings: RequestHandler = async (
             // emit real-time update to team room
             try {
               if (io) {
-                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l._id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy, distributedTo: l.distributedTo || [], status: l.status })) });
+                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l.id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy, claimedByName: l.claimedByName, distributedTo: l.distributedTo || [], status: l.status })) });
                 io.to(`team_${teamKey}`).emit('distributor_indicator', { active: true });
               }
             } catch (e) {
