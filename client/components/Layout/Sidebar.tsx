@@ -13,6 +13,8 @@ import {
   Menu,
   X,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -183,6 +185,16 @@ export function Sidebar({
 
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
+            <div className="mb-3 hidden md:flex items-center justify-center">
+              <button
+                onClick={() => handleCollapseToggle(!isCollapsed)}
+                className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+              </button>
+            </div>
             <div className="space-y-2">
               <button onClick={() => handleNavigate("/settings")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all">
                 <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
