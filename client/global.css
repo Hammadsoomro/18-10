@@ -192,4 +192,17 @@
     50% { transform: scale(1.25); opacity: 0.6; }
     100% { transform: scale(1); opacity: 1; }
   }
+
+  /* Animated sidebar gradient */
+  .sidebar-gradient {
+    background: linear-gradient(120deg, #0ea5a4 0%, #7c3aed 33%, #f97316 66%, #ef476f 100%);
+    background-size: 400% 400%;
+    animation: sidebarGradient 8s ease infinite;
+  }
+
+  @keyframes sidebarGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 }
