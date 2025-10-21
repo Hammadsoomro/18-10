@@ -278,6 +278,199 @@ export default function Settings() {
             {/* Team Management moved to separate tab */}
           </TabsContent>
 
+          {/* Team Management Tab */}
+          <TabsContent value="team" className="space-y-6 mt-6">
+            {user?.role === "admin" ? (
+              <Card className="border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Team Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Manage team members and their permissions
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          + Add New Member
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Add New Team Member</DialogTitle>
+                          <DialogDescription>
+                            Create a new account for a team member. They will be
+                            added to your team.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <Label htmlFor="member-name">Full Name</Label>
+                            <Input
+                              id="member-name"
+                              placeholder="John Doe"
+                              value={memberName}
+                              onChange={(e) => setMemberName(e.target.value)}
+                              className="mt-2"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="member-email">Email</Label>
+                            <Input
+                              id="member-email"
+                              type="email"
+                              placeholder="john@example.com"
+                              value={memberEmail}
+                              onChange={(e) => setMemberEmail(e.target.value)}
+                              className="mt-2"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="member-password">Password</Label>
+                            <Input
+                              id="member-password"
+                              type="password"
+                              placeholder="Enter password (min 6 characters)"
+                              value={memberPassword}
+                              onChange={(e) => setMemberPassword(e.target.value)}
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleCreateMember}
+                            disabled={isCreatingMember}
+                            className="bg-green-600 hover:bg-green-700 flex-1"
+                          >
+                            {isCreatingMember ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              "Create Member"
+                            )}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (!token) return;
+                        setIsLoadingMembers(true);
+                        try {
+                          const res = await fetch("/api/auth/members", {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            setMembers(data.members || []);
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          toast.error("Failed to fetch members");
+                        } finally {
+                          setIsLoadingMembers(false);
+                        }
+                      }}
+                    >
+                      Refresh Members
+                    </Button>
+                  </div>
+
+                  <div className="mt-4">
+                    {isLoadingMembers ? (
+                      <div className="text-sm text-slate-500">Loading...</div>
+                    ) : members.length === 0 ? (
+                      <div className="text-sm text-slate-500">No team members yet</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {members.map((m) => (
+                          <div key={m.id} className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                            <div>
+                              <div className="font-semibold">{m.name}</div>
+                              <div className="text-xs text-slate-500">{m.email}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500 mr-3">{m.active ? 'Active' : 'Inactive'}</span>
+                              <Button
+                                size="sm"
+                                variant={m.active ? 'destructive' : 'secondary'}
+                                onClick={async () => {
+                                  if (!token) return;
+                                  try {
+                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                      body: JSON.stringify({ active: !m.active }),
+                                    });
+                                    if (!res.ok) throw new Error('Failed to update member');
+                                    setMembers((prev) => prev.map(p => p.id === m.id ? { ...p, active: !p.active } : p));
+                                    toast.success(`${m.active ? 'Blocked' : 'Unblocked'} ${m.name}`);
+                                  } catch (e) {
+                                    console.error(e);
+                                    toast.error('Failed to update member');
+                                  }
+                                }}
+                              >
+                                {m.active ? 'Block' : 'Unblock'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  if (!token) return;
+                                  if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
+                                  try {
+                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                      method: 'DELETE',
+                                      headers: { Authorization: `Bearer ${token}` },
+                                    });
+                                    if (!res.ok) throw new Error('Failed to delete member');
+                                    setMembers((prev) => prev.filter(p => p.id !== m.id));
+                                    toast.success(`Deleted ${m.name}`);
+                                  } catch (e) {
+                                    console.error(e);
+                                    toast.error('Failed to delete member');
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <CardTitle>Team Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Only admins can manage team members.</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Claim Settings */}
           <TabsContent value="claim" className="space-y-6 mt-6">
             {user?.role === "admin" ? (
