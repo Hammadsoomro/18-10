@@ -158,9 +158,9 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-hidden">
-          <nav className="h-full p-4 space-y-3 overflow-y-auto">
+        {/* Navigation - fills remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <nav className="flex-1 p-3 space-y-3 overflow-y-auto">
             {visibleNavItems.map((item) => (
               <button
                 key={item.path}
@@ -180,6 +180,24 @@ export function Sidebar({
               </button>
             ))}
           </nav>
+
+          {/* Footer should remain visible */}
+          <div className="px-3 pb-4">
+            <div className="space-y-2">
+              <button onClick={() => handleNavigate("/settings")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all">
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <Settings className="h-5 w-5 text-white" />
+                </div>
+                {!isCollapsed && <span className="text-sm font-semibold">Settings</span>}
+              </button>
+              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all">
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                  <LogOut className="h-5 w-5 text-red-400" />
+                </div>
+                {!isCollapsed && <span className="text-sm font-semibold">Logout</span>}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
