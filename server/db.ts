@@ -30,6 +30,9 @@ const contactSchema = new mongoose.Schema(
     name: { type: String, default: "" },
     phone: { type: String, required: true },
     pinned: { type: Boolean, default: false },
+    lastMessage: { type: String, default: null },
+    lastMessageAt: { type: Date, default: null },
+    unreadCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
