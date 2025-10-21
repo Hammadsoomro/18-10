@@ -96,6 +96,9 @@ export function createServerWithSocket() {
     cors: { origin: "*", methods: ["GET", "POST"] },
   });
 
+  // expose io to request handlers
+  app.set('io', io);
+
   // WebSocket events
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
