@@ -59,6 +59,8 @@ export function createServer() {
   app.get("/api/auth/claim-settings", handleGetClaimSettings);
   app.post("/api/auth/claim-settings", handleSaveClaimSettings);
   app.get("/api/auth/members", handleGetMembers);
+  app.put("/api/auth/member/:id", handleUpdateMember);
+  app.delete("/api/auth/member/:id", handleDeleteMember);
   app.get("/api/auth/distributor-settings", handleGetDistributorSettings);
   app.post("/api/auth/distributor-settings", handleSaveDistributorSettings);
 
