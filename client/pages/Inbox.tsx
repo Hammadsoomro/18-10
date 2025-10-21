@@ -199,6 +199,9 @@ export default function Inbox() {
         lines: map[k].lines,
       }));
       setDistributorItems(items);
+      if (tab !== "distributor") {
+        setUnreadDistributor(computeUnreadForDistributor(items));
+      }
     } catch (e) {
       console.error("Failed to fetch distributor assignments", e);
     }
