@@ -22,6 +22,7 @@ import {
   handleCreateContact,
   handleUpdateContact,
   handleDeleteContact,
+  handleGetMessages,
   handleSendMessage,
 } from "./routes/contacts";
 import {
