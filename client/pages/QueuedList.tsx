@@ -123,7 +123,6 @@ export default function QueuedList() {
     );
   }
 
-  const { user } = useAuth();
   if (user && user.role !== "admin") {
     return (
       <Layout title="Queued List">
