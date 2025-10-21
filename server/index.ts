@@ -11,6 +11,8 @@ import {
   handleGetClaimSettings,
   handleSaveClaimSettings,
   handleGetMembers,
+  handleUpdateMember,
+  handleDeleteMember,
   handleGetDistributorSettings,
   handleSaveDistributorSettings,
 } from "./routes/auth";
