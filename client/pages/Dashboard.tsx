@@ -91,7 +91,7 @@ export default function Dashboard() {
         socketRef.current = null;
       }
     };
-  }, []);
+  }, [token]);
 
   return (
     <Layout title="Dashboard">
