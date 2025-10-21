@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { RequestHandler } from "express";
 import { NumberLine } from "../db";
 import { verifyToken } from "../utils/jwt";
 
