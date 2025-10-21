@@ -490,6 +490,76 @@ export const handleSaveDistributorSettings: RequestHandler = async (
 
     await settings.save();
 
+    // Start or stop the server-side distributor loop for this team
+    try {
+      const app = (req as any).app;
+      if (!app.locals.distributorLoops) app.locals.distributorLoops = {};
+
+      const teamKey = String(user.teamId);
+      // clear existing loop if any
+      if (app.locals.distributorLoops[teamKey]) {
+        clearInterval(app.locals.distributorLoops[teamKey]);
+        delete app.locals.distributorLoops[teamKey];
+      }
+
+      if (settings.isActive) {
+        // start a new loop
+        const startLoop = async () => {
+          const io = app.get('io');
+          const DistributorSettingsModel = require('../db').DistributorSettings;
+          const NumberLineModel = require('../db').NumberLine;
+
+          const currentSettings = await DistributorSettingsModel.findOne({ teamId: teamKey }).populate('selectedMembers');
+          if (!currentSettings || !currentSettings.isActive) return;
+
+          const members = currentSettings.selectedMembers || [];
+          const linesPerMemberLocal = currentSettings.linesPerMember || 1;
+
+          const claimedLines: any[] = [];
+
+          for (const member of members) {
+            if (!member || !member._id) continue;
+            for (let i = 0; i < linesPerMemberLocal; i++) {
+              // claim the next available 'distributed' line for this team
+              const claimed = await NumberLineModel.findOneAndUpdate(
+                { teamId: teamKey, status: 'distributed' },
+                { $set: { status: 'claimed', claimedBy: member._id, claimedAt: new Date() }, $push: { distributedTo: member._id } },
+                { new: true, sort: { createdAt: 1 } },
+              );
+              if (claimed) claimedLines.push(claimed);
+              else break; // no more lines for this member
+            }
+          }
+
+          if (claimedLines.length > 0) {
+            // emit real-time update to team room
+            try {
+              if (io) {
+                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l._id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy })) });
+                io.to(`team_${teamKey}`).emit('distributor_indicator', { active: true });
+              }
+            } catch (e) {
+              console.error('Socket emit error:', e);
+            }
+          }
+        };
+
+        // Immediately run once, then set interval based on timerSeconds
+        await startLoop();
+        const interval = setInterval(async () => {
+          try {
+            await startLoop();
+          } catch (e) {
+            console.error('Distributor loop error:', e);
+          }
+        }, Math.max(1000, (settings.timerSeconds || 60) * 1000));
+
+        app.locals.distributorLoops[teamKey] = interval;
+      }
+    } catch (e) {
+      console.error('Failed to start/stop distributor loop:', e);
+    }
+
     res.json({
       message: "Distributor settings saved successfully",
       linesPerMember: settings.linesPerMember,
