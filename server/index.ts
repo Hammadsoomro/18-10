@@ -88,6 +88,7 @@ export function createServer() {
   app.post("/api/contacts", handleCreateContact);
   app.put("/api/contacts/:id", handleUpdateContact);
   app.delete("/api/contacts/:id", handleDeleteContact);
+  app.get("/api/contacts/:id/messages", handleGetMessages);
   app.post("/api/contacts/:id/message", handleSendMessage);
 
   return app;
