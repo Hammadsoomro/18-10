@@ -60,6 +60,7 @@ export function createServer() {
   app.post("/api/auth/signup", handleSignup);
   app.post("/api/auth/login", handleLogin);
   app.post("/api/auth/create-member", handleCreateMember);
+  app.post("/api/auth/change-password", handleChangePassword);
   app.get("/api/auth/claim-settings", handleGetClaimSettings);
   app.post("/api/auth/claim-settings", handleSaveClaimSettings);
   app.get("/api/auth/members", handleGetMembers);
