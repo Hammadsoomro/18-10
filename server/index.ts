@@ -8,6 +8,7 @@ import {
   handleSignup,
   handleLogin,
   handleCreateMember,
+  handleChangePassword,
   handleGetClaimSettings,
   handleSaveClaimSettings,
   handleGetMembers,
