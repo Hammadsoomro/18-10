@@ -108,23 +108,25 @@ export function Sidebar({
         <div className="p-4 border-b border-transparent">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg">
-                {/* Professional SVG logo */}
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="24" height="24" rx="6" fill="url(#g)" />
-                  <path d="M6 12h12M12 6v12" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-2xl overflow-hidden">
+                {/* Modern circular monogram logo */}
+                <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="-mt-0.5">
                   <defs>
-                    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" />
+                    <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#34d399" />
+                      <stop offset="50%" stopColor="#06b6d4" />
                       <stop offset="100%" stopColor="#7c3aed" />
                     </linearGradient>
                   </defs>
+                  <circle cx="24" cy="24" r="22" fill="url(#lg2)" />
+                  <path d="M15 30c0-6 6-10 9-10s9 4 9 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15 18h18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               {!isCollapsed && (
                 <div>
                   <div className="text-white font-extrabold tracking-tight text-lg">Line-Link</div>
-                  <div className="text-xs text-white/70">Admin Panel</div>
+                  <div className="text-xs text-white/80">Admin Panel</div>
                 </div>
               )}
             </div>
