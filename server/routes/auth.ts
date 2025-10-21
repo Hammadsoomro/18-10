@@ -342,13 +342,23 @@ export const handleUpdateMember: RequestHandler = async (req, res) => {
     const member = await User.findById(memberId);
     if (!member) return res.status(404).json({ error: "Member not found" });
     if (String(member.teamId) !== String(admin.teamId)) {
-      return res.status(403).json({ error: "Cannot modify member from another team" });
+      return res
+        .status(403)
+        .json({ error: "Cannot modify member from another team" });
     }
 
     member.active = active;
     await member.save();
 
-    res.json({ message: "Member updated", member: { id: member._id.toString(), name: member.name, email: member.email, active: member.active } });
+    res.json({
+      message: "Member updated",
+      member: {
+        id: member._id.toString(),
+        name: member.name,
+        email: member.email,
+        active: member.active,
+      },
+    });
   } catch (error) {
     console.error("Update member error:", error);
     res.status(500).json({ error: "Failed to update member" });
@@ -374,7 +384,9 @@ export const handleDeleteMember: RequestHandler = async (req, res) => {
     const member = await User.findById(memberId);
     if (!member) return res.status(404).json({ error: "Member not found" });
     if (String(member.teamId) !== String(admin.teamId)) {
-      return res.status(403).json({ error: "Cannot delete member from another team" });
+      return res
+        .status(403)
+        .json({ error: "Cannot delete member from another team" });
     }
 
     await User.findByIdAndDelete(memberId);
@@ -408,8 +420,10 @@ export const handleChangePassword: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Current password is incorrect" });
     }
 
-    if (typeof newPassword !== 'string' || newPassword.length < 6) {
-      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    if (typeof newPassword !== "string" || newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "New password must be at least 6 characters" });
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
@@ -417,8 +431,8 @@ export const handleChangePassword: RequestHandler = async (req, res) => {
 
     res.json({ message: "Password updated successfully" });
   } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({ error: 'Failed to change password' });
+    console.error("Change password error:", error);
+    res.status(500).json({ error: "Failed to change password" });
   }
 };
 
@@ -542,11 +556,13 @@ export const handleSaveDistributorSettings: RequestHandler = async (
       if (settings.isActive) {
         // start a new loop
         const startLoop = async () => {
-          const io = app.get('io');
-          const DistributorSettingsModel = require('../db').DistributorSettings;
-          const NumberLineModel = require('../db').NumberLine;
+          const io = app.get("io");
+          const DistributorSettingsModel = require("../db").DistributorSettings;
+          const NumberLineModel = require("../db").NumberLine;
 
-          const currentSettings = await DistributorSettingsModel.findOne({ teamId: teamKey }).populate('selectedMembers');
+          const currentSettings = await DistributorSettingsModel.findOne({
+            teamId: teamKey,
+          }).populate("selectedMembers");
           if (!currentSettings || !currentSettings.isActive) return;
 
           const members = currentSettings.selectedMembers || [];
@@ -559,8 +575,15 @@ export const handleSaveDistributorSettings: RequestHandler = async (
             for (let i = 0; i < linesPerMemberLocal; i++) {
               // claim the next available 'distributed' line for this team
               const claimed = await NumberLineModel.findOneAndUpdate(
-                { teamId: teamKey, status: 'distributed' },
-                { $set: { status: 'claimed', claimedBy: member._id, claimedAt: new Date() }, $push: { distributedTo: member._id } },
+                { teamId: teamKey, status: "distributed" },
+                {
+                  $set: {
+                    status: "claimed",
+                    claimedBy: member._id,
+                    claimedAt: new Date(),
+                  },
+                  $push: { distributedTo: member._id },
+                },
                 { new: true, sort: { createdAt: 1 } },
               );
               if (claimed) {
@@ -573,7 +596,7 @@ export const handleSaveDistributorSettings: RequestHandler = async (
                   claimedBy: member._id,
                   claimedByName: member.name,
                   distributedTo: claimed.distributedTo || [],
-                  status: 'claimed',
+                  status: "claimed",
                 });
               } else break; // no more lines for this member
             }
@@ -583,29 +606,45 @@ export const handleSaveDistributorSettings: RequestHandler = async (
             // emit real-time update to team room
             try {
               if (io) {
-                io.to(`team_${teamKey}`).emit('distributed_lines', { lines: claimedLines.map(l => ({ id: l.id, lineNumber: l.lineNumber, content: l.content, claimedAt: l.claimedAt, claimedBy: l.claimedBy, claimedByName: l.claimedByName, distributedTo: l.distributedTo || [], status: l.status })) });
-                io.to(`team_${teamKey}`).emit('distributor_indicator', { active: true });
+                io.to(`team_${teamKey}`).emit("distributed_lines", {
+                  lines: claimedLines.map((l) => ({
+                    id: l.id,
+                    lineNumber: l.lineNumber,
+                    content: l.content,
+                    claimedAt: l.claimedAt,
+                    claimedBy: l.claimedBy,
+                    claimedByName: l.claimedByName,
+                    distributedTo: l.distributedTo || [],
+                    status: l.status,
+                  })),
+                });
+                io.to(`team_${teamKey}`).emit("distributor_indicator", {
+                  active: true,
+                });
               }
             } catch (e) {
-              console.error('Socket emit error:', e);
+              console.error("Socket emit error:", e);
             }
           }
         };
 
         // Immediately run once, then set interval based on timerSeconds
         await startLoop();
-        const interval = setInterval(async () => {
-          try {
-            await startLoop();
-          } catch (e) {
-            console.error('Distributor loop error:', e);
-          }
-        }, Math.max(1000, (settings.timerSeconds || 60) * 1000));
+        const interval = setInterval(
+          async () => {
+            try {
+              await startLoop();
+            } catch (e) {
+              console.error("Distributor loop error:", e);
+            }
+          },
+          Math.max(1000, (settings.timerSeconds || 60) * 1000),
+        );
 
         app.locals.distributorLoops[teamKey] = interval;
       }
     } catch (e) {
-      console.error('Failed to start/stop distributor loop:', e);
+      console.error("Failed to start/stop distributor loop:", e);
     }
 
     res.json({

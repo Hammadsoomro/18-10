@@ -50,7 +50,9 @@ export default function Inbox() {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  const [claimSettingCooldown, setClaimSettingCooldown] = useState<number | null>(null);
+  const [claimSettingCooldown, setClaimSettingCooldown] = useState<
+    number | null
+  >(null);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -60,17 +62,19 @@ export default function Inbox() {
 
     if (!token) return;
     try {
-      const tokenRaw = localStorage.getItem('auth_token');
-      const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split('.')[1])) : null;
+      const tokenRaw = localStorage.getItem("auth_token");
+      const payload = tokenRaw
+        ? JSON.parse(atob(tokenRaw.split(".")[1]))
+        : null;
       const teamId = payload?.teamId;
       const userId = payload?.id;
       const s = io(undefined, { autoConnect: true });
       socketRef.current = s;
-      s.on('connect', () => {
-        if (teamId) s.emit('join_team', teamId);
+      s.on("connect", () => {
+        if (teamId) s.emit("join_team", teamId);
       });
 
-      s.on('distributed_lines', (data: any) => {
+      s.on("distributed_lines", (data: any) => {
         // always refresh distributor assignments and, if relevant, inbox data
         try {
           fetchDistributorAssignments();
@@ -79,14 +83,23 @@ export default function Inbox() {
         try {
           const lines = Array.isArray(data.lines) ? data.lines : [];
           const forMe = lines.some((l: any) => {
-            const dt = Array.isArray(l.distributedTo) ? l.distributedTo.map(String) : [];
-            return dt.includes(String(userId)) || String(l.claimedBy) === String(userId);
+            const dt = Array.isArray(l.distributedTo)
+              ? l.distributedTo.map(String)
+              : [];
+            return (
+              dt.includes(String(userId)) ||
+              String(l.claimedBy) === String(userId)
+            );
           });
           if (forMe) {
             fetchData();
             // small toast
             // @ts-ignore
-            import('sonner').then(({ toast }) => toast.success('You received new lines from Auto Distributor')).catch(() => {});
+            import("sonner")
+              .then(({ toast }) =>
+                toast.success("You received new lines from Auto Distributor"),
+              )
+              .catch(() => {});
           }
         } catch (e) {}
       });
@@ -98,55 +111,87 @@ export default function Inbox() {
         }
       };
     } catch (e) {
-      console.error('Socket init error', e);
+      console.error("Socket init error", e);
     }
   }, [token]);
 
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch('/api/auth/claim-settings', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/auth/claim-settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
-      console.error('Failed to fetch claim settings', e);
+      console.error("Failed to fetch claim settings", e);
     }
   };
 
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch('/api/numbers/claimed-lines', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/numbers/claimed-lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
-      const distributed = lines.filter((l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0);
+      const distributed = lines.filter(
+        (l: any) =>
+          Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
+      );
       // group by claimedBy (assigned member)
       const map: Record<string, any> = {};
       for (const l of distributed) {
-        const memberId = (l.claimedBy && (l.claimedBy._id || l.claimedBy)) || String((l as any).claimedBy || 'unknown');
-        const memberName = (l.claimedBy && (l.claimedBy.name || l.claimedByName)) || ((l as any).claimedByName) || 'Member';
+        const memberId =
+          (l.claimedBy && (l.claimedBy._id || l.claimedBy)) ||
+          String((l as any).claimedBy || "unknown");
+        const memberName =
+          (l.claimedBy && (l.claimedBy.name || l.claimedByName)) ||
+          (l as any).claimedByName ||
+          "Member";
         if (!map[memberId]) {
-          map[memberId] = { assignedTo: memberName, distributedAt: l.claimedAt || l.updatedAt || l.createdAt || new Date().toISOString(), lines: [] };
+          map[memberId] = {
+            assignedTo: memberName,
+            distributedAt:
+              l.claimedAt ||
+              l.updatedAt ||
+              l.createdAt ||
+              new Date().toISOString(),
+            lines: [],
+          };
         }
         map[memberId].lines.push(l.content || l);
       }
-      const items = Object.keys(map).map((k) => ({ id: k + '_' + map[k].distributedAt, assignedTo: map[k].assignedTo, distributedAt: map[k].distributedAt, lines: map[k].lines }));
+      const items = Object.keys(map).map((k) => ({
+        id: k + "_" + map[k].distributedAt,
+        assignedTo: map[k].assignedTo,
+        distributedAt: map[k].distributedAt,
+        lines: map[k].lines,
+      }));
       setDistributorItems(items);
     } catch (e) {
-      console.error('Failed to fetch distributor assignments', e);
+      console.error("Failed to fetch distributor assignments", e);
     }
   };
 
   useEffect(() => {
     const onSettings = (e: any) => {
       const cs = e?.detail?.cooldownSeconds;
-      if (typeof cs === 'number') setClaimSettingCooldown(cs);
+      if (typeof cs === "number") setClaimSettingCooldown(cs);
     };
-    window.addEventListener('claim_settings_updated', onSettings as EventListener);
-    return () => window.removeEventListener('claim_settings_updated', onSettings as EventListener);
+    window.addEventListener(
+      "claim_settings_updated",
+      onSettings as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "claim_settings_updated",
+        onSettings as EventListener,
+      );
   }, []);
 
   // Cooldown persistence helpers
@@ -224,11 +269,17 @@ export default function Inbox() {
     };
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener("claim_cooldown_updated", onCustom as EventListener);
+    window.addEventListener(
+      "claim_cooldown_updated",
+      onCustom as EventListener,
+    );
 
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
+      window.removeEventListener(
+        "claim_cooldown_updated",
+        onCustom as EventListener,
+      );
       if (cooldownTimerRef.current) {
         window.clearInterval(cooldownTimerRef.current);
         cooldownTimerRef.current = null;
@@ -321,10 +372,11 @@ export default function Inbox() {
           // Try to parse error message for better UX
           try {
             const err = await claimResponse.json();
-            const message = err?.error || 'Another member just claimed that line. Try again.';
+            const message =
+              err?.error || "Another member just claimed that line. Try again.";
             toast.error(message);
           } catch (e) {
-            toast.error('Another member just claimed that line. Try again.');
+            toast.error("Another member just claimed that line. Try again.");
           }
           await fetchData();
           return;
@@ -347,7 +399,9 @@ export default function Inbox() {
       // start persistent cooldown using server setting (fallback 60s)
       startCooldown(claimSettingCooldown ?? 60);
 
-      toast.success(`${claimedCount} line${claimedCount > 1 ? 's' : ''} claimed successfully!`);
+      toast.success(
+        `${claimedCount} line${claimedCount > 1 ? "s" : ""} claimed successfully!`,
+      );
     } catch (error) {
       console.error("Error claiming line:", error);
       toast.error("Failed to claim line");

@@ -99,7 +99,7 @@ export function createServerWithSocket() {
   });
 
   // expose io to request handlers
-  app.set('io', io);
+  app.set("io", io);
 
   // WebSocket events
   io.on("connection", (socket) => {

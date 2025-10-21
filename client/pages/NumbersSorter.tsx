@@ -196,8 +196,12 @@ export default function NumbersSorter() {
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
       // notify other pages to refresh distributed lines
       try {
-        localStorage.setItem('distributor_updated', String(Date.now()));
-        window.dispatchEvent(new CustomEvent('distributor_updated', { detail: { teamId: user?.teamId } }));
+        localStorage.setItem("distributor_updated", String(Date.now()));
+        window.dispatchEvent(
+          new CustomEvent("distributor_updated", {
+            detail: { teamId: user?.teamId },
+          }),
+        );
       } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
@@ -233,7 +237,9 @@ export default function NumbersSorter() {
         <div className="p-6">
           <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <p className="text-lg font-semibold">Not available</p>
-            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
           </div>
         </div>
       </Layout>

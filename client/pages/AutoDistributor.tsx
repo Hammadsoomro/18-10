@@ -61,27 +61,32 @@ export default function AutoDistributor() {
       setTimeout(() => fetchDistributedLines(), 300);
     };
 
-    window.addEventListener('distributor_updated', onDistributorUpdated as EventListener);
+    window.addEventListener(
+      "distributor_updated",
+      onDistributorUpdated as EventListener,
+    );
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'distributor_updated') {
+      if (e.key === "distributor_updated") {
         onDistributorUpdated();
       }
     };
-    window.addEventListener('storage', onStorage);
+    window.addEventListener("storage", onStorage);
 
     // socket connection for real-time distribution events
     if (token) {
       try {
-        const tokenRaw = localStorage.getItem('auth_token');
-        const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split('.')[1])) : null;
+        const tokenRaw = localStorage.getItem("auth_token");
+        const payload = tokenRaw
+          ? JSON.parse(atob(tokenRaw.split(".")[1]))
+          : null;
         const teamId = payload?.teamId;
         const s = io(undefined, { autoConnect: true });
         socketRef.current = s;
-        s.on('connect', () => {
-          if (teamId) s.emit('join_team', teamId);
+        s.on("connect", () => {
+          if (teamId) s.emit("join_team", teamId);
         });
 
-        s.on('distributed_lines', (data: any) => {
+        s.on("distributed_lines", (data: any) => {
           // server informs which lines were moved from 'Lines in Distribution'
           // refresh the distributed list so UI updates immediately
           fetchDistributedLines();
@@ -90,22 +95,29 @@ export default function AutoDistributor() {
             if (count > 0) {
               // small toast
               // @ts-ignore
-              import('sonner').then(({ toast }) => toast.success(`${count} line(s) distributed`)).catch(() => {});
+              import("sonner")
+                .then(({ toast }) =>
+                  toast.success(`${count} line(s) distributed`),
+                )
+                .catch(() => {});
             }
           } catch (e) {}
         });
 
-        s.on('distributor_indicator', (data: any) => {
+        s.on("distributor_indicator", (data: any) => {
           // could update UI indicator if needed
         });
       } catch (e) {
-        console.error('Socket error', e);
+        console.error("Socket error", e);
       }
     }
 
     return () => {
-      window.removeEventListener('distributor_updated', onDistributorUpdated as EventListener);
-      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(
+        "distributor_updated",
+        onDistributorUpdated as EventListener,
+      );
+      window.removeEventListener("storage", onStorage);
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -166,7 +178,9 @@ export default function AutoDistributor() {
       const data = await response.json();
 
       // Show only lines with "distributed" status (endpoint returns claimed + distributed)
-      const distributed = data.lines.filter((line: any) => line.status === "distributed");
+      const distributed = data.lines.filter(
+        (line: any) => line.status === "distributed",
+      );
       setDistributedLines(distributed);
     } catch (error) {
       console.error("Error fetching distributed lines:", error);
@@ -282,7 +296,9 @@ export default function AutoDistributor() {
         <div className="p-6">
           <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <p className="text-lg font-semibold">Not available</p>
-            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
           </div>
         </div>
       </Layout>
