@@ -143,7 +143,7 @@ export function Sidebar({
         </div>
 
 
-        {/* Account Info (slim) */}
+        {/* Account Info (slim) moved below header */}
         {!isCollapsed && user && (
           <div className="px-4 py-2 border-b border-transparent">
             <div className="flex items-center justify-between">
