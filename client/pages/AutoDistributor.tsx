@@ -217,7 +217,6 @@ export default function AutoDistributor() {
   }
 
   // Hide UI from non-admins
-  const { user } = useAuth();
   if (user && user.role !== "admin") {
     return (
       <Layout title="Auto Distributor">
