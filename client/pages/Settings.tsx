@@ -94,7 +94,8 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
