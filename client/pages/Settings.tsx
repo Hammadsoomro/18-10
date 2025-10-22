@@ -156,7 +156,8 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch("/api/auth/create-member", {
+      const createUrl = `${window.location.origin}/api/auth/create-member`;
+      const response = await fetch(createUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
