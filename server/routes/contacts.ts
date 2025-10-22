@@ -245,6 +245,61 @@ export const handleSendMessage: RequestHandler = async (req, res) => {
     }
     await contact.save();
 
+    // If outgoing message, attempt to send via SignalWire
+    if (direction !== 'incoming') {
+      try {
+        const PROJECT_ID = process.env.SIGNALWIRE_PROJECT_ID;
+        const API_TOKEN = process.env.SIGNALWIRE_API_TOKEN;
+        const SPACE = process.env.SIGNALWIRE_SPACE; // e.g. your-space.signalwire.com (only the subdomain part is used)
+        const FROM_NUMBER = process.env.SIGNALWIRE_FROM_NUMBER; // e.g. +1234567890
+
+        if (PROJECT_ID && API_TOKEN && SPACE && FROM_NUMBER) {
+          const url = `https://${SPACE}/api/laml/2010-04-01/Accounts/${PROJECT_ID}/Messages.json`;
+          const params = new URLSearchParams();
+          params.append('From', FROM_NUMBER);
+          params.append('To', contact.phone);
+          params.append('Body', message);
+
+          const auth = Buffer.from(`${PROJECT_ID}:${API_TOKEN}`).toString('base64');
+
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: params.toString(),
+          });
+
+          if (!resp.ok) {
+            const text = await resp.text();
+            console.error('SignalWire send failed', resp.status, text);
+          } else {
+            const data = await resp.json();
+            // Optionally store message SID or response data
+            const Message = require('../db').Message;
+            try {
+              const msg = new Message({
+                userId: user._id,
+                contactId: contact._id,
+                content: message,
+                sender: 'outgoing',
+                read: true,
+                remoteId: data.sid || data.api_id || null,
+              });
+              await msg.save();
+            } catch (e) {
+              console.error('Failed saving outgoing message record', e);
+            }
+          }
+        } else {
+          console.warn('SignalWire credentials not fully configured; skipping sending SMS');
+        }
+      } catch (e) {
+        console.error('SignalWire send error', e);
+      }
+    }
+
     // Emit socket event if server has io attached
     try {
       const app: any = req.app;
