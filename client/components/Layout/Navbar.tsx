@@ -118,7 +118,17 @@ export function Navbar({
         width: `calc(100% - ${sidebarCollapsed ? "80px" : "256px"})`,
       }}
     >
-      <div className="flex-1">
+      <div className="flex-1 flex items-center">
+        {onToggleSidebarCollapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebarCollapse}
+            className="mr-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </Button>
+        )}
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
           {title}
         </h1>
