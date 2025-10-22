@@ -42,7 +42,8 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await fetch("/api/auth/members", {
+          const membersUrl = `${window.location.origin}/api/auth/members`;
+          const res = await fetch(membersUrl, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
