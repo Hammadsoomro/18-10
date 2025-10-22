@@ -100,12 +100,18 @@ export function Navbar({
     };
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener("claim_cooldown_updated", onCustom as EventListener);
+    window.addEventListener(
+      "claim_cooldown_updated",
+      onCustom as EventListener,
+    );
 
     return () => {
       clearInterval(timer);
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
+      window.removeEventListener(
+        "claim_cooldown_updated",
+        onCustom as EventListener,
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -126,7 +132,11 @@ export function Navbar({
             onClick={onToggleSidebarCollapse}
             className="mr-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
           </Button>
         )}
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">

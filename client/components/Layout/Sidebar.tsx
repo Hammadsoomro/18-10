@@ -69,9 +69,24 @@ export function Sidebar({
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Conversation", path: "/conversation" },
-    { icon: SortAsc, label: "Numbers Sorter", path: "/numbers-sorter", adminOnly: true },
-    { icon: Zap, label: "Auto Distributor", path: "/auto-distributor", adminOnly: true },
-    { icon: ListTodo, label: "Queued List", path: "/queued-list", adminOnly: true },
+    {
+      icon: SortAsc,
+      label: "Numbers Sorter",
+      path: "/numbers-sorter",
+      adminOnly: true,
+    },
+    {
+      icon: Zap,
+      label: "Auto Distributor",
+      path: "/auto-distributor",
+      adminOnly: true,
+    },
+    {
+      icon: ListTodo,
+      label: "Queued List",
+      path: "/queued-list",
+      adminOnly: true,
+    },
     { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
     { icon: Inbox, label: "Inbox", path: "/inbox" },
   ];
@@ -116,12 +131,18 @@ export function Sidebar({
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
               {/* logo (external asset) */}
-              <img src="https://cdn.builder.io/o/assets%2F13331b2ed0834c738201e986b4f369af%2Fecd70b64eebe4d40acd0af01614f0b02?alt=media&token=c167c7c3-d78b-4c39-ae58-8c2c3be041cb&apiKey=13331b2ed0834c738201e986b4f369af" alt="Line-Link logo" className="w-full h-full object-cover" />
+              <img
+                src="https://cdn.builder.io/o/assets%2F13331b2ed0834c738201e986b4f369af%2Fecd70b64eebe4d40acd0af01614f0b02?alt=media&token=c167c7c3-d78b-4c39-ae58-8c2c3be041cb&apiKey=13331b2ed0834c738201e986b4f369af"
+                alt="Line-Link logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             {!isCollapsed && (
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div className="text-white font-extrabold tracking-tight text-lg truncate">Line-Link</div>
+                  <div className="text-white font-extrabold tracking-tight text-lg truncate">
+                    Line-Link
+                  </div>
                   <button
                     onClick={() => handleCollapseToggle(!isCollapsed)}
                     className="md:hidden p-1 hover:bg-white/10 rounded-lg transition"
@@ -136,23 +157,41 @@ export function Sidebar({
 
           {!isCollapsed && (
             <div className="mt-3">
-              <div className="text-white font-mono text-lg font-semibold">{time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
-              <div className="text-xs text-white/80 mt-0.5">{time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+              <div className="text-white font-mono text-lg font-semibold">
+                {time.toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </div>
+              <div className="text-xs text-white/80 mt-0.5">
+                {time.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </div>
             </div>
           )}
         </div>
-
 
         {/* Account Info (slim) moved below header */}
         {!isCollapsed && user && (
           <div className="px-4 py-2 border-b border-transparent">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] text-white/80 uppercase tracking-wider">Account</p>
-                <p className="text-sm text-white font-semibold truncate">{user.name}</p>
+                <p className="text-[10px] text-white/80 uppercase tracking-wider">
+                  Account
+                </p>
+                <p className="text-sm text-white font-semibold truncate">
+                  {user.name}
+                </p>
               </div>
               <div className="text-right ml-2">
-                <p className="text-[10px] text-white/70 capitalize">{user.role}</p>
+                <p className="text-[10px] text-white/70 capitalize">
+                  {user.role}
+                </p>
               </div>
             </div>
           </div>
@@ -184,28 +223,43 @@ export function Sidebar({
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
             <div className="px-4 pb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button onClick={() => handleNavigate("/settings")} aria-label="Settings" title="Settings" className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition">
-                <Settings className="h-5 w-5" />
-              </button>
-              <button onClick={handleLogout} aria-label="Logout" title="Logout" className="p-2 rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition">
-                <LogOut className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleNavigate("/settings")}
+                  aria-label="Settings"
+                  title="Settings"
+                  className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
+                >
+                  <Settings className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                  title="Logout"
+                  className="p-2 rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="hidden md:flex items-center">
+                <button
+                  onClick={() => handleCollapseToggle(!isCollapsed)}
+                  className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
+                  aria-label={
+                    isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                  }
+                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-5 w-5" />
+                  ) : (
+                    <ChevronLeft className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="hidden md:flex items-center">
-              <button
-                onClick={() => handleCollapseToggle(!isCollapsed)}
-                className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
           </div>
         </div>
-
       </aside>
 
       {/* Content offset */}

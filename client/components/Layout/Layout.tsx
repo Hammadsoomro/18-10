@@ -24,7 +24,11 @@ export function Layout({ children, title = "Dashboard" }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Navbar */}
-        <Navbar title={title} sidebarCollapsed={sidebarCollapsed} onToggleSidebarCollapse={() => setSidebarCollapsed(prev => !prev)} />
+        <Navbar
+          title={title}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebarCollapse={() => setSidebarCollapsed((prev) => !prev)}
+        />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto pt-16 md:pt-16">

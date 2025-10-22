@@ -197,8 +197,11 @@ export const handleGetMessages: RequestHandler = async (req, res) => {
     const contact = await Contact.findOne({ _id: id, userId: user._id });
     if (!contact) return res.status(404).json({ error: "Contact not found" });
 
-    const { Message } = require('../db');
-    const messages = await Message.find({ contactId: contact._id, userId: user._id })
+    const { Message } = require("../db");
+    const messages = await Message.find({
+      contactId: contact._id,
+      userId: user._id,
+    })
       .sort({ createdAt: 1 })
       .lean();
 
@@ -212,8 +215,8 @@ export const handleGetMessages: RequestHandler = async (req, res) => {
 
     res.json({ messages: formatted });
   } catch (error) {
-    console.error('Get messages error:', error);
-    res.status(500).json({ error: 'Failed to get messages' });
+    console.error("Get messages error:", error);
+    res.status(500).json({ error: "Failed to get messages" });
   }
 };
 
@@ -240,13 +243,13 @@ export const handleSendMessage: RequestHandler = async (req, res) => {
     // Update last message and timestamp
     contact.lastMessage = message;
     contact.lastMessageAt = new Date();
-    if (direction === 'incoming') {
+    if (direction === "incoming") {
       contact.unreadCount = (contact.unreadCount || 0) + 1;
     }
     await contact.save();
 
     // If outgoing message, attempt to send via SignalWire
-    if (direction !== 'incoming') {
+    if (direction !== "incoming") {
       try {
         const PROJECT_ID = process.env.SIGNALWIRE_PROJECT_ID;
         const API_TOKEN = process.env.SIGNALWIRE_API_TOKEN;
@@ -256,71 +259,75 @@ export const handleSendMessage: RequestHandler = async (req, res) => {
         if (PROJECT_ID && API_TOKEN && SPACE && FROM_NUMBER) {
           const url = `https://${SPACE}/api/laml/2010-04-01/Accounts/${PROJECT_ID}/Messages.json`;
           const params = new URLSearchParams();
-          params.append('From', FROM_NUMBER);
-          params.append('To', contact.phone);
-          params.append('Body', message);
+          params.append("From", FROM_NUMBER);
+          params.append("To", contact.phone);
+          params.append("Body", message);
 
-          const auth = Buffer.from(`${PROJECT_ID}:${API_TOKEN}`).toString('base64');
+          const auth = Buffer.from(`${PROJECT_ID}:${API_TOKEN}`).toString(
+            "base64",
+          );
 
           const resp = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Authorization': `Basic ${auth}`,
-              'Content-Type': 'application/x-www-form-urlencoded'
+              Authorization: `Basic ${auth}`,
+              "Content-Type": "application/x-www-form-urlencoded",
             },
             body: params.toString(),
           });
 
           if (!resp.ok) {
             const text = await resp.text();
-            console.error('SignalWire send failed', resp.status, text);
+            console.error("SignalWire send failed", resp.status, text);
           } else {
             const data = await resp.json();
             // Optionally store message SID or response data
-            const Message = require('../db').Message;
+            const Message = require("../db").Message;
             try {
               const msg = new Message({
                 userId: user._id,
                 contactId: contact._id,
                 content: message,
-                sender: 'outgoing',
+                sender: "outgoing",
                 read: true,
                 remoteId: data.sid || data.api_id || null,
               });
               await msg.save();
             } catch (e) {
-              console.error('Failed saving outgoing message record', e);
+              console.error("Failed saving outgoing message record", e);
             }
           }
         } else {
-          console.warn('SignalWire credentials not fully configured; skipping sending SMS');
+          console.warn(
+            "SignalWire credentials not fully configured; skipping sending SMS",
+          );
         }
       } catch (e) {
-        console.error('SignalWire send error', e);
+        console.error("SignalWire send error", e);
       }
     }
 
     // Emit socket event if server has io attached
     try {
       const app: any = req.app;
-      const io = app.get('io');
+      const io = app.get("io");
       if (io) {
-        io.to(`team_${user.teamId}`).emit('sms_received', {
+        io.to(`team_${user.teamId}`).emit("sms_received", {
           contactId: contact._id.toString(),
           phone: contact.phone,
           name: contact.name,
           message,
-          direction: direction || 'incoming',
+          direction: direction || "incoming",
           timestamp: contact.lastMessageAt,
         });
       }
     } catch (e) {
-      console.error('Emit sms error', e);
+      console.error("Emit sms error", e);
     }
 
-    res.json({ message: 'Message sent' });
+    res.json({ message: "Message sent" });
   } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error("Send message error:", error);
+    res.status(500).json({ error: "Failed to send message" });
   }
 };
