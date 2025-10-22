@@ -35,6 +35,14 @@ export default function Settings() {
   const [members, setMembers] = useState<{ id: string; name: string; email: string; active: boolean }[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
+  // Edit member state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<{ id: string; name: string; email: string; active: boolean } | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editActive, setEditActive] = useState(true);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   useEffect(() => {
     if (user?.role === "admin" && token) {
       fetchClaimSettings();
@@ -412,13 +420,27 @@ export default function Settings() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-slate-500 mr-3">{m.active ? 'Active' : 'Inactive'}</span>
+                                    <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingMember(m);
+                                  setEditName(m.name);
+                                  setEditEmail(m.email);
+                                  setEditActive(m.active);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
                               <Button
                                 size="sm"
                                 variant={m.active ? 'destructive' : 'secondary'}
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const memberUrl = `${window.location.origin}/api/auth/member/${m.id}`;
+                                    const res = await fetch(memberUrl, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                       body: JSON.stringify({ active: !m.active }),
@@ -441,7 +463,8 @@ export default function Settings() {
                                   if (!token) return;
                                   if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const memberUrl = `${window.location.origin}/api/auth/member/${m.id}`;
+                                    const res = await fetch(memberUrl, {
                                       method: 'DELETE',
                                       headers: { Authorization: `Bearer ${token}` },
                                     });
@@ -460,8 +483,79 @@ export default function Settings() {
                           </div>
                         ))}
                       </div>
-                    )}
+                      )}
                   </div>
+
+                  {/* Edit Member Dialog */}
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Edit Team Member</DialogTitle>
+                        <DialogDescription>
+                          Update member details and status.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div>
+                          <Label htmlFor="edit-member-name">Full Name</Label>
+                          <Input
+                            id="edit-member-name"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-member-email">Email</Label>
+                          <Input
+                            id="edit-member-email"
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label>Active</Label>
+                          <Switch checked={editActive} onCheckedChange={(v: any) => setEditActive(!!v)} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button
+                          onClick={async () => {
+                            if (!editingMember || !token) return;
+                            setIsSavingEdit(true);
+                            try {
+                              const memberUrl = `${window.location.origin}/api/auth/member/${editingMember.id}`;
+                              const res = await fetch(memberUrl, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ name: editName, email: editEmail, active: editActive }),
+                              });
+                              if (!res.ok) {
+                                const t = await res.text();
+                                throw new Error(t || 'Failed to update member');
+                              }
+                              setMembers((prev) => prev.map(p => p.id === editingMember.id ? { ...p, name: editName, email: editEmail, active: editActive } : p));
+                              setIsEditDialogOpen(false);
+                              toast.success('Member updated');
+                            } catch (e) {
+                              console.error('Error updating member', e);
+                              toast.error('Failed to update member');
+                            } finally {
+                              setIsSavingEdit(false);
+                            }
+                          }}
+                          disabled={isSavingEdit}
+                          className="bg-blue-600 hover:bg-blue-700 flex-1"
+                        >
+                          {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                 </CardContent>
               </Card>
             ) : (
