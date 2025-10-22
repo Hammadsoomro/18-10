@@ -23,12 +23,14 @@ interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
   onCollapsedChange?: (collapsed: boolean) => void;
+  collapsed?: boolean;
 }
 
 export function Sidebar({
   open = true,
   onClose,
   onCollapsedChange,
+  collapsed,
 }: SidebarProps) {
   const [time, setTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -47,6 +49,12 @@ export function Sidebar({
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (typeof collapsed === "boolean") {
+      setIsCollapsed(collapsed);
+    }
+  }, [collapsed]);
 
   const handleNavigate = (path: string) => {
     navigate(path);
