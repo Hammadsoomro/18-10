@@ -35,6 +35,12 @@ export default function Settings() {
   const [members, setMembers] = useState<{ id: string; name: string; email: string; active: boolean }[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   // Edit member state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<{ id: string; name: string; email: string; active: boolean } | null>(null);
