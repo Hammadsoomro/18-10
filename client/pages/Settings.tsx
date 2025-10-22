@@ -188,7 +188,8 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch("/api/auth/members", {
+        const membersUrl = `${window.location.origin}/api/auth/members`;
+        const res = await fetch(membersUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
