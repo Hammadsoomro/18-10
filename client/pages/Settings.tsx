@@ -63,7 +63,8 @@ export default function Settings() {
 
     try {
       setIsLoadingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const response = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
