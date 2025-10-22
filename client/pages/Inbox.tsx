@@ -127,7 +127,8 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const res = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
