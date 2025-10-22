@@ -785,7 +785,7 @@ export default function Settings() {
                         body: JSON.stringify({ currentPassword, newPassword: newPasswordInput }),
                       });
                       if (!res.ok) {
-                        const text = await res.text();
+                        const text = await res.clone().text();
                         let msg = 'Failed to update password';
                         try { msg = JSON.parse(text).error || text; } catch { msg = text; }
                         throw new Error(msg);
