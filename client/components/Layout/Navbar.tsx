@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Bell } from "lucide-react";
+import { Moon, Sun, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileMenu } from "./ProfileMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,11 +7,13 @@ import { useAuth } from "@/hooks/useAuth";
 interface NavbarProps {
   title?: string;
   sidebarCollapsed?: boolean;
+  onToggleSidebarCollapse?: () => void;
 }
 
 export function Navbar({
   title = "Dashboard",
   sidebarCollapsed = false,
+  onToggleSidebarCollapse,
 }: NavbarProps) {
   const { user } = useAuth();
   const [isDark, setIsDark] = useState(true);
