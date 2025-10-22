@@ -725,12 +725,20 @@ export default function Settings() {
                     id="current-password"
                     type="password"
                     className="mt-2"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" className="mt-2" />
+                  <Input
+                    id="new-password"
+                    type="password"
+                    className="mt-2"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                  />
                 </div>
 
                 <div>
@@ -739,11 +747,64 @@ export default function Settings() {
                     id="confirm-password"
                     type="password"
                     className="mt-2"
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
                   />
                 </div>
 
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Update Password
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={isUpdatingPassword}
+                  onClick={async () => {
+                    if (!token) {
+                      toast.error('Not authenticated');
+                      return;
+                    }
+
+                    if (!currentPassword || !newPasswordInput || !confirmPasswordInput) {
+                      toast.error('Please fill all password fields');
+                      return;
+                    }
+
+                    if (newPasswordInput !== confirmPasswordInput) {
+                      toast.error('New passwords do not match');
+                      return;
+                    }
+
+                    if (newPasswordInput.length < 6) {
+                      toast.error('New password must be at least 6 characters');
+                      return;
+                    }
+
+                    setIsUpdatingPassword(true);
+                    try {
+                      const apiUrl = `${window.location.origin}/api/auth/change-password`;
+                      const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ currentPassword, newPassword: newPasswordInput }),
+                      });
+                      if (!res.ok) {
+                        const text = await res.text();
+                        let msg = 'Failed to update password';
+                        try { msg = JSON.parse(text).error || text; } catch { msg = text; }
+                        throw new Error(msg);
+                      }
+
+                      toast.success('Password updated successfully');
+                      // clear inputs
+                      setCurrentPassword('');
+                      setNewPasswordInput('');
+                      setConfirmPasswordInput('');
+                    } catch (e) {
+                      console.error('Password update error', e);
+                      toast.error(e instanceof Error ? e.message : 'Failed to update password');
+                    } finally {
+                      setIsUpdatingPassword(false);
+                    }
+                  }}
+                >
+                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
                 </Button>
               </CardContent>
             </Card>
