@@ -150,8 +150,34 @@ export default function NumbersSorter() {
 
     setIsMoving(true);
     try {
-      const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-queue", {
+      // Fetch all lines to determine which are already distributed
+      const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!allRes.ok) throw new Error("Failed to fetch existing lines");
+      const allData = await allRes.json();
+      const allLines = Array.isArray(allData.lines) ? allData.lines : [];
+
+      // Build a set of distributed contents to dedupe against
+      const distributedContents = new Set(
+        allLines
+          .filter((l: any) => l.status === "distributed")
+          .map((l: any) => (typeof l.content === "string" ? l.content.trim() : String(l.content)))
+      );
+
+      // Filter current sorter lines to exclude any that already exist in distributed
+      const linesToMove = lines.filter(
+        (l) => !distributedContents.has((l.content || "").trim()),
+      );
+
+      if (linesToMove.length === 0) {
+        toast.error("All selected lines already exist in Distributed Lines and were skipped");
+        setIsMoving(false);
+        return;
+      }
+
+      const lineIds = linesToMove.map((l) => l._id || l.id).filter(Boolean);
+      const response = await fetch(`${window.location.origin}/api/numbers/move-to-queue`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +188,7 @@ export default function NumbersSorter() {
 
       if (!response.ok) throw new Error("Failed to move lines");
 
-      toast.success(`${lines.length} line(s) moved to Queued List`);
+      toast.success(`${linesToMove.length} line(s) moved to Queued List`);
       setLines([]);
       setTimeout(() => navigate("/queued-list"), 500);
     } catch (error) {
