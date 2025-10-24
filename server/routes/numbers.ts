@@ -15,12 +15,21 @@ export const handleGetLines: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const lines = await NumberLine.find({
-      teamId: decoded.teamId,
-      $or: [{ status: "queued" }, { status: "claimed", claimedBy: decoded.id }],
-    })
-      .populate("claimedBy", "name email")
-      .sort({ createdAt: -1 });
+    // Admins see 'staged' lines (sorted live); members see queued or their claimed lines
+    const isAdmin = decoded.role === 'admin';
+    let lines;
+    if (isAdmin) {
+      lines = await NumberLine.find({ teamId: decoded.teamId, status: 'staged' })
+        .populate("claimedBy", "name email")
+        .sort({ createdAt: -1 });
+    } else {
+      lines = await NumberLine.find({
+        teamId: decoded.teamId,
+        $or: [{ status: "queued" }, { status: "claimed", claimedBy: decoded.id }],
+      })
+        .populate("claimedBy", "name email")
+        .sort({ createdAt: -1 });
+    }
 
     res.json({ lines });
   } catch (error) {
