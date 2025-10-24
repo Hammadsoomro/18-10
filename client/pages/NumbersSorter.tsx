@@ -80,7 +80,7 @@ export default function NumbersSorter() {
     lineTexts = Array.from(new Set(lineTexts));
 
     // Check for duplicates with existing staged lines and distributed lines
-    const existingContents = new Set(lines.map((l) => (l.content || "").trim()));
+    const existingContents = new Set(lines.map((l) => (l.content || "").toString().trim().toLowerCase()));
 
     try {
       const distRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
