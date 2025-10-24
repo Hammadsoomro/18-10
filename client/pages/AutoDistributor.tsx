@@ -129,7 +129,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/auth/members", {
+      const response = await fetch(`${window.location.origin}/api/auth/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
