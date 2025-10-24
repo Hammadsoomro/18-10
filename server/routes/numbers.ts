@@ -97,7 +97,7 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       teamId: decoded.teamId,
       content,
       lineNumber: startLineNumber + index,
-      status: "queued" as const,
+      status: "staged" as const,
     }));
 
     const createdLines = await NumberLine.insertMany(newLines);
