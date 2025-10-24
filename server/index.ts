@@ -32,6 +32,7 @@ import {
   handleDeleteLine,
   handleMoveToQueue,
   handleMoveToDistributor,
+  handleClearDistributor,
   handleGetQueuedLines,
   handleGetClaimedLines,
   handleGetStats,
