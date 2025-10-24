@@ -591,8 +591,45 @@ export default function Inbox() {
           {/* Distributor Tab */}
           <TabsContent value="distributor" className="space-y-6 mt-6">
             <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle>Auto Distributor Assignments</CardTitle>
+                {distributorItems.length > 0 && (
+                  <div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">Clear</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogTitle>Clear distributor assignments?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete all Auto Distributor assigned lines for your team. This action cannot be undone.
+                        </AlertDialogDescription>
+                        <div className="flex gap-4 justify-end">
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`${window.location.origin}/api/numbers/clear-distributor`, {
+                                  method: 'POST',
+                                  headers: { Authorization: `Bearer ${token}` },
+                                });
+                                if (!res.ok) throw new Error('Failed to clear distributor assignments');
+                                await fetchDistributorAssignments();
+                                toast.success('Distributor assignments cleared');
+                              } catch (e) {
+                                console.error('Clear distributor failed', e);
+                                toast.error('Failed to clear distributor assignments');
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Clear
+                          </AlertDialogAction>
+                        </div>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 {distributorItems.length === 0 ? (
