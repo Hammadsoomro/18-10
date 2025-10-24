@@ -92,7 +92,7 @@ export default function NumbersSorter() {
           ? distData.lines.filter((ln: any) => ln.status === "distributed")
           : [];
         for (const d of distributed) {
-          if (d && d.content) existingContents.add((d.content || "").toString().trim());
+          if (d && d.content) existingContents.add((d.content || "").toString().trim().toLowerCase());
         }
       }
     } catch (e) {
