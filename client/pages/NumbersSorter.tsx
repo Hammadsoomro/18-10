@@ -79,8 +79,26 @@ export default function NumbersSorter() {
     const duplicatesInInput = lineTexts.length - new Set(lineTexts).size;
     lineTexts = Array.from(new Set(lineTexts));
 
-    // Check for duplicates with existing lines
-    const existingContents = new Set(lines.map((l) => l.content));
+    // Check for duplicates with existing staged lines and distributed lines
+    const existingContents = new Set(lines.map((l) => (l.content || "").trim()));
+
+    try {
+      const distRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (distRes.ok) {
+        const distData = await distRes.json();
+        const distributed = Array.isArray(distData.lines)
+          ? distData.lines.filter((ln: any) => ln.status === "distributed")
+          : [];
+        for (const d of distributed) {
+          if (d && d.content) existingContents.add((d.content || "").toString().trim());
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch distributed lines for dedupe", e);
+    }
+
     const beforeDedup = lineTexts.length;
     lineTexts = lineTexts.filter((text) => !existingContents.has(text));
     const duplicatesWithExisting = beforeDedup - lineTexts.length;
