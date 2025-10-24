@@ -55,7 +55,7 @@ export default function DistributedLines() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
