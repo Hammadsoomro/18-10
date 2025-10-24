@@ -165,7 +165,7 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/numbers/claimed-lines", {
+      const res = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -331,7 +331,7 @@ export default function Inbox() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -380,7 +380,7 @@ export default function Inbox() {
       // Step 1: Move all existing claimed lines to distributed
       if (claims.length > 0) {
         const claimedLineIds = claims.map((c) => c._id || c.id);
-        const moveResponse = await fetch("/api/numbers/move-to-distributor", {
+        const moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -394,7 +394,7 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`/api/numbers/claim`, {
+      const claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
