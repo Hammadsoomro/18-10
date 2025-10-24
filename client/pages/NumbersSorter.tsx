@@ -105,7 +105,19 @@ export default function NumbersSorter() {
         body: JSON.stringify({ contents: lineTexts }),
       });
 
-      if (!response.ok) throw new Error("Failed to add lines");
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        let message = `Failed to add lines: ${response.status}`;
+        try {
+          const json = JSON.parse(body || "{}");
+          if (json && json.error) message = json.error;
+        } catch {}
+        console.error("Add lines failed:", response.status, body);
+        toast.error(message);
+        setIsAdding(false);
+        return;
+      }
+
       const data = await response.json();
 
       setLines([...lines, ...data.lines]);
