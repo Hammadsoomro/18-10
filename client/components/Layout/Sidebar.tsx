@@ -69,16 +69,11 @@ export function Sidebar({
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Conversation", path: "/conversation" },
+    { icon: Inbox, label: "Inbox", path: "/inbox" },
     {
       icon: SortAsc,
       label: "Numbers Sorter",
       path: "/numbers-sorter",
-      adminOnly: true,
-    },
-    {
-      icon: Zap,
-      label: "Auto Distributor",
-      path: "/auto-distributor",
       adminOnly: true,
     },
     {
@@ -88,7 +83,12 @@ export function Sidebar({
       adminOnly: true,
     },
     { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
-    { icon: Inbox, label: "Inbox", path: "/inbox" },
+    {
+      icon: Zap,
+      label: "Auto Distributor",
+      path: "/auto-distributor",
+      adminOnly: true,
+    },
   ];
 
   const visibleNavItems = navItems.filter((item) => {
