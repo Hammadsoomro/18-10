@@ -87,7 +87,7 @@ export default function QueuedList() {
     try {
       // Delete all lines
       const deletePromises = lines.map((line) =>
-        fetch(`/api/numbers/line/${line._id || line.id}`, {
+        fetch(`${window.location.origin}/api/numbers/line/${line._id || line.id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }),
