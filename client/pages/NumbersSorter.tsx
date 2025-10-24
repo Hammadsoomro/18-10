@@ -39,18 +39,18 @@ export default function NumbersSorter() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to fetch lines");
       const data = await response.json();
 
-      // Only show lines that are still in "queued" status (not moved yet)
-      const queuedLines = data.lines.filter(
-        (line: any) => line.status === "queued",
-      );
-      setLines(queuedLines);
+      // For admin Numbers Sorter, show lines in the 'staged' status (Sorted Lines live)
+      const stagedLines = Array.isArray(data.lines)
+        ? data.lines.filter((line: any) => line.status === "staged")
+        : [];
+      setLines(stagedLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
