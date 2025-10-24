@@ -198,6 +198,25 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
   }
 };
 
+export const handleClearDistributor: RequestHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ error: "Invalid token" });
+
+    // Only admins can clear distributor assignments
+    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+    const result = await NumberLine.deleteMany({ teamId: decoded.teamId, status: 'distributed' });
+    res.json({ message: 'Cleared distributor assignments', deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Clear distributor error:', error);
+    res.status(500).json({ error: 'Failed to clear distributor assignments' });
+  }
+};
+
 export const handleGetQueuedLines: RequestHandler = async (req, res) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
