@@ -170,7 +170,7 @@ export default function AutoDistributor() {
     try {
       setIsLoading(true);
       // Use the claimed-lines endpoint which includes distributed items
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
