@@ -103,10 +103,21 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
 
     if (sanitized.length === 0) return res.status(400).json({ error: 'No valid contents provided' });
 
+    // remove any contents already present in distributed lines for this team
+    const distributedDocs = await NumberLine.find({ teamId: decoded.teamId, status: 'distributed' });
+    const distributedSet = new Set(distributedDocs.map((d) => (d.content || '').toString().trim().toLowerCase()));
+
+    const filtered = sanitized.filter((s: string) => !distributedSet.has(s.toString().trim().toLowerCase()));
+
+    if (filtered.length === 0) {
+      // nothing to create (all were duplicates of distributed lines)
+      return res.json({ lines: [] });
+    }
+
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const startLineNumber = existingLines.length + 1;
 
-    const newLines = sanitized.map((content: string, index: number) => ({
+    const newLines = filtered.map((content: string, index: number) => ({
       teamId: decoded.teamId,
       content,
       lineNumber: startLineNumber + index,
