@@ -120,7 +120,8 @@ export default function NumbersSorter() {
 
       const data = await response.json();
 
-      setLines([...lines, ...data.lines]);
+      // Refresh lines from server to ensure UI reflects server-side state
+      await fetchLines();
       setInputValue("");
 
       let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
