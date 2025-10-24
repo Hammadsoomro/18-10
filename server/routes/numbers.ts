@@ -62,7 +62,7 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
       teamId: decoded.teamId,
       content,
       lineNumber,
-      status: "queued",
+      status: "staged",
     });
 
     await line.save();
