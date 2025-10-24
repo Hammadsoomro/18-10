@@ -569,8 +569,8 @@ export default function Inbox() {
                         className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
                       >
                         <div className="flex-1">
-                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                            {truncateText(claim.content)}
+                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap break-words">
+                            {claim.content}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
                             <Clock className="h-3 w-3" />
