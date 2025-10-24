@@ -78,6 +78,7 @@ export function createServer() {
   app.delete("/api/numbers/line/:id", handleDeleteLine);
   app.post("/api/numbers/move-to-queue", handleMoveToQueue);
   app.post("/api/numbers/move-to-distributor", handleMoveToDistributor);
+  app.post("/api/numbers/clear-distributor", handleClearDistributor);
   app.get("/api/numbers/queued", handleGetQueuedLines);
   app.get("/api/numbers/claimed-lines", handleGetClaimedLines);
   app.get("/api/numbers/stats", handleGetStats);
