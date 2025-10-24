@@ -100,7 +100,7 @@ export default function NumbersSorter() {
     }
 
     const beforeDedup = lineTexts.length;
-    lineTexts = lineTexts.filter((text) => !existingContents.has(text));
+    lineTexts = lineTexts.filter((text) => !existingContents.has(text.toString().trim().toLowerCase()));
     const duplicatesWithExisting = beforeDedup - lineTexts.length;
 
     if (lineTexts.length === 0) {
