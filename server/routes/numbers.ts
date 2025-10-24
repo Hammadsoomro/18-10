@@ -50,17 +50,21 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    if (!decoded.teamId) return res.status(400).json({ error: 'Team ID missing in token' });
+
     const { content } = req.body;
-    if (!content) {
+    if (!content || typeof content !== 'string' || !content.trim()) {
       return res.status(400).json({ error: "Content is required" });
     }
+
+    const sanitizedContent = content.trim();
 
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const lineNumber = existingLines.length + 1;
 
     const line = new NumberLine({
       teamId: decoded.teamId,
-      content,
+      content: sanitizedContent,
       lineNumber,
       status: "staged",
     });
@@ -68,8 +72,8 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
     await line.save();
     res.json(line);
   } catch (error) {
-    console.error("Create line error:", error);
-    res.status(500).json({ error: "Failed to create line" });
+    console.error("Create line error:", (error as Error).message || error);
+    res.status(500).json({ error: ((error as Error).message || "Failed to create line") });
   }
 };
 
@@ -85,26 +89,37 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    if (!decoded.teamId) return res.status(400).json({ error: 'Team ID missing in token' });
+
     const { contents } = req.body;
     if (!Array.isArray(contents) || contents.length === 0) {
       return res.status(400).json({ error: "Contents array is required" });
     }
 
+    // sanitize and filter empty contents
+    const sanitized = contents
+      .map((c: any) => (typeof c === 'string' ? c.trim() : String(c)))
+      .filter((c: string) => c.length > 0);
+
+    if (sanitized.length === 0) return res.status(400).json({ error: 'No valid contents provided' });
+
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const startLineNumber = existingLines.length + 1;
 
-    const newLines = contents.map((content, index) => ({
+    const newLines = sanitized.map((content: string, index: number) => ({
       teamId: decoded.teamId,
       content,
       lineNumber: startLineNumber + index,
       status: "staged" as const,
     }));
 
-    const createdLines = await NumberLine.insertMany(newLines);
+    // Use ordered:false so if any document fails, others still insert
+    const createdLines = await NumberLine.insertMany(newLines, { ordered: false });
     res.json({ lines: createdLines });
   } catch (error) {
-    console.error("Create lines error:", error);
-    res.status(500).json({ error: "Failed to create lines" });
+    console.error("Create lines error:", (error as Error).message || error);
+    // Return the error message for debugging (safe in dev)
+    res.status(500).json({ error: ((error as Error).message || "Failed to create lines") });
   }
 };
 
