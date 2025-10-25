@@ -340,23 +340,24 @@ export default function Inbox() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
+
+      // Fetch queued lines specifically (queue endpoint)
+      const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error("Failed to fetch lines");
-      const data = await response.json();
-
-      // Filter queued lines (status: queued)
-      const queued = data.lines.filter(
-        (line: QueuedLine) => line.status === "queued",
-      );
+      if (!qRes.ok) throw new Error("Failed to fetch queued lines");
+      const qData = await qRes.json();
+      const queued = Array.isArray(qData.lines) ? qData.lines : [];
       setQueuedLines(queued);
 
-      // Filter claimed lines (status: claimed)
-      const claimed = data.lines.filter(
-        (line: ClaimItem) => line.status === "claimed",
-      );
+      // Fetch claimed/distributed lines via claimed-lines endpoint
+      const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
+      const cData = await cRes.json();
+      const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
+      const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
       setClaims(claimed);
 
       // also refresh distributor assignments
