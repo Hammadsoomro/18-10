@@ -48,10 +48,11 @@ export default function NumbersSorter() {
       const data = await response.json();
 
       // For admin Numbers Sorter, show lines in the 'staged' status (Sorted Lines live)
-      const stagedLines = Array.isArray(data.lines)
-        ? data.lines.filter((line: any) => line.status === "staged")
-        : [];
+      const all = Array.isArray(data.lines) ? data.lines : [];
+      const stagedLines = all.filter((line: any) => line.status === "staged");
+      const duplicateLines = all.filter((line: any) => line.status === "duplicate");
       setLines(stagedLines);
+      setDuplicates(duplicateLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
