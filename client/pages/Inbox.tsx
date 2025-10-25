@@ -342,23 +342,55 @@ export default function Inbox() {
       setIsLoading(true);
 
       // Fetch queued lines specifically (queue endpoint)
-      const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!qRes.ok) throw new Error("Failed to fetch queued lines");
-      const qData = await qRes.json();
-      const queued = Array.isArray(qData.lines) ? qData.lines : [];
+      let queued: QueuedLine[] = [];
+      try {
+        const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (qRes.ok) {
+          const qData = await qRes.json();
+          queued = Array.isArray(qData.lines) ? qData.lines : [];
+        } else {
+          console.warn("Queued endpoint returned non-ok status", qRes.status);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch queued endpoint, will fallback to lines endpoint", e);
+      }
+
+      // Fallback: try to fetch all lines and filter queued
+      if (queued.length === 0) {
+        try {
+          const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (allRes.ok) {
+            const allData = await allRes.json();
+            const allLines = Array.isArray(allData.lines) ? allData.lines : [];
+            queued = allLines.filter((line: any) => line.status === "queued");
+          }
+        } catch (e) {
+          console.warn("Fallback fetch to /api/numbers/lines failed", e);
+        }
+      }
+
       setQueuedLines(queued);
 
       // Fetch claimed/distributed lines via claimed-lines endpoint
-      const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
-      const cData = await cRes.json();
-      const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
-      const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
-      setClaims(claimed);
+      try {
+        const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
+          const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
+          setClaims(claimed);
+        } else {
+          console.warn("claimed-lines endpoint returned non-ok", cRes.status);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch claimed-lines", e);
+      }
 
       // also refresh distributor assignments
       fetchDistributorAssignments();
