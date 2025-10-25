@@ -110,14 +110,14 @@ export default function NumbersSorter() {
     };
   }, [token]);
 
-  const fetchLines = async () => {
+  const fetchLines = async (silent = false) => {
     if (!token) {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -133,9 +133,9 @@ export default function NumbersSorter() {
       setDuplicates(duplicateLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
-      toast.error("Failed to fetch lines");
+      if (!silent) toast.error("Failed to fetch lines");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
