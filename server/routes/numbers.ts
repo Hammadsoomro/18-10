@@ -249,6 +249,16 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
       { status: "queued", claimedBy: null },
     );
 
+    // emit update
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team_${decoded.teamId}`).emit("lines_moved_to_queue", { lineIds });
+      }
+    } catch (e) {
+      console.error('Emit lines_moved_to_queue failed', e);
+    }
+
     res.json({
       message: "Lines moved to queue",
       modifiedCount: updatedLines.modifiedCount,
