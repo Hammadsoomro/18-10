@@ -468,8 +468,8 @@ export default function AutoDistributor() {
                           <span className="font-bold text-slate-900 dark:text-white">
                             #{line.lineNumber}
                           </span>
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {truncateText(line.content)}
+                          <span className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                            {line.content}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
