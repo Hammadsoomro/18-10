@@ -135,16 +135,25 @@ export default function Inbox() {
 
   const fetchClaimSettings = async () => {
     if (!token) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
       const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
       const res = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
       if (!res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
-      console.error("Failed to fetch claim settings", e);
+      if ((e as any)?.name === 'AbortError') {
+        console.warn('fetchClaimSettings aborted due to timeout');
+      } else {
+        console.error("Failed to fetch claim settings", e);
+      }
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
@@ -380,32 +389,58 @@ export default function Inbox() {
       // Fetch queued lines specifically (queue endpoint)
       let queued: QueuedLine[] = [];
       try {
-        const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (qRes.ok) {
-          const qData = await qRes.json();
-          queued = Array.isArray(qData.lines) ? qData.lines : [];
-        } else {
-          console.warn("Queued endpoint returned non-ok status", qRes.status);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+          const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+          if (qRes.ok) {
+            const qData = await qRes.json();
+            queued = Array.isArray(qData.lines) ? qData.lines : [];
+          } else {
+            console.warn("Queued endpoint returned non-ok status", qRes.status);
+          }
+        } catch (e) {
+          if ((e as any)?.name === 'AbortError') {
+            console.warn('Queued fetch aborted due to timeout, will fallback to lines endpoint');
+          } else {
+            console.warn("Failed to fetch queued endpoint, will fallback to lines endpoint", e);
+          }
+        } finally {
+          clearTimeout(timeout);
         }
-      } catch (e) {
-        console.warn("Failed to fetch queued endpoint, will fallback to lines endpoint", e);
+      } catch (outer) {
+        console.warn('Unexpected error fetching queued lines', outer);
       }
 
       // Fallback: try to fetch all lines and filter queued
       if (queued.length === 0) {
         try {
-          const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (allRes.ok) {
-            const allData = await allRes.json();
-            const allLines = Array.isArray(allData.lines) ? allData.lines : [];
-            queued = allLines.filter((line: any) => line.status === "queued");
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          try {
+            const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            });
+            if (allRes.ok) {
+              const allData = await allRes.json();
+              const allLines = Array.isArray(allData.lines) ? allData.lines : [];
+              queued = allLines.filter((line: any) => line.status === "queued");
+            }
+          } catch (e) {
+            if ((e as any)?.name === 'AbortError') {
+              console.warn('Lines fetch aborted due to timeout');
+            } else {
+              console.warn("Fallback fetch to /api/numbers/lines failed", e);
+            }
+          } finally {
+            clearTimeout(timeout);
           }
-        } catch (e) {
-          console.warn("Fallback fetch to /api/numbers/lines failed", e);
+        } catch (outer) {
+          console.warn('Unexpected error in fallback queued fetch', outer);
         }
       }
 
@@ -413,19 +448,32 @@ export default function Inbox() {
 
       // Fetch claimed/distributed lines via claimed-lines endpoint
       try {
-        const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (cRes.ok) {
-          const cData = await cRes.json();
-          const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
-          const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
-          setClaims(claimed);
-        } else {
-          console.warn("claimed-lines endpoint returned non-ok", cRes.status);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+          const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
+            const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
+            setClaims(claimed);
+          } else {
+            console.warn("claimed-lines endpoint returned non-ok", cRes.status);
+          }
+        } catch (e) {
+          if ((e as any)?.name === 'AbortError') {
+            console.warn('claimed-lines fetch aborted due to timeout');
+          } else {
+            console.warn("Failed to fetch claimed-lines", e);
+          }
+        } finally {
+          clearTimeout(timeout);
         }
-      } catch (e) {
-        console.warn("Failed to fetch claimed-lines", e);
+      } catch (outer) {
+        console.warn('Unexpected error fetching claimed-lines', outer);
       }
 
       // also refresh distributor assignments
