@@ -30,6 +30,25 @@ export default function NumbersSorter() {
 
   useEffect(() => {
     fetchLines();
+
+    const onLinesUpdated = () => {
+      fetchLines();
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "lines_updated") fetchLines();
+    };
+
+    window.addEventListener("lines_updated", onLinesUpdated as EventListener);
+    window.addEventListener("storage", onStorage);
+
+    const interval = setInterval(() => fetchLines(), 15000); // poll every 15s
+
+    return () => {
+      window.removeEventListener("lines_updated", onLinesUpdated as EventListener);
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
   }, [token]);
 
   const fetchLines = async () => {
@@ -142,6 +161,10 @@ export default function NumbersSorter() {
 
       // Refresh lines from server to ensure UI reflects server-side state
       await fetchLines();
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       setInputValue("");
 
       let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
@@ -168,6 +191,10 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to delete line");
 
       setLines(lines.filter((l) => l._id !== id && l.id !== id));
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       toast.success("Line deleted");
     } catch (error) {
       console.error("Error deleting line:", error);
@@ -185,6 +212,10 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to delete duplicate");
 
       setDuplicates(duplicates.filter((d) => d._id !== id && d.id !== id));
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       toast.success("Duplicate removed");
     } catch (error) {
       console.error("Error deleting duplicate:", error);
@@ -239,6 +270,10 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${linesToMove.length} line(s) moved to Queued List`);
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/queued-list"), 500);
     } catch (error) {
@@ -270,7 +305,7 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
-      // notify other pages to refresh distributed lines
+      // notify other pages to refresh distributed lines and general lines
       try {
         localStorage.setItem("distributor_updated", String(Date.now()));
         window.dispatchEvent(
@@ -278,6 +313,8 @@ export default function NumbersSorter() {
             detail: { teamId: user?.teamId },
           }),
         );
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
       } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
