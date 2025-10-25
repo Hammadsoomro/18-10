@@ -241,22 +241,6 @@ export function Sidebar({
                   <LogOut className="h-5 w-5" />
                 </button>
               </div>
-              <div className="hidden md:flex items-center">
-                <button
-                  onClick={() => handleCollapseToggle(!isCollapsed)}
-                  className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
-                  aria-label={
-                    isCollapsed ? "Expand sidebar" : "Collapse sidebar"
-                  }
-                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-5 w-5" />
-                  ) : (
-                    <ChevronLeft className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </div>
