@@ -90,6 +90,17 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
     });
 
     await line.save();
+
+    // emit real-time update to team room if io present
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team_${decoded.teamId}`).emit("lines_added", { lines: [line] });
+      }
+    } catch (e) {
+      console.error('Emit lines_added failed', e);
+    }
+
     res.json(line);
   } catch (error) {
     console.error("Create line error:", (error as Error).message || error);
