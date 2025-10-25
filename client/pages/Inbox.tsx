@@ -422,28 +422,52 @@ export default function Inbox() {
       // Step 1: Move all existing claimed lines to distributed
       if (claims.length > 0) {
         const claimedLineIds = claims.map((c) => c._id || c.id);
-        const moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
+        let moveResponse: Response | null = null;
+        try {
+          moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ lineIds: claimedLineIds }),
+          });
+        } catch (netErr) {
+          console.error('Network error moving claimed lines', netErr);
+          toast.error('Network error while moving claimed lines');
+          return;
+        }
+
+        if (!moveResponse.ok) {
+          const text = await moveResponse.text().catch(() => "");
+          console.error('Move to distributor failed', moveResponse.status, text);
+          let message = 'Failed to move claimed lines';
+          try {
+            const json = JSON.parse(text || '{}');
+            if (json.error) message = json.error;
+          } catch {}
+          toast.error(message);
+          return;
+        }
+      }
+
+      // Step 2: Claim the next line
+      const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
+      let claimResponse: Response | null = null;
+      try {
+        claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ lineIds: claimedLineIds }),
+          body: JSON.stringify({ lineId: lineToClaimId }),
         });
-
-        if (!moveResponse.ok) throw new Error("Failed to move claimed lines");
+      } catch (netErr) {
+        console.error('Network error claiming line', netErr);
+        toast.error('Network error while claiming line');
+        return;
       }
-
-      // Step 2: Claim the next line
-      const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lineId: lineToClaimId }),
-      });
 
       if (!claimResponse.ok) {
         if (claimResponse.status === 409) {
@@ -459,7 +483,15 @@ export default function Inbox() {
           await fetchData();
           return;
         }
-        throw new Error("Failed to claim line");
+        const bodyText = await claimResponse.text().catch(() => "");
+        console.error('Claim failed', claimResponse.status, bodyText);
+        let msg = 'Failed to claim line';
+        try {
+          const j = JSON.parse(bodyText || '{}');
+          if (j && j.error) msg = j.error;
+        } catch {}
+        toast.error(msg);
+        return;
       }
 
       // Parse response to show how many lines were claimed (backend may return { lines: [...] })
