@@ -175,6 +175,23 @@ export default function NumbersSorter() {
     }
   };
 
+  const handleDeleteDuplicate = async (id: string) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete duplicate");
+
+      setDuplicates(duplicates.filter((d) => d._id !== id && d.id !== id));
+      toast.success("Duplicate removed");
+    } catch (error) {
+      console.error("Error deleting duplicate:", error);
+      toast.error("Failed to delete duplicate");
+    }
+  };
+
   const handleMoveToQueuedList = async () => {
     if (lines.length === 0) {
       toast.error("No lines to move");
