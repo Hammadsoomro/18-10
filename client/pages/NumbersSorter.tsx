@@ -256,7 +256,7 @@ export default function NumbersSorter() {
       }
 
       // Refresh lines from server to ensure UI reflects server-side state
-      await fetchLines();
+      await fetchLines(true);
       try {
         localStorage.setItem("lines_updated", String(Date.now()));
         window.dispatchEvent(new CustomEvent("lines_updated"));
