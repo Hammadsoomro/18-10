@@ -408,6 +408,11 @@ export default function Inbox() {
       return;
     }
 
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast.error('You are offline. Please check your network connection.');
+      return;
+    }
+
     if (queuedLines.length === 0) {
       toast.error("No lines available to claim");
       return;
