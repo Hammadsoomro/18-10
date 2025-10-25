@@ -223,12 +223,12 @@ export function Sidebar({
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
             <div className={cn("px-4 pb-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-              <div className="flex items-center gap-2">
+              <div className={cn(isCollapsed ? "flex flex-col items-center space-y-2" : "flex items-center gap-2")}>
                 <button
                   onClick={() => handleNavigate("/settings")}
                   aria-label="Settings"
                   title="Settings"
-                  className="p-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition"
+                  className={cn("rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition", isCollapsed ? "p-2" : "p-2")}
                 >
                   <Settings className="h-5 w-5" />
                 </button>
@@ -236,7 +236,7 @@ export function Sidebar({
                   onClick={handleLogout}
                   aria-label="Logout"
                   title="Logout"
-                  className="p-2 rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition"
+                  className={cn("rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition", isCollapsed ? "p-2" : "p-2")}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
