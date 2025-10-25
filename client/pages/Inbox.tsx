@@ -66,72 +66,59 @@ export default function Inbox() {
     number | null
   >(null);
 
-  const socketRef = useRef<Socket | null>(null);
-
   useEffect(() => {
     fetchData();
     fetchClaimSettings();
-
-    if (!token) return;
-    try {
-      const tokenRaw = localStorage.getItem("auth_token");
-      const payload = tokenRaw
-        ? JSON.parse(atob(tokenRaw.split(".")[1]))
-        : null;
-      const teamId = payload?.teamId;
-      const userId = payload?.id;
-      const s = io(window.location.origin, { autoConnect: true });
-      socketRef.current = s;
-      s.on("connect", () => {
-        if (teamId) s.emit("join_team", teamId);
-      });
-
-      s.on("distributed_lines", (data: any) => {
-        // always refresh distributor assignments and, if relevant, inbox data
-        try {
-          fetchDistributorAssignments();
-          if (tab !== "distributor") {
-            setUnreadDistributor((prev) => {
-              const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
-              return prev + inc;
-            });
-          }
-        } catch (e) {}
-
-        try {
-          const lines = Array.isArray(data.lines) ? data.lines : [];
-          const forMe = lines.some((l: any) => {
-            const dt = Array.isArray(l.distributedTo)
-              ? l.distributedTo.map(String)
-              : [];
-            return (
-              dt.includes(String(userId)) ||
-              String(l.claimedBy) === String(userId)
-            );
-          });
-          if (forMe) {
-            fetchData();
-            // small toast
-            // @ts-ignore
-            import("sonner")
-              .then(({ toast }) =>
-                toast.success("You received new lines from Auto Distributor"),
-              )
-              .catch(() => {});
-          }
-        } catch (e) {}
-      });
-
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
-      };
-    } catch (e) {
-      console.error("Socket init error", e);
-    }
   }, [token]);
+
+  // socket handlers for real-time updates
+  useSocket(user?.teamId, {
+    distributed_lines: (data: any) => {
+      try {
+        fetchDistributorAssignments();
+        if (tab !== "distributor") {
+          setUnreadDistributor((prev) => {
+            const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
+            return prev + inc;
+          });
+        }
+      } catch (e) {}
+
+      try {
+        const tokenRaw = localStorage.getItem("auth_token");
+        const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split(".")[1])) : null;
+        const userId = payload?.id;
+        const lines = Array.isArray(data.lines) ? data.lines : [];
+        const forMe = lines.some((l: any) => {
+          const dt = Array.isArray(l.distributedTo) ? l.distributedTo.map(String) : [];
+          return dt.includes(String(userId)) || String(l.claimedBy) === String(userId);
+        });
+        if (forMe) {
+          fetchData();
+          // small toast
+          // @ts-ignore
+          import("sonner")
+            .then(({ toast }) => toast.success("You received new lines from Auto Distributor"))
+            .catch(() => {});
+        }
+      } catch (e) {}
+    },
+    claim_indicator: (data: any) => {
+      try {
+        if (typeof data?.cooldownRemaining === 'number') {
+          setClaimCooldown(data.cooldownRemaining);
+        }
+        if (typeof data?.ready === 'boolean') {
+          if (data.ready) fetchData();
+        }
+      } catch (e) {}
+    },
+    distributor_indicator: () => {
+      try {
+        fetchDistributorAssignments();
+      } catch (e) {}
+    }
+  });
 
   const fetchClaimSettings = async () => {
     if (!token) return;
