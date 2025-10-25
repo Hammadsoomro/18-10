@@ -42,12 +42,22 @@ export default function NumbersSorter() {
     window.addEventListener("lines_updated", onLinesUpdated as EventListener);
     window.addEventListener("storage", onStorage);
 
-    const interval = setInterval(() => fetchLines(), 15000); // poll every 15s
+    // setup socket real-time updates
+    let unsub: (() => void) | null = null;
+    try {
+      // lazy-import to avoid SSR issues
+      const { useSocket: _useSocket } = require("@/hooks/useSocket");
+    } catch (e) {
+      // ignore
+    }
+
+    const interval = setInterval(() => fetchLines(), 15000); // poll fallback every 15s
 
     return () => {
       window.removeEventListener("lines_updated", onLinesUpdated as EventListener);
       window.removeEventListener("storage", onStorage);
       clearInterval(interval);
+      if (unsub) unsub();
     };
   }, [token]);
 
