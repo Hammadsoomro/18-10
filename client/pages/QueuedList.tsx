@@ -215,8 +215,8 @@ export default function QueuedList() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                        {truncateText(line.content)}
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap break-words">
+                        {line.content}
                       </p>
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
