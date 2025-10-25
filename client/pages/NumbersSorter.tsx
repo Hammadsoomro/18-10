@@ -163,20 +163,37 @@ export default function NumbersSorter() {
     const existingContents = new Set(lines.map((l) => (l.content || "").toString().trim().toLowerCase()));
 
     try {
-      const distRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (distRes.ok) {
+      // Fetch distributed (claimed-lines) and queued lines in parallel to dedupe against both
+      const [distRes, queuedRes] = await Promise.all([
+        fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+        fetch(`${window.location.origin}/api/numbers/queued`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+      ]);
+
+      if (distRes && distRes.ok) {
         const distData = await distRes.json();
         const distributed = Array.isArray(distData.lines)
           ? distData.lines.filter((ln: any) => ln.status === "distributed")
           : [];
         for (const d of distributed) {
-          if (d && d.content) existingContents.add((d.content || "").toString().trim().toLowerCase());
+          if (d && d.content)
+            existingContents.add((d.content || "").toString().trim().toLowerCase());
+        }
+      }
+
+      if (queuedRes && queuedRes.ok) {
+        const queuedData = await queuedRes.json();
+        const queuedExisting = Array.isArray(queuedData.lines) ? queuedData.lines : [];
+        for (const q of queuedExisting) {
+          if (q && q.content)
+            existingContents.add((q.content || "").toString().trim().toLowerCase());
         }
       }
     } catch (e) {
-      console.warn("Failed to fetch distributed lines for dedupe", e);
+      console.warn("Failed to fetch distributed/queued lines for dedupe", e);
     }
 
     const beforeDedup = lineTexts.length;
