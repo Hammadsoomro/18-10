@@ -584,17 +584,15 @@ export default function NumbersSorter() {
           </div>
         )}
 
-        {/* Duplicates Removed Block */}
-        <div className="mt-6">
-          <Card className="border-slate-200 dark:border-slate-800">
-            <CardHeader>
-              <CardTitle>Removed Duplicates</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {duplicates.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-center py-6">No duplicates removed yet</p>
-              ) : (
-                duplicates.map((d) => (
+        {/* Duplicates Removed Block - hidden when empty */}
+        {duplicates.length > 0 && (
+          <div className="mt-6">
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle>Removed Duplicates</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {duplicates.map((d) => (
                   <div key={d._id || d.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-start justify-between gap-4">
                     <div className="flex-1 whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-300">
                       {d.content}
@@ -605,11 +603,11 @@ export default function NumbersSorter() {
                       </button>
                     </div>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </Layout>
   );
