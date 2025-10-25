@@ -323,6 +323,16 @@ export const handleClearDistributor: RequestHandler = async (req, res) => {
     if (decoded.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
 
     const result = await NumberLine.deleteMany({ teamId: decoded.teamId, status: 'distributed' });
+    // emit update
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team_${decoded.teamId}`).emit("distributor_cleared", { deletedCount: result.deletedCount });
+      }
+    } catch (e) {
+      console.error('Emit distributor_cleared failed', e);
+    }
+
     res.json({ message: 'Cleared distributor assignments', deletedCount: result.deletedCount });
   } catch (error) {
     console.error('Clear distributor error:', error);
