@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSocket } from "@/hooks/useSocket";
 
 interface NumberLine {
   _id?: string;
@@ -29,61 +30,52 @@ export default function NumbersSorter() {
   const [isMoving, setIsMoving] = useState(false);
 
   // real-time socket
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    var { useSocket } = require("@/hooks/useSocket");
-  } catch (e) {
-    // ignore in SSR/unsupported env
-  }
-
-  if (typeof useSocket === "function") {
-    useSocket(user?.teamId, {
-      lines_added: (payload: any) => {
-        if (!payload || !Array.isArray(payload.lines)) return;
-        setLines((prev) => {
-          const combined = [...payload.lines, ...prev];
-          const seen = new Set();
-          return combined.filter((l: any) => {
-            const id = l._id || l.id;
-            if (!id) return true;
-            if (seen.has(id)) return false;
-            seen.add(id);
-            return true;
-          });
+  useSocket(user?.teamId, {
+    lines_added: (payload: any) => {
+      if (!payload || !Array.isArray(payload.lines)) return;
+      setLines((prev) => {
+        const combined = [...payload.lines, ...prev];
+        const seen = new Set();
+        return combined.filter((l: any) => {
+          const id = l._id || l.id;
+          if (!id) return true;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
         });
-      },
-      duplicates_added: (payload: any) => {
-        if (!payload || !Array.isArray(payload.duplicates)) return;
-        setDuplicates((prev) => {
-          const combined = [...payload.duplicates, ...prev];
-          const seen = new Set();
-          return combined.filter((d: any) => {
-            const id = d._id || d.id;
-            if (!id) return true;
-            if (seen.has(id)) return false;
-            seen.add(id);
-            return true;
-          });
+      });
+    },
+    duplicates_added: (payload: any) => {
+      if (!payload || !Array.isArray(payload.duplicates)) return;
+      setDuplicates((prev) => {
+        const combined = [...payload.duplicates, ...prev];
+        const seen = new Set();
+        return combined.filter((d: any) => {
+          const id = d._id || d.id;
+          if (!id) return true;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
         });
-      },
-      lines_moved_to_queue: () => {
-        fetchLines();
-      },
-      lines_moved_to_distributor: () => {
-        fetchLines();
-      },
-      line_deleted: (p: any) => {
-        const id = p?.id;
-        if (!id) return;
-        setLines((prev) => prev.filter((l) => (l._id || l.id) !== id));
-        setDuplicates((prev) => prev.filter((d) => (d._id || d.id) !== id));
-      },
-      distributor_cleared: () => fetchLines(),
-      distributed_lines: () => fetchLines(),
-      distributor_indicator: () => fetchLines(),
-      claim_indicator: () => fetchLines(),
-    });
-  }
+      });
+    },
+    lines_moved_to_queue: () => {
+      fetchLines();
+    },
+    lines_moved_to_distributor: () => {
+      fetchLines();
+    },
+    line_deleted: (p: any) => {
+      const id = p?.id;
+      if (!id) return;
+      setLines((prev) => prev.filter((l) => (l._id || l.id) !== id));
+      setDuplicates((prev) => prev.filter((d) => (d._id || d.id) !== id));
+    },
+    distributor_cleared: () => fetchLines(),
+    distributed_lines: () => fetchLines(),
+    distributor_indicator: () => fetchLines(),
+    claim_indicator: () => fetchLines(),
+  });
 
   useEffect(() => {
     fetchLines();
