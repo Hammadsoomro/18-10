@@ -66,8 +66,17 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
     // Check if this content already exists in distributed lines
     const distributedDoc = await NumberLine.findOne({ teamId: decoded.teamId, status: 'distributed', content: { $regex: `^${sanitizedContent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
     if (distributedDoc) {
-      // already present in distributed - do not create duplicate
-      return res.json({ line: null, skipped: true });
+      // already present in distributed - save as duplicate record
+      const existingLines = await NumberLine.find({ teamId: decoded.teamId });
+      const lineNumber = existingLines.length + 1;
+      const dup = new NumberLine({
+        teamId: decoded.teamId,
+        content: sanitizedContent,
+        lineNumber,
+        status: 'duplicate',
+      });
+      await dup.save();
+      return res.json({ line: null, duplicate: dup });
     }
 
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
