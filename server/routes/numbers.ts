@@ -19,7 +19,11 @@ export const handleGetLines: RequestHandler = async (req, res) => {
     const isAdmin = decoded.role === 'admin';
     let lines;
     if (isAdmin) {
-      lines = await NumberLine.find({ teamId: decoded.teamId, status: 'staged' })
+      // admins should see staged (live sorted) and duplicates
+      lines = await NumberLine.find({
+        teamId: decoded.teamId,
+        status: { $in: ['staged', 'duplicate'] },
+      })
         .populate("claimedBy", "name email")
         .sort({ createdAt: -1 });
     } else {
