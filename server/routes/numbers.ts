@@ -210,6 +210,16 @@ export const handleDeleteLine: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Line not found" });
     }
 
+    // emit update
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team_${line.teamId}`).emit("line_deleted", { id: line._id });
+      }
+    } catch (e) {
+      console.error('Emit line_deleted failed', e);
+    }
+
     res.json({ message: "Line deleted" });
   } catch (error) {
     console.error("Delete line error:", error);
