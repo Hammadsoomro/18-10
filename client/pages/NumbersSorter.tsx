@@ -60,10 +60,10 @@ export default function NumbersSorter() {
       });
     },
     lines_moved_to_queue: () => {
-      fetchLines();
+      fetchLines(true);
     },
     lines_moved_to_distributor: () => {
-      fetchLines();
+      fetchLines(true);
     },
     line_deleted: (p: any) => {
       const id = p?.id;
