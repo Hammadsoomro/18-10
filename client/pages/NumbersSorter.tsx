@@ -71,10 +71,10 @@ export default function NumbersSorter() {
       setLines((prev) => prev.filter((l) => (l._id || l.id) !== id));
       setDuplicates((prev) => prev.filter((d) => (d._id || d.id) !== id));
     },
-    distributor_cleared: () => fetchLines(),
-    distributed_lines: () => fetchLines(),
-    distributor_indicator: () => fetchLines(),
-    claim_indicator: () => fetchLines(),
+    distributor_cleared: () => fetchLines(true),
+    distributed_lines: () => fetchLines(true),
+    distributor_indicator: () => fetchLines(true),
+    claim_indicator: () => fetchLines(true),
   });
 
   useEffect(() => {
