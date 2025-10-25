@@ -173,18 +173,56 @@ export default function Inbox() {
 
   const fetchDistributorAssignments = async () => {
     if (!token) return;
+
+    const urlCandidates = [
+      `${window.location.origin}/api/numbers/claimed-lines`,
+      "/api/numbers/claimed-lines",
+    ];
+
+    let lastError: any = null;
+    let dataLines: any[] = [];
+
+    for (const url of urlCandidates) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          mode: "cors",
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          console.warn(`Fetch ${url} returned non-ok`, res.status, body);
+          lastError = new Error(`Non-ok ${res.status}`);
+          continue;
+        }
+
+        const data = await res.json();
+        dataLines = Array.isArray(data.lines) ? data.lines : [];
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Fetch ${url} failed`, err);
+        // try next candidate
+      }
+    }
+
+    if (lastError) {
+      console.error("Failed to fetch distributor assignments after retries", lastError);
+      toast.error("Failed to fetch distributor assignments");
+      return;
+    }
+
     try {
-      const res = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const lines = data.lines || [];
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
-      const distributed = lines.filter(
-        (l: any) =>
-          Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
+      const distributed = dataLines.filter(
+        (l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
       );
+
       // group by claimedBy (assigned member)
       const map: Record<string, any> = {};
       for (const l of distributed) {
@@ -199,10 +237,7 @@ export default function Inbox() {
           map[memberId] = {
             assignedTo: memberName,
             distributedAt:
-              l.claimedAt ||
-              l.updatedAt ||
-              l.createdAt ||
-              new Date().toISOString(),
+              l.claimedAt || l.updatedAt || l.createdAt || new Date().toISOString(),
             lines: [],
           };
         }
@@ -219,7 +254,8 @@ export default function Inbox() {
         setUnreadDistributor(computeUnreadForDistributor(items));
       }
     } catch (e) {
-      console.error("Failed to fetch distributor assignments", e);
+      console.error("Failed to process distributor assignments", e);
+      toast.error("Failed to fetch distributor assignments");
     }
   };
 
