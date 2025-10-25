@@ -374,8 +374,8 @@ export default function NumbersSorter() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {truncateText(line.content)}
+                          <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-pre-wrap break-words">
+                            {line.content}
                           </span>
                         </div>
                         <p className="text-xs text-slate-400 dark:text-slate-500">
