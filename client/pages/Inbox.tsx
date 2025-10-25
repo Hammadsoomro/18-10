@@ -706,8 +706,8 @@ export default function Inbox() {
                             className="text-sm flex items-start gap-2"
                           >
                             <span className="text-slate-400">•</span>
-                            <span className="text-slate-700 dark:text-slate-300">
-                              {truncateText(line, 15)}
+                            <span className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                              {line}
                             </span>
                           </div>
                         ))}
