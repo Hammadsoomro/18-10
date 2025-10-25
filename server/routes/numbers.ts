@@ -120,10 +120,8 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
 
     const filtered = sanitized.filter((s: string) => !distributedSet.has(s.toString().trim().toLowerCase()));
 
-    if (filtered.length === 0) {
-      // nothing to create (all were duplicates of distributed lines)
-      return res.json({ lines: [] });
-    }
+    // compute skipped (duplicates removed because present in distributed)
+    const skipped = sanitized.filter((s: string) => distributedSet.has(s.toString().trim().toLowerCase()));
 
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const startLineNumber = existingLines.length + 1;
@@ -135,9 +133,22 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       status: "staged" as const,
     }));
 
+    // prepare duplicates to save
+    let duplicateDocs: any[] = [];
+    if (skipped.length > 0) {
+      duplicateDocs = skipped.map((content: string, index: number) => ({
+        teamId: decoded.teamId,
+        content,
+        lineNumber: startLineNumber + newLines.length + index,
+        status: "duplicate" as const,
+      }));
+    }
+
     // Use ordered:false so if any document fails, others still insert
-    const createdLines = await NumberLine.insertMany(newLines, { ordered: false });
-    res.json({ lines: createdLines });
+    const createdLines = newLines.length > 0 ? await NumberLine.insertMany(newLines, { ordered: false }) : [];
+    const createdDuplicates = duplicateDocs.length > 0 ? await NumberLine.insertMany(duplicateDocs, { ordered: false }) : [];
+
+    res.json({ lines: createdLines, duplicates: createdDuplicates });
   } catch (error) {
     console.error("Create lines error:", (error as Error).message || error);
     // Return the error message for debugging (safe in dev)
