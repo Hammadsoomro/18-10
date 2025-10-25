@@ -268,7 +268,7 @@ export default function Conversation() {
 
     try {
       // send message to server which will emit to team
-      const res = await fetch(`/api/contacts/${contact.id}/message`, {
+      const res = await fetch(`${window.location.origin}/api/contacts/${contact.id}/message`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
