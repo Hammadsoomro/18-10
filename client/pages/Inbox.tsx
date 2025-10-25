@@ -80,7 +80,7 @@ export default function Inbox() {
         : null;
       const teamId = payload?.teamId;
       const userId = payload?.id;
-      const s = io(undefined, { autoConnect: true });
+      const s = io(window.location.origin, { autoConnect: true });
       socketRef.current = s;
       s.on("connect", () => {
         if (teamId) s.emit("join_team", teamId);
