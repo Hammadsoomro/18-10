@@ -222,7 +222,7 @@ export function Sidebar({
 
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
-            <div className="px-4 pb-4 flex items-center justify-between">
+            <div className={cn("px-4 pb-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleNavigate("/settings")}
