@@ -66,7 +66,7 @@ export default function Conversation() {
       if (!token || !selectedContact) return;
       try {
         const res = await fetch(
-          `/api/contacts/${selectedContact.id}/messages`,
+          `${window.location.origin}/api/contacts/${selectedContact.id}/messages`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
