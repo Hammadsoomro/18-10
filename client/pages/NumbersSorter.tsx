@@ -103,7 +103,10 @@ export default function NumbersSorter() {
     const interval = setInterval(() => fetchLines(true), 15000); // poll fallback every 15s
 
     return () => {
-      window.removeEventListener("lines_updated", onLinesUpdated as EventListener);
+      window.removeEventListener(
+        "lines_updated",
+        onLinesUpdated as EventListener,
+      );
       window.removeEventListener("storage", onStorage);
       clearInterval(interval);
       if (unsub) unsub();
@@ -118,9 +121,12 @@ export default function NumbersSorter() {
 
     try {
       if (!silent) setIsLoading(true);
-      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to fetch lines");
       const data = await response.json();
@@ -128,7 +134,9 @@ export default function NumbersSorter() {
       // For admin Numbers Sorter, show lines in the 'staged' status (Sorted Lines live)
       const all = Array.isArray(data.lines) ? data.lines : [];
       const stagedLines = all.filter((line: any) => line.status === "staged");
-      const duplicateLines = all.filter((line: any) => line.status === "duplicate");
+      const duplicateLines = all.filter(
+        (line: any) => line.status === "duplicate",
+      );
       setLines(stagedLines);
       setDuplicates(duplicateLines);
     } catch (error) {
@@ -160,7 +168,9 @@ export default function NumbersSorter() {
     lineTexts = Array.from(new Set(lineTexts));
 
     // Check for duplicates with existing staged lines and distributed lines
-    const existingContents = new Set(lines.map((l) => (l.content || "").toString().trim().toLowerCase()));
+    const existingContents = new Set(
+      lines.map((l) => (l.content || "").toString().trim().toLowerCase()),
+    );
 
     try {
       // Fetch distributed (claimed-lines) and queued lines in parallel to dedupe against both
@@ -180,16 +190,22 @@ export default function NumbersSorter() {
           : [];
         for (const d of distributed) {
           if (d && d.content)
-            existingContents.add((d.content || "").toString().trim().toLowerCase());
+            existingContents.add(
+              (d.content || "").toString().trim().toLowerCase(),
+            );
         }
       }
 
       if (queuedRes && queuedRes.ok) {
         const queuedData = await queuedRes.json();
-        const queuedExisting = Array.isArray(queuedData.lines) ? queuedData.lines : [];
+        const queuedExisting = Array.isArray(queuedData.lines)
+          ? queuedData.lines
+          : [];
         for (const q of queuedExisting) {
           if (q && q.content)
-            existingContents.add((q.content || "").toString().trim().toLowerCase());
+            existingContents.add(
+              (q.content || "").toString().trim().toLowerCase(),
+            );
         }
       }
     } catch (e) {
@@ -197,7 +213,9 @@ export default function NumbersSorter() {
     }
 
     const beforeDedup = lineTexts.length;
-    lineTexts = lineTexts.filter((text) => !existingContents.has(text.toString().trim().toLowerCase()));
+    lineTexts = lineTexts.filter(
+      (text) => !existingContents.has(text.toString().trim().toLowerCase()),
+    );
     const duplicatesWithExisting = beforeDedup - lineTexts.length;
 
     if (lineTexts.length === 0) {
@@ -211,14 +229,17 @@ export default function NumbersSorter() {
 
     setIsAdding(true);
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ contents: lineTexts }),
         },
-        body: JSON.stringify({ contents: lineTexts }),
-      });
+      );
 
       if (!response.ok) {
         const body = await response.text().catch(() => "");
@@ -237,7 +258,11 @@ export default function NumbersSorter() {
 
       // If server returned duplicate records, merge them into duplicates state immediately so UI updates without waiting for fetchLines
       try {
-        if (data && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+        if (
+          data &&
+          Array.isArray(data.duplicates) &&
+          data.duplicates.length > 0
+        ) {
           setDuplicates((prev) => {
             // prepend new duplicates and dedupe by id
             const combined = [...data.duplicates, ...prev];
@@ -252,7 +277,7 @@ export default function NumbersSorter() {
           });
         }
       } catch (e) {
-        console.warn('Failed to merge server duplicates', e);
+        console.warn("Failed to merge server duplicates", e);
       }
 
       // Refresh lines from server to ensure UI reflects server-side state
@@ -264,7 +289,10 @@ export default function NumbersSorter() {
       setInputValue("");
 
       let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
-      const totalRemoved = duplicatesInInput + duplicatesWithExisting + (Array.isArray(data.duplicates) ? data.duplicates.length : 0);
+      const totalRemoved =
+        duplicatesInInput +
+        duplicatesWithExisting +
+        (Array.isArray(data.duplicates) ? data.duplicates.length : 0);
       if (totalRemoved > 0) {
         message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
       }
@@ -279,10 +307,13 @@ export default function NumbersSorter() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/line/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to delete line");
 
@@ -300,10 +331,13 @@ export default function NumbersSorter() {
 
   const handleDeleteDuplicate = async (id: string) => {
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/line/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to delete duplicate");
 
@@ -328,9 +362,12 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       // Fetch all lines to determine which are already distributed
-      const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const allRes = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!allRes.ok) throw new Error("Failed to fetch existing lines");
       const allData = await allRes.json();
       const allLines = Array.isArray(allData.lines) ? allData.lines : [];
@@ -339,7 +376,11 @@ export default function NumbersSorter() {
       const distributedContents = new Set(
         allLines
           .filter((l: any) => l.status === "distributed")
-          .map((l: any) => (typeof l.content === "string" ? l.content.trim() : String(l.content)))
+          .map((l: any) =>
+            typeof l.content === "string"
+              ? l.content.trim()
+              : String(l.content),
+          ),
       );
 
       // Filter current sorter lines to exclude any that already exist in distributed
@@ -348,20 +389,25 @@ export default function NumbersSorter() {
       );
 
       if (linesToMove.length === 0) {
-        toast.error("All selected lines already exist in Distributed Lines and were skipped");
+        toast.error(
+          "All selected lines already exist in Distributed Lines and were skipped",
+        );
         setIsMoving(false);
         return;
       }
 
       const lineIds = linesToMove.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch(`${window.location.origin}/api/numbers/move-to-queue`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/move-to-queue`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineIds }),
         },
-        body: JSON.stringify({ lineIds }),
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to move lines");
 
@@ -389,14 +435,17 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/move-to-distributor`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineIds }),
         },
-        body: JSON.stringify({ lineIds }),
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to move lines");
 
@@ -593,12 +642,20 @@ export default function NumbersSorter() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {duplicates.map((d) => (
-                  <div key={d._id || d.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-start justify-between gap-4">
+                  <div
+                    key={d._id || d.id}
+                    className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-start justify-between gap-4"
+                  >
                     <div className="flex-1 whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-300">
                       {d.content}
                     </div>
                     <div className="ml-4">
-                      <button onClick={() => handleDeleteDuplicate(d._id || d.id || "")} className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded">
+                      <button
+                        onClick={() =>
+                          handleDeleteDuplicate(d._id || d.id || "")
+                        }
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded"
+                      >
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </button>
                     </div>

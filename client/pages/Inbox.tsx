@@ -87,29 +87,38 @@ export default function Inbox() {
 
       try {
         const tokenRaw = localStorage.getItem("auth_token");
-        const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split(".")[1])) : null;
+        const payload = tokenRaw
+          ? JSON.parse(atob(tokenRaw.split(".")[1]))
+          : null;
         const userId = payload?.id;
         const lines = Array.isArray(data.lines) ? data.lines : [];
         const forMe = lines.some((l: any) => {
-          const dt = Array.isArray(l.distributedTo) ? l.distributedTo.map(String) : [];
-          return dt.includes(String(userId)) || String(l.claimedBy) === String(userId);
+          const dt = Array.isArray(l.distributedTo)
+            ? l.distributedTo.map(String)
+            : [];
+          return (
+            dt.includes(String(userId)) ||
+            String(l.claimedBy) === String(userId)
+          );
         });
         if (forMe) {
           fetchData();
           // small toast
           // @ts-ignore
           import("sonner")
-            .then(({ toast }) => toast.success("You received new lines from Auto Distributor"))
+            .then(({ toast }) =>
+              toast.success("You received new lines from Auto Distributor"),
+            )
             .catch(() => {});
         }
       } catch (e) {}
     },
     claim_indicator: (data: any) => {
       try {
-        if (typeof data?.cooldownRemaining === 'number') {
+        if (typeof data?.cooldownRemaining === "number") {
           setClaimCooldown(data.cooldownRemaining);
         }
-        if (typeof data?.ready === 'boolean') {
+        if (typeof data?.ready === "boolean") {
           if (data.ready) fetchData();
         }
       } catch (e) {}
@@ -118,7 +127,7 @@ export default function Inbox() {
       try {
         fetchDistributorAssignments();
       } catch (e) {}
-    }
+    },
   });
 
   const fetchClaimSettings = async () => {
@@ -135,8 +144,8 @@ export default function Inbox() {
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
-      if ((e as any)?.name === 'AbortError') {
-        console.warn('fetchClaimSettings aborted due to timeout');
+      if ((e as any)?.name === "AbortError") {
+        console.warn("fetchClaimSettings aborted due to timeout");
       } else {
         console.error("Failed to fetch claim settings", e);
       }
@@ -145,7 +154,8 @@ export default function Inbox() {
     }
   };
 
-  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+  const getDistributorLastReadKey = () =>
+    `distributor_last_read_${user?.id ?? "global"}`;
 
   const markDistributorRead = () => {
     try {
@@ -156,7 +166,9 @@ export default function Inbox() {
 
   const computeUnreadForDistributor = (items: DistributorItem[]) => {
     try {
-      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      const last = Number(
+        localStorage.getItem(getDistributorLastReadKey()) || 0,
+      );
       if (!last) return items.length;
       const count = items.filter((it) => {
         const t = Date.parse(it.distributedAt);
@@ -209,7 +221,10 @@ export default function Inbox() {
     }
 
     if (lastError) {
-      console.error("Failed to fetch distributor assignments after retries", lastError);
+      console.error(
+        "Failed to fetch distributor assignments after retries",
+        lastError,
+      );
       toast.error("Failed to fetch distributor assignments");
       return;
     }
@@ -217,7 +232,8 @@ export default function Inbox() {
     try {
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
       const distributed = dataLines.filter(
-        (l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
+        (l: any) =>
+          Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
       );
 
       // group by claimedBy (assigned member)
@@ -234,7 +250,10 @@ export default function Inbox() {
           map[memberId] = {
             assignedTo: memberName,
             distributedAt:
-              l.claimedAt || l.updatedAt || l.createdAt || new Date().toISOString(),
+              l.claimedAt ||
+              l.updatedAt ||
+              l.createdAt ||
+              new Date().toISOString(),
             lines: [],
           };
         }
@@ -380,10 +399,13 @@ export default function Inbox() {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
         try {
-          const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
-            headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
-          });
+          const qRes = await fetch(
+            `${window.location.origin}/api/numbers/queued`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            },
+          );
           if (qRes.ok) {
             const qData = await qRes.json();
             queued = Array.isArray(qData.lines) ? qData.lines : [];
@@ -391,16 +413,21 @@ export default function Inbox() {
             console.warn("Queued endpoint returned non-ok status", qRes.status);
           }
         } catch (e) {
-          if ((e as any)?.name === 'AbortError') {
-            console.warn('Queued fetch aborted due to timeout, will fallback to lines endpoint');
+          if ((e as any)?.name === "AbortError") {
+            console.warn(
+              "Queued fetch aborted due to timeout, will fallback to lines endpoint",
+            );
           } else {
-            console.warn("Failed to fetch queued endpoint, will fallback to lines endpoint", e);
+            console.warn(
+              "Failed to fetch queued endpoint, will fallback to lines endpoint",
+              e,
+            );
           }
         } finally {
           clearTimeout(timeout);
         }
       } catch (outer) {
-        console.warn('Unexpected error fetching queued lines', outer);
+        console.warn("Unexpected error fetching queued lines", outer);
       }
 
       // Fallback: try to fetch all lines and filter queued
@@ -409,18 +436,23 @@ export default function Inbox() {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 8000);
           try {
-            const allRes = await fetch(`${window.location.origin}/api/numbers/lines`, {
-              headers: { Authorization: `Bearer ${token}` },
-              signal: controller.signal,
-            });
+            const allRes = await fetch(
+              `${window.location.origin}/api/numbers/lines`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              },
+            );
             if (allRes.ok) {
               const allData = await allRes.json();
-              const allLines = Array.isArray(allData.lines) ? allData.lines : [];
+              const allLines = Array.isArray(allData.lines)
+                ? allData.lines
+                : [];
               queued = allLines.filter((line: any) => line.status === "queued");
             }
           } catch (e) {
-            if ((e as any)?.name === 'AbortError') {
-              console.warn('Lines fetch aborted due to timeout');
+            if ((e as any)?.name === "AbortError") {
+              console.warn("Lines fetch aborted due to timeout");
             } else {
               console.warn("Fallback fetch to /api/numbers/lines failed", e);
             }
@@ -428,7 +460,7 @@ export default function Inbox() {
             clearTimeout(timeout);
           }
         } catch (outer) {
-          console.warn('Unexpected error in fallback queued fetch', outer);
+          console.warn("Unexpected error in fallback queued fetch", outer);
         }
       }
 
@@ -439,21 +471,26 @@ export default function Inbox() {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
         try {
-          const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-            headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
-          });
+          const cRes = await fetch(
+            `${window.location.origin}/api/numbers/claimed-lines`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            },
+          );
           if (cRes.ok) {
             const cData = await cRes.json();
             const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
-            const claimed = allClaimed.filter((line: ClaimItem) => line.status === "claimed");
+            const claimed = allClaimed.filter(
+              (line: ClaimItem) => line.status === "claimed",
+            );
             setClaims(claimed);
           } else {
             console.warn("claimed-lines endpoint returned non-ok", cRes.status);
           }
         } catch (e) {
-          if ((e as any)?.name === 'AbortError') {
-            console.warn('claimed-lines fetch aborted due to timeout');
+          if ((e as any)?.name === "AbortError") {
+            console.warn("claimed-lines fetch aborted due to timeout");
           } else {
             console.warn("Failed to fetch claimed-lines", e);
           }
@@ -461,7 +498,7 @@ export default function Inbox() {
           clearTimeout(timeout);
         }
       } catch (outer) {
-        console.warn('Unexpected error fetching claimed-lines', outer);
+        console.warn("Unexpected error fetching claimed-lines", outer);
       }
 
       // also refresh distributor assignments
@@ -480,8 +517,8 @@ export default function Inbox() {
       return;
     }
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      toast.error('You are offline. Please check your network connection.');
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("You are offline. Please check your network connection.");
       return;
     }
 
@@ -501,26 +538,33 @@ export default function Inbox() {
         const claimedLineIds = claims.map((c) => c._id || c.id);
         let moveResponse: Response | null = null;
         try {
-          moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          moveResponse = await fetch(
+            `${window.location.origin}/api/numbers/move-to-distributor`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ lineIds: claimedLineIds }),
             },
-            body: JSON.stringify({ lineIds: claimedLineIds }),
-          });
+          );
         } catch (netErr) {
-          console.error('Network error moving claimed lines', netErr);
-          toast.error('Network error while moving claimed lines');
+          console.error("Network error moving claimed lines", netErr);
+          toast.error("Network error while moving claimed lines");
           return;
         }
 
         if (!moveResponse.ok) {
           const text = await moveResponse.text().catch(() => "");
-          console.error('Move to distributor failed', moveResponse.status, text);
-          let message = 'Failed to move claimed lines';
+          console.error(
+            "Move to distributor failed",
+            moveResponse.status,
+            text,
+          );
+          let message = "Failed to move claimed lines";
           try {
-            const json = JSON.parse(text || '{}');
+            const json = JSON.parse(text || "{}");
             if (json.error) message = json.error;
           } catch {}
           toast.error(message);
@@ -532,17 +576,20 @@ export default function Inbox() {
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
       let claimResponse: Response | null = null;
       try {
-        claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        claimResponse = await fetch(
+          `${window.location.origin}/api/numbers/claim`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ lineId: lineToClaimId }),
           },
-          body: JSON.stringify({ lineId: lineToClaimId }),
-        });
+        );
       } catch (netErr) {
-        console.error('Network error claiming line', netErr);
-        toast.error('Network error while claiming line');
+        console.error("Network error claiming line", netErr);
+        toast.error("Network error while claiming line");
         return;
       }
 
@@ -561,10 +608,10 @@ export default function Inbox() {
           return;
         }
         const bodyText = await claimResponse.text().catch(() => "");
-        console.error('Claim failed', claimResponse.status, bodyText);
-        let msg = 'Failed to claim line';
+        console.error("Claim failed", claimResponse.status, bodyText);
+        let msg = "Failed to claim line";
         try {
-          const j = JSON.parse(bodyText || '{}');
+          const j = JSON.parse(bodyText || "{}");
           if (j && j.error) msg = j.error;
         } catch {}
         toast.error(msg);
@@ -634,18 +681,24 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs value={tab} onValueChange={(v) => {
-            const nv = (v as any) as "claims" | "distributor";
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            const nv = v as any as "claims" | "distributor";
             setTab(nv);
             if (nv === "distributor") markDistributorRead();
-          }} className="w-full">
+          }}
+          className="w-full"
+        >
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
             <TabsTrigger value="distributor">
               <span className="relative inline-flex items-center gap-2">
                 Auto Distributor
                 {unreadDistributor > 0 && (
-                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                  <Badge variant="destructive" className="animate-pulse">
+                    {unreadDistributor}
+                  </Badge>
                 )}
               </span>
             </TabsTrigger>
@@ -748,28 +801,46 @@ export default function Inbox() {
                   <div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">Clear</Button>
+                        <Button variant="destructive" size="sm">
+                          Clear
+                        </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                        <AlertDialogTitle>Clear distributor assignments?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Clear distributor assignments?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will permanently delete all Auto Distributor assigned lines for your team. This action cannot be undone.
+                          This will permanently delete all Auto Distributor
+                          assigned lines for your team. This action cannot be
+                          undone.
                         </AlertDialogDescription>
                         <div className="flex gap-4 justify-end">
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={async () => {
                               try {
-                                const res = await fetch(`${window.location.origin}/api/numbers/clear-distributor`, {
-                                  method: 'POST',
-                                  headers: { Authorization: `Bearer ${token}` },
-                                });
-                                if (!res.ok) throw new Error('Failed to clear distributor assignments');
+                                const res = await fetch(
+                                  `${window.location.origin}/api/numbers/clear-distributor`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  },
+                                );
+                                if (!res.ok)
+                                  throw new Error(
+                                    "Failed to clear distributor assignments",
+                                  );
                                 await fetchDistributorAssignments();
-                                toast.success('Distributor assignments cleared');
+                                toast.success(
+                                  "Distributor assignments cleared",
+                                );
                               } catch (e) {
-                                console.error('Clear distributor failed', e);
-                                toast.error('Failed to clear distributor assignments');
+                                console.error("Clear distributor failed", e);
+                                toast.error(
+                                  "Failed to clear distributor assignments",
+                                );
                               }
                             }}
                             className="bg-red-600 hover:bg-red-700"

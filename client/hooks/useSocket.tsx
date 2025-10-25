@@ -24,7 +24,10 @@ export function initSocket() {
   return socket;
 }
 
-export function useSocket(teamId: string | undefined, handlers: Record<string, (payload: any) => void> = {}) {
+export function useSocket(
+  teamId: string | undefined,
+  handlers: Record<string, (payload: any) => void> = {},
+) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
