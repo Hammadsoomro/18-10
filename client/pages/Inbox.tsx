@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { useSocket } from "@/hooks/useSocket";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
