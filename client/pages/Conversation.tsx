@@ -178,7 +178,7 @@ export default function Conversation() {
 
     setIsAdding(true);
     try {
-      const response = await fetch("/api/contacts", {
+      const response = await fetch(`${window.location.origin}/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
