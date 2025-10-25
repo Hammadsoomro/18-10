@@ -168,6 +168,21 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
     const createdLines = newLines.length > 0 ? await NumberLine.insertMany(newLines, { ordered: false }) : [];
     const createdDuplicates = duplicateDocs.length > 0 ? await NumberLine.insertMany(duplicateDocs, { ordered: false }) : [];
 
+    // emit real-time updates
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        if (createdLines.length > 0) {
+          io.to(`team_${decoded.teamId}`).emit("lines_added", { lines: createdLines });
+        }
+        if (createdDuplicates.length > 0) {
+          io.to(`team_${decoded.teamId}`).emit("duplicates_added", { duplicates: createdDuplicates });
+        }
+      }
+    } catch (e) {
+      console.error('Emit lines/duplicates failed', e);
+    }
+
     res.json({ lines: createdLines, duplicates: createdDuplicates });
   } catch (error) {
     console.error("Create lines error:", (error as Error).message || error);
