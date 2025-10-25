@@ -159,6 +159,26 @@ export default function NumbersSorter() {
 
       const data = await response.json();
 
+      // If server returned duplicate records, merge them into duplicates state immediately so UI updates without waiting for fetchLines
+      try {
+        if (data && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          setDuplicates((prev) => {
+            // prepend new duplicates and dedupe by id
+            const combined = [...data.duplicates, ...prev];
+            const seen = new Set();
+            return combined.filter((d: any) => {
+              const id = d._id || d.id;
+              if (!id) return true;
+              if (seen.has(id)) return false;
+              seen.add(id);
+              return true;
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to merge server duplicates', e);
+      }
+
       // Refresh lines from server to ensure UI reflects server-side state
       await fetchLines();
       try {
@@ -168,7 +188,7 @@ export default function NumbersSorter() {
       setInputValue("");
 
       let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
-      const totalRemoved = duplicatesInInput + duplicatesWithExisting;
+      const totalRemoved = duplicatesInInput + duplicatesWithExisting + (Array.isArray(data.duplicates) ? data.duplicates.length : 0);
       if (totalRemoved > 0) {
         message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
       }
