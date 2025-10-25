@@ -433,6 +433,33 @@ export default function NumbersSorter() {
             </Button>
           </div>
         )}
+
+        {/* Duplicates Removed Block */}
+        <div className="mt-6">
+          <Card className="border-slate-200 dark:border-slate-800">
+            <CardHeader>
+              <CardTitle>Removed Duplicates</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {duplicates.length === 0 ? (
+                <p className="text-slate-500 dark:text-slate-400 text-center py-6">No duplicates removed yet</p>
+              ) : (
+                duplicates.map((d) => (
+                  <div key={d._id || d.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-start justify-between gap-4">
+                    <div className="flex-1 whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-300">
+                      {d.content}
+                    </div>
+                    <div className="ml-4">
+                      <button onClick={() => handleDeleteDuplicate(d._id || d.id || "")} className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded">
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );
