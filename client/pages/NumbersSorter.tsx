@@ -81,11 +81,11 @@ export default function NumbersSorter() {
     fetchLines();
 
     const onLinesUpdated = () => {
-      fetchLines();
+      fetchLines(true);
     };
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "lines_updated") fetchLines();
+      if (e.key === "lines_updated") fetchLines(true);
     };
 
     window.addEventListener("lines_updated", onLinesUpdated as EventListener);
@@ -100,7 +100,7 @@ export default function NumbersSorter() {
       // ignore
     }
 
-    const interval = setInterval(() => fetchLines(), 15000); // poll fallback every 15s
+    const interval = setInterval(() => fetchLines(true), 15000); // poll fallback every 15s
 
     return () => {
       window.removeEventListener("lines_updated", onLinesUpdated as EventListener);
