@@ -23,6 +23,7 @@ export default function NumbersSorter() {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [lines, setLines] = useState<NumberLine[]>([]);
+  const [duplicates, setDuplicates] = useState<NumberLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
