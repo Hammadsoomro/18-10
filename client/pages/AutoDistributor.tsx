@@ -465,9 +465,6 @@ export default function AutoDistributor() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            #{line.lineNumber}
-                          </span>
                           <span className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
                             {line.content}
                           </span>
