@@ -55,7 +55,7 @@ export default function DistributedLines() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -73,7 +73,7 @@ export default function DistributedLines() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`/api/numbers/line/${id}`, {
+      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -166,8 +166,8 @@ export default function DistributedLines() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                        {truncateText(line.content)}
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap break-words">
+                        {line.content}
                       </p>
                       {user?.role === "admin" && (
                         <div>

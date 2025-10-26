@@ -198,6 +198,7 @@
 
   /* Sidebar gradient - static (no animation) */
   .sidebar-gradient {
-    background: linear-gradient(120deg, #0ea5a4 0%, #7c3aed 33%, #f97316 66%, #ef476f 100%);
+    /* Updated to a cooler blue gradient */
+    background: linear-gradient(120deg, #0ea5a4 0%, #06b6d4 40%, #3b82f6 100%);
   }
 }

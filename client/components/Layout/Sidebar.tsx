@@ -13,6 +13,8 @@ import {
   Menu,
   X,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,12 +23,14 @@ interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
   onCollapsedChange?: (collapsed: boolean) => void;
+  collapsed?: boolean;
 }
 
 export function Sidebar({
   open = true,
   onClose,
   onCollapsedChange,
+  collapsed,
 }: SidebarProps) {
   const [time, setTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -46,6 +50,12 @@ export function Sidebar({
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (typeof collapsed === "boolean") {
+      setIsCollapsed(collapsed);
+    }
+  }, [collapsed]);
+
   const handleNavigate = (path: string) => {
     navigate(path);
     if (onClose) onClose();
@@ -59,11 +69,26 @@ export function Sidebar({
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: MessageCircle, label: "Conversation", path: "/conversation" },
-    { icon: SortAsc, label: "Numbers Sorter", path: "/numbers-sorter", adminOnly: true },
-    { icon: Zap, label: "Auto Distributor", path: "/auto-distributor", adminOnly: true },
-    { icon: ListTodo, label: "Queued List", path: "/queued-list", adminOnly: true },
-    { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
     { icon: Inbox, label: "Inbox", path: "/inbox" },
+    {
+      icon: SortAsc,
+      label: "Numbers Sorter",
+      path: "/numbers-sorter",
+      adminOnly: true,
+    },
+    {
+      icon: ListTodo,
+      label: "Queued List",
+      path: "/queued-list",
+      adminOnly: true,
+    },
+    { icon: Clock, label: "Distributed Lines", path: "/distributed-lines" },
+    {
+      icon: Zap,
+      label: "Auto Distributor",
+      path: "/auto-distributor",
+      adminOnly: true,
+    },
   ];
 
   const visibleNavItems = navItems.filter((item) => {
@@ -105,23 +130,19 @@ export function Sidebar({
         <div className="px-4 pt-4 pb-2 border-b border-transparent">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
-              {/* logo */}
-              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="50%" stopColor="#06b6d4" />
-                    <stop offset="100%" stopColor="#7c3aed" />
-                  </linearGradient>
-                </defs>
-                <circle cx="24" cy="24" r="22" fill="url(#lg3)" />
-                <path d="M16 28c0-5 5-9 8-9s8 4 8 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* logo (external asset) */}
+              <img
+                src="https://cdn.builder.io/o/assets%2F13331b2ed0834c738201e986b4f369af%2Fecd70b64eebe4d40acd0af01614f0b02?alt=media&token=c167c7c3-d78b-4c39-ae58-8c2c3be041cb&apiKey=13331b2ed0834c738201e986b4f369af"
+                alt="Line-Link logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             {!isCollapsed && (
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div className="text-white font-extrabold tracking-tight text-lg truncate">Line-Link</div>
+                  <div className="text-white font-extrabold tracking-tight text-lg truncate">
+                    Line-Link
+                  </div>
                   <button
                     onClick={() => handleCollapseToggle(!isCollapsed)}
                     className="md:hidden p-1 hover:bg-white/10 rounded-lg transition"
@@ -136,23 +157,41 @@ export function Sidebar({
 
           {!isCollapsed && (
             <div className="mt-3">
-              <div className="text-white font-mono text-lg font-semibold">{time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
-              <div className="text-xs text-white/80 mt-0.5">{time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+              <div className="text-white font-mono text-lg font-semibold">
+                {time.toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </div>
+              <div className="text-xs text-white/80 mt-0.5">
+                {time.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </div>
             </div>
           )}
         </div>
-
 
         {/* Account Info (slim) moved below header */}
         {!isCollapsed && user && (
           <div className="px-4 py-2 border-b border-transparent">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] text-white/80 uppercase tracking-wider">Account</p>
-                <p className="text-sm text-white font-semibold truncate">{user.name}</p>
+                <p className="text-[10px] text-white/80 uppercase tracking-wider">
+                  Account
+                </p>
+                <p className="text-sm text-white font-semibold truncate">
+                  {user.name}
+                </p>
               </div>
               <div className="text-right ml-2">
-                <p className="text-[10px] text-white/70 capitalize">{user.role}</p>
+                <p className="text-[10px] text-white/70 capitalize">
+                  {user.role}
+                </p>
               </div>
             </div>
           </div>
@@ -183,23 +222,28 @@ export function Sidebar({
 
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
-            <div className="space-y-2">
-              <button onClick={() => handleNavigate("/settings")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all">
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <Settings className="h-5 w-5 text-white" />
-                </div>
-                {!isCollapsed && <span className="text-sm font-semibold">Settings</span>}
-              </button>
-              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all">
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <LogOut className="h-5 w-5 text-red-400" />
-                </div>
-                {!isCollapsed && <span className="text-sm font-semibold">Logout</span>}
-              </button>
+            <div className={cn("px-4 pb-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
+              <div className={cn(isCollapsed ? "flex flex-col items-center space-y-2" : "flex items-center gap-2")}>
+                <button
+                  onClick={() => handleNavigate("/settings")}
+                  aria-label="Settings"
+                  title="Settings"
+                  className={cn("rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition", isCollapsed ? "p-2" : "p-2")}
+                >
+                  <Settings className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                  title="Logout"
+                  className={cn("rounded-lg bg-white/10 text-red-400 hover:bg-red-900/20 transition", isCollapsed ? "p-2" : "p-2")}
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
       </aside>
 
       {/* Content offset */}

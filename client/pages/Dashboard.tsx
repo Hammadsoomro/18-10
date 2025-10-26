@@ -33,8 +33,12 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch stats');
+        const res = await fetch(`${window.location.origin}/api/numbers/stats`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          console.warn('Stats fetch non-ok', res.status, body);
+          throw new Error('Failed to fetch stats');
+        }
         const data = await res.json();
         if (!mounted) return;
         setStats({
@@ -51,8 +55,12 @@ export default function Dashboard() {
     const fetchDistributorActive = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/auth/distributor-settings', { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) return;
+        const res = await fetch(`${window.location.origin}/api/auth/distributor-settings`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          console.warn('Distributor settings fetch non-ok', res.status, body);
+          return;
+        }
         const data = await res.json();
         if (!mounted) return;
         setDistributorActive(Boolean(data.isActive));

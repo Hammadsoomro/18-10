@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Bell } from "lucide-react";
+import { Moon, Sun, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileMenu } from "./ProfileMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,11 +7,13 @@ import { useAuth } from "@/hooks/useAuth";
 interface NavbarProps {
   title?: string;
   sidebarCollapsed?: boolean;
+  onToggleSidebarCollapse?: () => void;
 }
 
 export function Navbar({
   title = "Dashboard",
   sidebarCollapsed = false,
+  onToggleSidebarCollapse,
 }: NavbarProps) {
   const { user } = useAuth();
   const [isDark, setIsDark] = useState(true);
@@ -98,12 +100,18 @@ export function Navbar({
     };
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener("claim_cooldown_updated", onCustom as EventListener);
+    window.addEventListener(
+      "claim_cooldown_updated",
+      onCustom as EventListener,
+    );
 
     return () => {
       clearInterval(timer);
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
+      window.removeEventListener(
+        "claim_cooldown_updated",
+        onCustom as EventListener,
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -116,7 +124,22 @@ export function Navbar({
         width: `calc(100% - ${sidebarCollapsed ? "80px" : "256px"})`,
       }}
     >
-      <div className="flex-1">
+      <div className="flex-1 flex items-center">
+        {onToggleSidebarCollapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebarCollapse}
+            className="mr-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Toggle sidebar collapse"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </Button>
+        )}
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
           {title}
         </h1>

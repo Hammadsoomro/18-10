@@ -46,7 +46,9 @@ export default function Conversation() {
   const [newContactPhone, setNewContactPhone] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [messageText, setMessageText] = useState("");
-  const [messages, setMessages] = useState<Array<{id:string,content:string,sender:string,createdAt:string}>>([]);
+  const [messages, setMessages] = useState<
+    Array<{ id: string; content: string; sender: string; createdAt: string }>
+  >([]);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -63,14 +65,17 @@ export default function Conversation() {
     const fetchMessages = async () => {
       if (!token || !selectedContact) return;
       try {
-        const res = await fetch(`/api/contacts/${selectedContact.id}/messages`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to fetch messages');
+        const res = await fetch(
+          `${window.location.origin}/api/contacts/${selectedContact.id}/messages`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (!res.ok) throw new Error("Failed to fetch messages");
         const data = await res.json();
         setMessages(data.messages || []);
       } catch (e) {
-        console.error('Messages fetch error', e);
+        console.error("Messages fetch error", e);
       }
     };
     fetchMessages();
@@ -81,7 +86,9 @@ export default function Conversation() {
     // connect socket
     const tokenRaw = localStorage.getItem("auth_token");
     try {
-      const payload = tokenRaw ? JSON.parse(atob(tokenRaw.split(".")[1])) : null;
+      const payload = tokenRaw
+        ? JSON.parse(atob(tokenRaw.split(".")[1]))
+        : null;
       const teamId = payload?.teamId;
       const s = io(undefined, { autoConnect: true });
       socketRef.current = s;
@@ -92,7 +99,9 @@ export default function Conversation() {
       s.on("sms_received", (data: any) => {
         // data: contactId, phone, name, message, direction, timestamp
         setContacts((prev) => {
-          const idx = prev.findIndex((c) => c.id === data.contactId || c.phone === data.phone);
+          const idx = prev.findIndex(
+            (c) => c.id === data.contactId || c.phone === data.phone,
+          );
           let updated = [...prev];
           if (idx !== -1) {
             const contact = { ...updated[idx] };
@@ -140,7 +149,7 @@ export default function Conversation() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/contacts", {
+      const response = await fetch(`${window.location.origin}/api/contacts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -169,7 +178,7 @@ export default function Conversation() {
 
     setIsAdding(true);
     try {
-      const response = await fetch("/api/contacts", {
+      const response = await fetch(`${window.location.origin}/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +212,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`/api/contacts/${id}`, {
+      const response = await fetch(`${window.location.origin}/api/contacts/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -228,7 +237,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`/api/contacts/${contact.id}`, {
+      const response = await fetch(`${window.location.origin}/api/contacts/${contact.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -242,7 +251,9 @@ export default function Conversation() {
       if (!response.ok) throw new Error("Failed to update contact");
 
       setContacts((prev) =>
-        prev.map((c) => (c.id === contact.id ? { ...c, pinned: !c.pinned } : c)),
+        prev.map((c) =>
+          c.id === contact.id ? { ...c, pinned: !c.pinned } : c,
+        ),
       );
       toast.success(contact.pinned ? "Unpinned" : "Pinned");
     } catch (error) {
@@ -253,35 +264,38 @@ export default function Conversation() {
 
   const handleSendMessage = async (contact: Contact) => {
     if (!messageText.trim()) return;
-    if (!token) return toast.error('Not authenticated');
+    if (!token) return toast.error("Not authenticated");
 
     try {
       // send message to server which will emit to team
-      const res = await fetch(`/api/contacts/${contact.id}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message: messageText, direction: 'outgoing' }),
+      const res = await fetch(`${window.location.origin}/api/contacts/${contact.id}/message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: messageText, direction: "outgoing" }),
       });
-      if (!res.ok) throw new Error('Failed to send');
+      if (!res.ok) throw new Error("Failed to send");
 
       // optimistic update
-      setContacts(prev => {
-        const idx = prev.findIndex(c => c.id === contact.id);
+      setContacts((prev) => {
+        const idx = prev.findIndex((c) => c.id === contact.id);
         const updated = [...prev];
         if (idx !== -1) {
           const ct = { ...updated[idx] };
           ct.lastMessage = messageText;
           ct.lastMessageAt = new Date().toISOString();
-          updated.splice(idx,1);
+          updated.splice(idx, 1);
           updated.unshift(ct);
         }
         return updated;
       });
 
-      setMessageText('');
+      setMessageText("");
     } catch (e) {
       console.error(e);
-      toast.error('Failed to send message');
+      toast.error("Failed to send message");
     }
   };
 
@@ -367,7 +381,11 @@ export default function Conversation() {
                     onClick={() => {
                       setSelectedContact(contact);
                       // clear unread
-                      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, unreadCount: 0 } : c));
+                      setContacts((prev) =>
+                        prev.map((c) =>
+                          c.id === contact.id ? { ...c, unreadCount: 0 } : c,
+                        ),
+                      );
                     }}
                     className={`w-full p-3 rounded-lg text-left transition-colors ${
                       selectedContact?.id === contact.id
@@ -388,7 +406,9 @@ export default function Conversation() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <button className="underline text-xs">{contact.phone}</button>
+                              <button className="underline text-xs">
+                                {contact.phone}
+                              </button>
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
@@ -397,12 +417,29 @@ export default function Conversation() {
                               </DialogHeader>
                               <div>
                                 <p className="font-semibold">{contact.name}</p>
-                                <p className="text-sm text-slate-500">{contact.phone}</p>
-                                {contact.lastMessage && <p className="mt-2">Last: {contact.lastMessage}</p>}
+                                <p className="text-sm text-slate-500">
+                                  {contact.phone}
+                                </p>
+                                {contact.lastMessage && (
+                                  <p className="mt-2">
+                                    Last: {contact.lastMessage}
+                                  </p>
+                                )}
                               </div>
                               <DialogFooter className="mt-4">
-                                <Button variant="outline" onClick={() => navigator.clipboard.writeText(contact.phone)}>Copy Phone</Button>
-                                <Button onClick={() => setSelectedContact(contact)}>Open Chat</Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(contact.phone)
+                                  }
+                                >
+                                  Copy Phone
+                                </Button>
+                                <Button
+                                  onClick={() => setSelectedContact(contact)}
+                                >
+                                  Open Chat
+                                </Button>
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
@@ -420,7 +457,11 @@ export default function Conversation() {
                           </div>
                         )}
                         <div className="text-xs text-slate-400">
-                          {contact.lastMessageAt ? new Date(contact.lastMessageAt).toLocaleTimeString() : ''}
+                          {contact.lastMessageAt
+                            ? new Date(
+                                contact.lastMessageAt,
+                              ).toLocaleTimeString()
+                            : ""}
                         </div>
                       </div>
                     </div>
@@ -474,9 +515,14 @@ export default function Conversation() {
                 ) : (
                   <div className="space-y-3">
                     {messages.map((m) => (
-                      <div key={m.id} className={`max-w-[80%] p-3 rounded-lg ${m.sender === 'user' ? 'ml-auto bg-blue-600 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                      <div
+                        key={m.id}
+                        className={`max-w-[80%] p-3 rounded-lg ${m.sender === "user" ? "ml-auto bg-blue-600 text-white" : "bg-slate-100 text-slate-900"}`}
+                      >
                         <div className="text-sm">{m.content}</div>
-                        <div className="text-xs text-slate-400 mt-1 text-right">{new Date(m.createdAt).toLocaleString()}</div>
+                        <div className="text-xs text-slate-400 mt-1 text-right">
+                          {new Date(m.createdAt).toLocaleString()}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -484,8 +530,14 @@ export default function Conversation() {
               </CardContent>
               <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex gap-2">
-                  <Input placeholder="Type a message..." value={messageText} onChange={(e)=>setMessageText(e.target.value)} />
-                  <Button onClick={()=>handleSendMessage(selectedContact)}>Send</Button>
+                  <Input
+                    placeholder="Type a message..."
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                  />
+                  <Button onClick={() => handleSendMessage(selectedContact)}>
+                    Send
+                  </Button>
                 </div>
               </div>
             </Card>

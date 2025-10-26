@@ -65,7 +65,7 @@ const numberLineSchema = new mongoose.Schema(
     lineNumber: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["queued", "distributed", "claimed"],
+      enum: ["queued", "distributed", "claimed", "staged", "duplicate"],
       default: "queued",
     },
     claimedBy: {

@@ -35,6 +35,20 @@ export default function Settings() {
   const [members, setMembers] = useState<{ id: string; name: string; email: string; active: boolean }[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Edit member state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<{ id: string; name: string; email: string; active: boolean } | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editActive, setEditActive] = useState(true);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   useEffect(() => {
     if (user?.role === "admin" && token) {
       fetchClaimSettings();
@@ -42,7 +56,8 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await fetch("/api/auth/members", {
+          const membersUrl = `${window.location.origin}/api/auth/members`;
+          const res = await fetch(membersUrl, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -63,7 +78,8 @@ export default function Settings() {
 
     try {
       setIsLoadingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const response = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -93,7 +109,8 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +170,8 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch("/api/auth/create-member", {
+      const createUrl = `${window.location.origin}/api/auth/create-member`;
+      const response = await fetch(createUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -184,7 +202,8 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch("/api/auth/members", {
+        const membersUrl = `${window.location.origin}/api/auth/members`;
+        const res = await fetch(membersUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -373,7 +392,7 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await fetch("/api/auth/members", {
+                          const res = await fetch(`${window.location.origin}/api/auth/members`, {
                             headers: { Authorization: `Bearer ${token}` },
                           });
                           if (res.ok) {
@@ -407,13 +426,27 @@ export default function Settings() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-slate-500 mr-3">{m.active ? 'Active' : 'Inactive'}</span>
+                                    <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingMember(m);
+                                  setEditName(m.name);
+                                  setEditEmail(m.email);
+                                  setEditActive(m.active);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
                               <Button
                                 size="sm"
                                 variant={m.active ? 'destructive' : 'secondary'}
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const memberUrl = `${window.location.origin}/api/auth/member/${m.id}`;
+                                    const res = await fetch(memberUrl, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                       body: JSON.stringify({ active: !m.active }),
@@ -436,7 +469,8 @@ export default function Settings() {
                                   if (!token) return;
                                   if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const memberUrl = `${window.location.origin}/api/auth/member/${m.id}`;
+                                    const res = await fetch(memberUrl, {
                                       method: 'DELETE',
                                       headers: { Authorization: `Bearer ${token}` },
                                     });
@@ -455,8 +489,79 @@ export default function Settings() {
                           </div>
                         ))}
                       </div>
-                    )}
+                      )}
                   </div>
+
+                  {/* Edit Member Dialog */}
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Edit Team Member</DialogTitle>
+                        <DialogDescription>
+                          Update member details and status.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div>
+                          <Label htmlFor="edit-member-name">Full Name</Label>
+                          <Input
+                            id="edit-member-name"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-member-email">Email</Label>
+                          <Input
+                            id="edit-member-email"
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label>Active</Label>
+                          <Switch checked={editActive} onCheckedChange={(v: any) => setEditActive(!!v)} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button
+                          onClick={async () => {
+                            if (!editingMember || !token) return;
+                            setIsSavingEdit(true);
+                            try {
+                              const memberUrl = `${window.location.origin}/api/auth/member/${editingMember.id}`;
+                              const res = await fetch(memberUrl, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ name: editName, email: editEmail, active: editActive }),
+                              });
+                              if (!res.ok) {
+                                const t = await res.text();
+                                throw new Error(t || 'Failed to update member');
+                              }
+                              setMembers((prev) => prev.map(p => p.id === editingMember.id ? { ...p, name: editName, email: editEmail, active: editActive } : p));
+                              setIsEditDialogOpen(false);
+                              toast.success('Member updated');
+                            } catch (e) {
+                              console.error('Error updating member', e);
+                              toast.error('Failed to update member');
+                            } finally {
+                              setIsSavingEdit(false);
+                            }
+                          }}
+                          disabled={isSavingEdit}
+                          className="bg-blue-600 hover:bg-blue-700 flex-1"
+                        >
+                          {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                 </CardContent>
               </Card>
             ) : (
@@ -620,12 +725,20 @@ export default function Settings() {
                     id="current-password"
                     type="password"
                     className="mt-2"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" className="mt-2" />
+                  <Input
+                    id="new-password"
+                    type="password"
+                    className="mt-2"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                  />
                 </div>
 
                 <div>
@@ -634,11 +747,64 @@ export default function Settings() {
                     id="confirm-password"
                     type="password"
                     className="mt-2"
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
                   />
                 </div>
 
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Update Password
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={isUpdatingPassword}
+                  onClick={async () => {
+                    if (!token) {
+                      toast.error('Not authenticated');
+                      return;
+                    }
+
+                    if (!currentPassword || !newPasswordInput || !confirmPasswordInput) {
+                      toast.error('Please fill all password fields');
+                      return;
+                    }
+
+                    if (newPasswordInput !== confirmPasswordInput) {
+                      toast.error('New passwords do not match');
+                      return;
+                    }
+
+                    if (newPasswordInput.length < 6) {
+                      toast.error('New password must be at least 6 characters');
+                      return;
+                    }
+
+                    setIsUpdatingPassword(true);
+                    try {
+                      const apiUrl = `${window.location.origin}/api/auth/change-password`;
+                      const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ currentPassword, newPassword: newPasswordInput }),
+                      });
+                      if (!res.ok) {
+                        const text = await res.clone().text();
+                        let msg = 'Failed to update password';
+                        try { msg = JSON.parse(text).error || text; } catch { msg = text; }
+                        throw new Error(msg);
+                      }
+
+                      toast.success('Password updated successfully');
+                      // clear inputs
+                      setCurrentPassword('');
+                      setNewPasswordInput('');
+                      setConfirmPasswordInput('');
+                    } catch (e) {
+                      console.error('Password update error', e);
+                      toast.error(e instanceof Error ? e.message : 'Failed to update password');
+                    } finally {
+                      setIsUpdatingPassword(false);
+                    }
+                  }}
+                >
+                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
                 </Button>
               </CardContent>
             </Card>

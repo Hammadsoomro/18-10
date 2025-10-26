@@ -1,10 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { useSocket } from "@/hooks/useSocket";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   CheckCircle2,
   AlertCircle,
@@ -57,88 +67,95 @@ export default function Inbox() {
     number | null
   >(null);
 
-  const socketRef = useRef<Socket | null>(null);
-
   useEffect(() => {
     fetchData();
     fetchClaimSettings();
-
-    if (!token) return;
-    try {
-      const tokenRaw = localStorage.getItem("auth_token");
-      const payload = tokenRaw
-        ? JSON.parse(atob(tokenRaw.split(".")[1]))
-        : null;
-      const teamId = payload?.teamId;
-      const userId = payload?.id;
-      const s = io(undefined, { autoConnect: true });
-      socketRef.current = s;
-      s.on("connect", () => {
-        if (teamId) s.emit("join_team", teamId);
-      });
-
-      s.on("distributed_lines", (data: any) => {
-        // always refresh distributor assignments and, if relevant, inbox data
-        try {
-          fetchDistributorAssignments();
-          if (tab !== "distributor") {
-            setUnreadDistributor((prev) => {
-              const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
-              return prev + inc;
-            });
-          }
-        } catch (e) {}
-
-        try {
-          const lines = Array.isArray(data.lines) ? data.lines : [];
-          const forMe = lines.some((l: any) => {
-            const dt = Array.isArray(l.distributedTo)
-              ? l.distributedTo.map(String)
-              : [];
-            return (
-              dt.includes(String(userId)) ||
-              String(l.claimedBy) === String(userId)
-            );
-          });
-          if (forMe) {
-            fetchData();
-            // small toast
-            // @ts-ignore
-            import("sonner")
-              .then(({ toast }) =>
-                toast.success("You received new lines from Auto Distributor"),
-              )
-              .catch(() => {});
-          }
-        } catch (e) {}
-      });
-
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
-      };
-    } catch (e) {
-      console.error("Socket init error", e);
-    }
   }, [token]);
+
+  // socket handlers for real-time updates
+  useSocket(user?.teamId, {
+    distributed_lines: (data: any) => {
+      try {
+        fetchDistributorAssignments();
+        if (tab !== "distributor") {
+          setUnreadDistributor((prev) => {
+            const inc = Array.isArray(data?.lines) ? data.lines.length : 0;
+            return prev + inc;
+          });
+        }
+      } catch (e) {}
+
+      try {
+        const tokenRaw = localStorage.getItem("auth_token");
+        const payload = tokenRaw
+          ? JSON.parse(atob(tokenRaw.split(".")[1]))
+          : null;
+        const userId = payload?.id;
+        const lines = Array.isArray(data.lines) ? data.lines : [];
+        const forMe = lines.some((l: any) => {
+          const dt = Array.isArray(l.distributedTo)
+            ? l.distributedTo.map(String)
+            : [];
+          return (
+            dt.includes(String(userId)) ||
+            String(l.claimedBy) === String(userId)
+          );
+        });
+        if (forMe) {
+          fetchData();
+          // small toast
+          // @ts-ignore
+          import("sonner")
+            .then(({ toast }) =>
+              toast.success("You received new lines from Auto Distributor"),
+            )
+            .catch(() => {});
+        }
+      } catch (e) {}
+    },
+    claim_indicator: (data: any) => {
+      try {
+        if (typeof data?.cooldownRemaining === "number") {
+          setClaimCooldown(data.cooldownRemaining);
+        }
+        if (typeof data?.ready === "boolean") {
+          if (data.ready) fetchData();
+        }
+      } catch (e) {}
+    },
+    distributor_indicator: () => {
+      try {
+        fetchDistributorAssignments();
+      } catch (e) {}
+    },
+  });
 
   const fetchClaimSettings = async () => {
     if (!token) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch("/api/auth/claim-settings", {
+      const apiUrl = `${window.location.origin}/api/auth/claim-settings`;
+      const res = await fetch(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
       if (!res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
-      console.error("Failed to fetch claim settings", e);
+      if ((e as any)?.name === "AbortError") {
+        console.warn("fetchClaimSettings aborted due to timeout");
+      } else {
+        console.error("Failed to fetch claim settings", e);
+      }
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
-  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+  const getDistributorLastReadKey = () =>
+    `distributor_last_read_${user?.id ?? "global"}`;
 
   const markDistributorRead = () => {
     try {
@@ -149,7 +166,9 @@ export default function Inbox() {
 
   const computeUnreadForDistributor = (items: DistributorItem[]) => {
     try {
-      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      const last = Number(
+        localStorage.getItem(getDistributorLastReadKey()) || 0,
+      );
       if (!last) return items.length;
       const count = items.filter((it) => {
         const t = Date.parse(it.distributedAt);
@@ -163,18 +182,60 @@ export default function Inbox() {
 
   const fetchDistributorAssignments = async () => {
     if (!token) return;
+
+    const urlCandidates = [
+      `${window.location.origin}/api/numbers/claimed-lines`,
+      "/api/numbers/claimed-lines",
+    ];
+
+    let lastError: any = null;
+    let dataLines: any[] = [];
+
+    for (const url of urlCandidates) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          mode: "cors",
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          console.warn(`Fetch ${url} returned non-ok`, res.status, body);
+          lastError = new Error(`Non-ok ${res.status}`);
+          continue;
+        }
+
+        const data = await res.json();
+        dataLines = Array.isArray(data.lines) ? data.lines : [];
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Fetch ${url} failed`, err);
+        // try next candidate
+      }
+    }
+
+    if (lastError) {
+      console.error(
+        "Failed to fetch distributor assignments after retries",
+        lastError,
+      );
+      toast.error("Failed to fetch distributor assignments");
+      return;
+    }
+
     try {
-      const res = await fetch("/api/numbers/claimed-lines", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const lines = data.lines || [];
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
-      const distributed = lines.filter(
+      const distributed = dataLines.filter(
         (l: any) =>
           Array.isArray(l.distributedTo) && l.distributedTo.length > 0,
       );
+
       // group by claimedBy (assigned member)
       const map: Record<string, any> = {};
       for (const l of distributed) {
@@ -209,7 +270,8 @@ export default function Inbox() {
         setUnreadDistributor(computeUnreadForDistributor(items));
       }
     } catch (e) {
-      console.error("Failed to fetch distributor assignments", e);
+      console.error("Failed to process distributor assignments", e);
+      toast.error("Failed to fetch distributor assignments");
     }
   };
 
@@ -330,24 +392,114 @@ export default function Inbox() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-      if (!response.ok) throw new Error("Failed to fetch lines");
-      const data = await response.json();
+      // Fetch queued lines specifically (queue endpoint)
+      let queued: QueuedLine[] = [];
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+          const qRes = await fetch(
+            `${window.location.origin}/api/numbers/queued`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            },
+          );
+          if (qRes.ok) {
+            const qData = await qRes.json();
+            queued = Array.isArray(qData.lines) ? qData.lines : [];
+          } else {
+            console.warn("Queued endpoint returned non-ok status", qRes.status);
+          }
+        } catch (e) {
+          if ((e as any)?.name === "AbortError") {
+            console.warn(
+              "Queued fetch aborted due to timeout, will fallback to lines endpoint",
+            );
+          } else {
+            console.warn(
+              "Failed to fetch queued endpoint, will fallback to lines endpoint",
+              e,
+            );
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (outer) {
+        console.warn("Unexpected error fetching queued lines", outer);
+      }
 
-      // Filter queued lines (status: queued)
-      const queued = data.lines.filter(
-        (line: QueuedLine) => line.status === "queued",
-      );
+      // Fallback: try to fetch all lines and filter queued
+      if (queued.length === 0) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          try {
+            const allRes = await fetch(
+              `${window.location.origin}/api/numbers/lines`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              },
+            );
+            if (allRes.ok) {
+              const allData = await allRes.json();
+              const allLines = Array.isArray(allData.lines)
+                ? allData.lines
+                : [];
+              queued = allLines.filter((line: any) => line.status === "queued");
+            }
+          } catch (e) {
+            if ((e as any)?.name === "AbortError") {
+              console.warn("Lines fetch aborted due to timeout");
+            } else {
+              console.warn("Fallback fetch to /api/numbers/lines failed", e);
+            }
+          } finally {
+            clearTimeout(timeout);
+          }
+        } catch (outer) {
+          console.warn("Unexpected error in fallback queued fetch", outer);
+        }
+      }
+
       setQueuedLines(queued);
 
-      // Filter claimed lines (status: claimed)
-      const claimed = data.lines.filter(
-        (line: ClaimItem) => line.status === "claimed",
-      );
-      setClaims(claimed);
+      // Fetch claimed/distributed lines via claimed-lines endpoint
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+          const cRes = await fetch(
+            `${window.location.origin}/api/numbers/claimed-lines`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            },
+          );
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            const allClaimed = Array.isArray(cData.lines) ? cData.lines : [];
+            const claimed = allClaimed.filter(
+              (line: ClaimItem) => line.status === "claimed",
+            );
+            setClaims(claimed);
+          } else {
+            console.warn("claimed-lines endpoint returned non-ok", cRes.status);
+          }
+        } catch (e) {
+          if ((e as any)?.name === "AbortError") {
+            console.warn("claimed-lines fetch aborted due to timeout");
+          } else {
+            console.warn("Failed to fetch claimed-lines", e);
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (outer) {
+        console.warn("Unexpected error fetching claimed-lines", outer);
+      }
 
       // also refresh distributor assignments
       fetchDistributorAssignments();
@@ -365,6 +517,11 @@ export default function Inbox() {
       return;
     }
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("You are offline. Please check your network connection.");
+      return;
+    }
+
     if (queuedLines.length === 0) {
       toast.error("No lines available to claim");
       return;
@@ -379,28 +536,62 @@ export default function Inbox() {
       // Step 1: Move all existing claimed lines to distributed
       if (claims.length > 0) {
         const claimedLineIds = claims.map((c) => c._id || c.id);
-        const moveResponse = await fetch("/api/numbers/move-to-distributor", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ lineIds: claimedLineIds }),
-        });
+        let moveResponse: Response | null = null;
+        try {
+          moveResponse = await fetch(
+            `${window.location.origin}/api/numbers/move-to-distributor`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ lineIds: claimedLineIds }),
+            },
+          );
+        } catch (netErr) {
+          console.error("Network error moving claimed lines", netErr);
+          toast.error("Network error while moving claimed lines");
+          return;
+        }
 
-        if (!moveResponse.ok) throw new Error("Failed to move claimed lines");
+        if (!moveResponse.ok) {
+          const text = await moveResponse.text().catch(() => "");
+          console.error(
+            "Move to distributor failed",
+            moveResponse.status,
+            text,
+          );
+          let message = "Failed to move claimed lines";
+          try {
+            const json = JSON.parse(text || "{}");
+            if (json.error) message = json.error;
+          } catch {}
+          toast.error(message);
+          return;
+        }
       }
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`/api/numbers/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lineId: lineToClaimId }),
-      });
+      let claimResponse: Response | null = null;
+      try {
+        claimResponse = await fetch(
+          `${window.location.origin}/api/numbers/claim`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ lineId: lineToClaimId }),
+          },
+        );
+      } catch (netErr) {
+        console.error("Network error claiming line", netErr);
+        toast.error("Network error while claiming line");
+        return;
+      }
 
       if (!claimResponse.ok) {
         if (claimResponse.status === 409) {
@@ -416,7 +607,15 @@ export default function Inbox() {
           await fetchData();
           return;
         }
-        throw new Error("Failed to claim line");
+        const bodyText = await claimResponse.text().catch(() => "");
+        console.error("Claim failed", claimResponse.status, bodyText);
+        let msg = "Failed to claim line";
+        try {
+          const j = JSON.parse(bodyText || "{}");
+          if (j && j.error) msg = j.error;
+        } catch {}
+        toast.error(msg);
+        return;
       }
 
       // Parse response to show how many lines were claimed (backend may return { lines: [...] })
@@ -482,18 +681,24 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs value={tab} onValueChange={(v) => {
-            const nv = (v as any) as "claims" | "distributor";
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            const nv = v as any as "claims" | "distributor";
             setTab(nv);
             if (nv === "distributor") markDistributorRead();
-          }} className="w-full">
+          }}
+          className="w-full"
+        >
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
             <TabsTrigger value="distributor">
               <span className="relative inline-flex items-center gap-2">
                 Auto Distributor
                 {unreadDistributor > 0 && (
-                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                  <Badge variant="destructive" className="animate-pulse">
+                    {unreadDistributor}
+                  </Badge>
                 )}
               </span>
             </TabsTrigger>
@@ -568,8 +773,8 @@ export default function Inbox() {
                         className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
                       >
                         <div className="flex-1">
-                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                            {truncateText(claim.content)}
+                          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap break-words">
+                            {claim.content}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
                             <Clock className="h-3 w-3" />
@@ -590,8 +795,63 @@ export default function Inbox() {
           {/* Distributor Tab */}
           <TabsContent value="distributor" className="space-y-6 mt-6">
             <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle>Auto Distributor Assignments</CardTitle>
+                {distributorItems.length > 0 && (
+                  <div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          Clear
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogTitle>
+                          Clear distributor assignments?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete all Auto Distributor
+                          assigned lines for your team. This action cannot be
+                          undone.
+                        </AlertDialogDescription>
+                        <div className="flex gap-4 justify-end">
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(
+                                  `${window.location.origin}/api/numbers/clear-distributor`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  },
+                                );
+                                if (!res.ok)
+                                  throw new Error(
+                                    "Failed to clear distributor assignments",
+                                  );
+                                await fetchDistributorAssignments();
+                                toast.success(
+                                  "Distributor assignments cleared",
+                                );
+                              } catch (e) {
+                                console.error("Clear distributor failed", e);
+                                toast.error(
+                                  "Failed to clear distributor assignments",
+                                );
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Clear
+                          </AlertDialogAction>
+                        </div>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 {distributorItems.length === 0 ? (
@@ -626,8 +886,8 @@ export default function Inbox() {
                             className="text-sm flex items-start gap-2"
                           >
                             <span className="text-slate-400">•</span>
-                            <span className="text-slate-700 dark:text-slate-300">
-                              {truncateText(line, 15)}
+                            <span className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                              {line}
                             </span>
                           </div>
                         ))}

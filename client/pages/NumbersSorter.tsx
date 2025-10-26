@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSocket } from "@/hooks/useSocket";
 
 interface NumberLine {
   _id?: string;
@@ -23,39 +24,126 @@ export default function NumbersSorter() {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [lines, setLines] = useState<NumberLine[]>([]);
+  const [duplicates, setDuplicates] = useState<NumberLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
+  // real-time socket
+  useSocket(user?.teamId, {
+    lines_added: (payload: any) => {
+      if (!payload || !Array.isArray(payload.lines)) return;
+      setLines((prev) => {
+        const combined = [...payload.lines, ...prev];
+        const seen = new Set();
+        return combined.filter((l: any) => {
+          const id = l._id || l.id;
+          if (!id) return true;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+      });
+    },
+    duplicates_added: (payload: any) => {
+      if (!payload || !Array.isArray(payload.duplicates)) return;
+      setDuplicates((prev) => {
+        const combined = [...payload.duplicates, ...prev];
+        const seen = new Set();
+        return combined.filter((d: any) => {
+          const id = d._id || d.id;
+          if (!id) return true;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+      });
+    },
+    lines_moved_to_queue: () => {
+      fetchLines(true);
+    },
+    lines_moved_to_distributor: () => {
+      fetchLines(true);
+    },
+    line_deleted: (p: any) => {
+      const id = p?.id;
+      if (!id) return;
+      setLines((prev) => prev.filter((l) => (l._id || l.id) !== id));
+      setDuplicates((prev) => prev.filter((d) => (d._id || d.id) !== id));
+    },
+    distributor_cleared: () => fetchLines(true),
+    distributed_lines: () => fetchLines(true),
+    distributor_indicator: () => fetchLines(true),
+    claim_indicator: () => fetchLines(true),
+  });
+
   useEffect(() => {
     fetchLines();
+
+    const onLinesUpdated = () => {
+      fetchLines(true);
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "lines_updated") fetchLines(true);
+    };
+
+    window.addEventListener("lines_updated", onLinesUpdated as EventListener);
+    window.addEventListener("storage", onStorage);
+
+    // setup socket real-time updates
+    let unsub: (() => void) | null = null;
+    try {
+      // lazy-import to avoid SSR issues
+      const { useSocket: _useSocket } = require("@/hooks/useSocket");
+    } catch (e) {
+      // ignore
+    }
+
+    const interval = setInterval(() => fetchLines(true), 15000); // poll fallback every 15s
+
+    return () => {
+      window.removeEventListener(
+        "lines_updated",
+        onLinesUpdated as EventListener,
+      );
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+      if (unsub) unsub();
+    };
   }, [token]);
 
-  const fetchLines = async () => {
+  const fetchLines = async (silent = false) => {
     if (!token) {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!silent) setIsLoading(true);
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to fetch lines");
       const data = await response.json();
 
-      // Only show lines that are still in "queued" status (not moved yet)
-      const queuedLines = data.lines.filter(
-        (line: any) => line.status === "queued",
+      // For admin Numbers Sorter, show lines in the 'staged' status (Sorted Lines live)
+      const all = Array.isArray(data.lines) ? data.lines : [];
+      const stagedLines = all.filter((line: any) => line.status === "staged");
+      const duplicateLines = all.filter(
+        (line: any) => line.status === "duplicate",
       );
-      setLines(queuedLines);
+      setLines(stagedLines);
+      setDuplicates(duplicateLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
-      toast.error("Failed to fetch lines");
+      if (!silent) toast.error("Failed to fetch lines");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -79,10 +167,55 @@ export default function NumbersSorter() {
     const duplicatesInInput = lineTexts.length - new Set(lineTexts).size;
     lineTexts = Array.from(new Set(lineTexts));
 
-    // Check for duplicates with existing lines
-    const existingContents = new Set(lines.map((l) => l.content));
+    // Check for duplicates with existing staged lines and distributed lines
+    const existingContents = new Set(
+      lines.map((l) => (l.content || "").toString().trim().toLowerCase()),
+    );
+
+    try {
+      // Fetch distributed (claimed-lines) and queued lines in parallel to dedupe against both
+      const [distRes, queuedRes] = await Promise.all([
+        fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+        fetch(`${window.location.origin}/api/numbers/queued`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+      ]);
+
+      if (distRes && distRes.ok) {
+        const distData = await distRes.json();
+        const distributed = Array.isArray(distData.lines)
+          ? distData.lines.filter((ln: any) => ln.status === "distributed")
+          : [];
+        for (const d of distributed) {
+          if (d && d.content)
+            existingContents.add(
+              (d.content || "").toString().trim().toLowerCase(),
+            );
+        }
+      }
+
+      if (queuedRes && queuedRes.ok) {
+        const queuedData = await queuedRes.json();
+        const queuedExisting = Array.isArray(queuedData.lines)
+          ? queuedData.lines
+          : [];
+        for (const q of queuedExisting) {
+          if (q && q.content)
+            existingContents.add(
+              (q.content || "").toString().trim().toLowerCase(),
+            );
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch distributed/queued lines for dedupe", e);
+    }
+
     const beforeDedup = lineTexts.length;
-    lineTexts = lineTexts.filter((text) => !existingContents.has(text));
+    lineTexts = lineTexts.filter(
+      (text) => !existingContents.has(text.toString().trim().toLowerCase()),
+    );
     const duplicatesWithExisting = beforeDedup - lineTexts.length;
 
     if (lineTexts.length === 0) {
@@ -96,23 +229,70 @@ export default function NumbersSorter() {
 
     setIsAdding(true);
     try {
-      const response = await fetch("/api/numbers/lines", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ contents: lineTexts }),
         },
-        body: JSON.stringify({ contents: lineTexts }),
-      });
+      );
 
-      if (!response.ok) throw new Error("Failed to add lines");
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        let message = `Failed to add lines: ${response.status}`;
+        try {
+          const json = JSON.parse(body || "{}");
+          if (json && json.error) message = json.error;
+        } catch {}
+        console.error("Add lines failed:", response.status, body);
+        toast.error(message);
+        setIsAdding(false);
+        return;
+      }
+
       const data = await response.json();
 
-      setLines([...lines, ...data.lines]);
+      // If server returned duplicate records, merge them into duplicates state immediately so UI updates without waiting for fetchLines
+      try {
+        if (
+          data &&
+          Array.isArray(data.duplicates) &&
+          data.duplicates.length > 0
+        ) {
+          setDuplicates((prev) => {
+            // prepend new duplicates and dedupe by id
+            const combined = [...data.duplicates, ...prev];
+            const seen = new Set();
+            return combined.filter((d: any) => {
+              const id = d._id || d.id;
+              if (!id) return true;
+              if (seen.has(id)) return false;
+              seen.add(id);
+              return true;
+            });
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to merge server duplicates", e);
+      }
+
+      // Refresh lines from server to ensure UI reflects server-side state
+      await fetchLines(true);
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       setInputValue("");
 
       let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
-      const totalRemoved = duplicatesInInput + duplicatesWithExisting;
+      const totalRemoved =
+        duplicatesInInput +
+        duplicatesWithExisting +
+        (Array.isArray(data.duplicates) ? data.duplicates.length : 0);
       if (totalRemoved > 0) {
         message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
       }
@@ -127,18 +307,49 @@ export default function NumbersSorter() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`/api/numbers/line/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/line/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to delete line");
 
       setLines(lines.filter((l) => l._id !== id && l.id !== id));
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       toast.success("Line deleted");
     } catch (error) {
       console.error("Error deleting line:", error);
       toast.error("Failed to delete line");
+    }
+  };
+
+  const handleDeleteDuplicate = async (id: string) => {
+    try {
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/line/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (!response.ok) throw new Error("Failed to delete duplicate");
+
+      setDuplicates(duplicates.filter((d) => d._id !== id && d.id !== id));
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
+      toast.success("Duplicate removed");
+    } catch (error) {
+      console.error("Error deleting duplicate:", error);
+      toast.error("Failed to delete duplicate");
     }
   };
 
@@ -150,19 +361,61 @@ export default function NumbersSorter() {
 
     setIsMoving(true);
     try {
-      const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-queue", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      // Fetch all lines to determine which are already distributed
+      const allRes = await fetch(
+        `${window.location.origin}/api/numbers/lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         },
-        body: JSON.stringify({ lineIds }),
-      });
+      );
+      if (!allRes.ok) throw new Error("Failed to fetch existing lines");
+      const allData = await allRes.json();
+      const allLines = Array.isArray(allData.lines) ? allData.lines : [];
+
+      // Build a set of distributed contents to dedupe against
+      const distributedContents = new Set(
+        allLines
+          .filter((l: any) => l.status === "distributed")
+          .map((l: any) =>
+            typeof l.content === "string"
+              ? l.content.trim()
+              : String(l.content),
+          ),
+      );
+
+      // Filter current sorter lines to exclude any that already exist in distributed
+      const linesToMove = lines.filter(
+        (l) => !distributedContents.has((l.content || "").trim()),
+      );
+
+      if (linesToMove.length === 0) {
+        toast.error(
+          "All selected lines already exist in Distributed Lines and were skipped",
+        );
+        setIsMoving(false);
+        return;
+      }
+
+      const lineIds = linesToMove.map((l) => l._id || l.id).filter(Boolean);
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/move-to-queue`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineIds }),
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to move lines");
 
-      toast.success(`${lines.length} line(s) moved to Queued List`);
+      toast.success(`${linesToMove.length} line(s) moved to Queued List`);
+      try {
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
+      } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/queued-list"), 500);
     } catch (error) {
@@ -182,19 +435,22 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-distributor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${window.location.origin}/api/numbers/move-to-distributor`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineIds }),
         },
-        body: JSON.stringify({ lineIds }),
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
-      // notify other pages to refresh distributed lines
+      // notify other pages to refresh distributed lines and general lines
       try {
         localStorage.setItem("distributor_updated", String(Date.now()));
         window.dispatchEvent(
@@ -202,6 +458,8 @@ export default function NumbersSorter() {
             detail: { teamId: user?.teamId },
           }),
         );
+        localStorage.setItem("lines_updated", String(Date.now()));
+        window.dispatchEvent(new CustomEvent("lines_updated"));
       } catch (e) {}
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
@@ -317,8 +575,8 @@ export default function NumbersSorter() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {truncateText(line.content)}
+                          <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-pre-wrap break-words">
+                            {line.content}
                           </span>
                         </div>
                         <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -372,6 +630,39 @@ export default function NumbersSorter() {
                 "Add to Auto Distributor"
               )}
             </Button>
+          </div>
+        )}
+
+        {/* Duplicates Removed Block - hidden when empty */}
+        {duplicates.length > 0 && (
+          <div className="mt-6">
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle>Removed Duplicates</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {duplicates.map((d) => (
+                  <div
+                    key={d._id || d.id}
+                    className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-start justify-between gap-4"
+                  >
+                    <div className="flex-1 whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-300">
+                      {d.content}
+                    </div>
+                    <div className="ml-4">
+                      <button
+                        onClick={() =>
+                          handleDeleteDuplicate(d._id || d.id || "")
+                        }
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

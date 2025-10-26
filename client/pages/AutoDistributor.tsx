@@ -129,7 +129,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/auth/members", {
+      const response = await fetch(`${window.location.origin}/api/auth/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -146,7 +146,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -170,7 +170,7 @@ export default function AutoDistributor() {
     try {
       setIsLoading(true);
       // Use the claimed-lines endpoint which includes distributed items
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -208,7 +208,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -246,7 +246,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -465,11 +465,8 @@ export default function AutoDistributor() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            #{line.lineNumber}
-                          </span>
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {truncateText(line.content)}
+                          <span className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                            {line.content}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
