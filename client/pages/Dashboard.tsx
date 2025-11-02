@@ -35,8 +35,10 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch stats');
+        const res = await fetch("/api/numbers/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch stats");
         const data = await res.json();
         if (!mounted) return;
         setStats({
@@ -46,20 +48,22 @@ export default function Dashboard() {
           claimedToday: data.claimedToday || 0,
         });
       } catch (error) {
-        console.error('Failed to fetch stats:', error);
+        console.error("Failed to fetch stats:", error);
       }
     };
 
     const fetchDistributorActive = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/auth/distributor-settings', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch("/api/auth/distributor-settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (!mounted) return;
         setDistributorActive(Boolean(data.isActive));
       } catch (e) {
-        console.error('Failed to fetch distributor settings', e);
+        console.error("Failed to fetch distributor settings", e);
       }
     };
 
@@ -68,41 +72,42 @@ export default function Dashboard() {
 
     // socket for real-time distributor indicator & stats
     try {
-      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      const payload = token ? JSON.parse(atob(token.split(".")[1])) : null;
       const teamId = payload?.teamId;
 
       if (socket) {
         socketRef.current = socket;
 
         const onConnect = () => {
-          if (teamId) socket.emit('join_team', teamId);
+          if (teamId) socket.emit("join_team", teamId);
         };
 
         const onDistributorIndicator = (data: any) => {
-          if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
+          if (typeof data?.active === "boolean")
+            setDistributorActive(Boolean(data.active));
         };
 
         const onStatsUpdated = () => fetchStats();
         const onQueuedChanged = () => fetchStats();
 
-        socket.on('connect', onConnect);
-        socket.on('distributor_indicator', onDistributorIndicator);
-        socket.on('stats_updated', onStatsUpdated);
-        socket.on('queued_lines_changed', onQueuedChanged);
+        socket.on("connect", onConnect);
+        socket.on("distributor_indicator", onDistributorIndicator);
+        socket.on("stats_updated", onStatsUpdated);
+        socket.on("queued_lines_changed", onQueuedChanged);
 
         // store ref for cleanup
         socketRef.current = socket;
 
         // cleanup function will remove listeners
         return () => {
-          socket.off('connect', onConnect);
-          socket.off('distributor_indicator', onDistributorIndicator);
-          socket.off('stats_updated', onStatsUpdated);
-          socket.off('queued_lines_changed', onQueuedChanged);
+          socket.off("connect", onConnect);
+          socket.off("distributor_indicator", onDistributorIndicator);
+          socket.off("stats_updated", onStatsUpdated);
+          socket.off("queued_lines_changed", onQueuedChanged);
         };
       }
     } catch (e) {
-      console.error('Dashboard socket init error', e);
+      console.error("Dashboard socket init error", e);
     }
 
     // stop polling; rely on socket events for updates
@@ -281,7 +286,10 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button onClick={()=>navigate('/numbers-sorter')} className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/numbers-sorter")}
+                className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-blue-900 dark:text-blue-400">
                   Add Numbers
                 </div>
@@ -290,7 +298,10 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button onClick={()=>navigate('/inbox')} className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/inbox")}
+                className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-cyan-900 dark:text-cyan-400">
                   View Inbox
                 </div>
@@ -299,7 +310,10 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button onClick={()=>navigate('/settings')} className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/settings")}
+                className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-green-900 dark:text-green-400">
                   Team Settings
                 </div>

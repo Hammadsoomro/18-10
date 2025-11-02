@@ -35,12 +35,14 @@ export default function DistributedLines() {
     if (!search) return true;
     const q = search.toLowerCase();
     const content = (line.content || "").toLowerCase();
-    const claimedByName = ((line as any).claimedBy?.name || line.claimedByName || "").toLowerCase();
+    const claimedByName = (
+      (line as any).claimedBy?.name ||
+      line.claimedByName ||
+      ""
+    ).toLowerCase();
     const lineNum = String(line.lineNumber || "");
     return (
-      content.includes(q) ||
-      claimedByName.includes(q) ||
-      lineNum.includes(q)
+      content.includes(q) || claimedByName.includes(q) || lineNum.includes(q)
     );
   });
 
@@ -50,16 +52,16 @@ export default function DistributedLines() {
     fetchDistributedLines();
 
     if (socket) {
-      socket.on('distributed_lines', () => fetchDistributedLines());
-      socket.on('queued_lines_changed', () => fetchDistributedLines());
-      socket.on('sorted_lines_changed', () => fetchDistributedLines());
+      socket.on("distributed_lines", () => fetchDistributedLines());
+      socket.on("queued_lines_changed", () => fetchDistributedLines());
+      socket.on("sorted_lines_changed", () => fetchDistributedLines());
     }
 
     return () => {
       if (socket) {
-        socket.off('distributed_lines', () => fetchDistributedLines());
-        socket.off('queued_lines_changed', () => fetchDistributedLines());
-        socket.off('sorted_lines_changed', () => fetchDistributedLines());
+        socket.off("distributed_lines", () => fetchDistributedLines());
+        socket.off("queued_lines_changed", () => fetchDistributedLines());
+        socket.off("sorted_lines_changed", () => fetchDistributedLines());
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,7 +102,7 @@ export default function DistributedLines() {
         let body = await response.text();
         try {
           const json = JSON.parse(body);
-          toast.error(json.error || 'Failed to delete line');
+          toast.error(json.error || "Failed to delete line");
         } catch (e) {
           toast.error(`Failed to delete line: ${response.status}`);
         }

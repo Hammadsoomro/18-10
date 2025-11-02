@@ -138,7 +138,8 @@ export default function Inbox() {
     }
   };
 
-  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+  const getDistributorLastReadKey = () =>
+    `distributor_last_read_${user?.id ?? "global"}`;
 
   const markDistributorRead = () => {
     try {
@@ -149,7 +150,9 @@ export default function Inbox() {
 
   const computeUnreadForDistributor = (items: DistributorItem[]) => {
     try {
-      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      const last = Number(
+        localStorage.getItem(getDistributorLastReadKey()) || 0,
+      );
       if (!last) return items.length;
       const count = items.filter((it) => {
         const t = Date.parse(it.distributedAt);
@@ -380,7 +383,9 @@ export default function Inbox() {
       if (claims.length > 0) {
         const claimedLineIds = claims
           .map((c) => c._id || c.id)
-          .filter((id): id is string => typeof id === "string" && id.trim() !== "");
+          .filter(
+            (id): id is string => typeof id === "string" && id.trim() !== "",
+          );
 
         if (claimedLineIds.length > 0) {
           const moveResponse = await fetch("/api/numbers/move-to-distributor", {
@@ -496,18 +501,24 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs value={tab} onValueChange={(v) => {
-            const nv = (v as any) as "claims" | "distributor";
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            const nv = v as any as "claims" | "distributor";
             setTab(nv);
             if (nv === "distributor") markDistributorRead();
-          }} className="w-full">
+          }}
+          className="w-full"
+        >
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
             <TabsTrigger value="distributor">
               <span className="relative inline-flex items-center gap-2">
                 Auto Distributor
                 {unreadDistributor > 0 && (
-                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                  <Badge variant="destructive" className="animate-pulse">
+                    {unreadDistributor}
+                  </Badge>
                 )}
               </span>
             </TabsTrigger>

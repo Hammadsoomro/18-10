@@ -78,7 +78,9 @@ export default function AutoDistributor() {
           const count = Array.isArray(data.lines) ? data.lines.length : 0;
           if (count > 0) {
             import("sonner")
-              .then(({ toast }) => toast.success(`${count} line(s) distributed`))
+              .then(({ toast }) =>
+                toast.success(`${count} line(s) distributed`),
+              )
               .catch(() => {});
           }
         } catch (e) {}

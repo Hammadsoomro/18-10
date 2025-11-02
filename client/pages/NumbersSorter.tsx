@@ -34,16 +34,16 @@ export default function NumbersSorter() {
     fetchLines();
 
     if (socket) {
-      socket.on('sorted_lines_changed', () => fetchLines());
-      socket.on('queued_lines_changed', () => fetchLines());
-      socket.on('stats_updated', () => fetchLines());
+      socket.on("sorted_lines_changed", () => fetchLines());
+      socket.on("queued_lines_changed", () => fetchLines());
+      socket.on("stats_updated", () => fetchLines());
     }
 
     return () => {
       if (socket) {
-        socket.off('sorted_lines_changed', () => fetchLines());
-        socket.off('queued_lines_changed', () => fetchLines());
-        socket.off('stats_updated', () => fetchLines());
+        socket.off("sorted_lines_changed", () => fetchLines());
+        socket.off("queued_lines_changed", () => fetchLines());
+        socket.off("stats_updated", () => fetchLines());
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,7 +65,9 @@ export default function NumbersSorter() {
       const data = await response.json();
 
       // show only 'sorted' status lines
-      const sortedLines = (data.lines || []).filter((line: any) => line.status === "sorted");
+      const sortedLines = (data.lines || []).filter(
+        (line: any) => line.status === "sorted",
+      );
       setLines(sortedLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
@@ -118,7 +120,7 @@ export default function NumbersSorter() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ contents: lineTexts, status: 'sorted' }),
+        body: JSON.stringify({ contents: lineTexts, status: "sorted" }),
       });
 
       if (!response.ok) throw new Error("Failed to add lines");
@@ -146,14 +148,21 @@ export default function NumbersSorter() {
       // Build message
       let messageParts: string[] = [];
       if (created.length > 0) messageParts.push(`${created.length} added`);
-      if (duplicatesInInput > 0) messageParts.push(`${duplicatesInInput} duplicates removed from input`);
-      if (duplicatesWithExisting > 0) messageParts.push(`${duplicatesWithExisting} duplicates removed (already in Sorted)`);
-      if (skippedFromOtherLists.length > 0) messageParts.push(`${skippedFromOtherLists.length} skipped (already in Queued/Distributed)`);
+      if (duplicatesInInput > 0)
+        messageParts.push(`${duplicatesInInput} duplicates removed from input`);
+      if (duplicatesWithExisting > 0)
+        messageParts.push(
+          `${duplicatesWithExisting} duplicates removed (already in Sorted)`,
+        );
+      if (skippedFromOtherLists.length > 0)
+        messageParts.push(
+          `${skippedFromOtherLists.length} skipped (already in Queued/Distributed)`,
+        );
 
       if (messageParts.length === 0) {
-        toast.error('No lines were added');
+        toast.error("No lines were added");
       } else {
-        toast.success(messageParts.join(' — '));
+        toast.success(messageParts.join(" — "));
       }
     } catch (error) {
       console.error("Error adding lines:", error);
