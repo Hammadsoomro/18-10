@@ -124,12 +124,15 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to add lines");
       const data = await response.json();
 
-      // Merge returned lines into existing state without duplicating by id or content
-      const returnedLines: NumberLine[] = data.lines || [];
+      // Server returns created lines in `lines` and optionally `skipped` for items that already exist in queued/distributed
+      const created: NumberLine[] = data.lines || [];
+      const skippedFromOtherLists: any[] = data.skipped || [];
+
+      // Merge created lines into existing state without duplicating by id or content
       const existingById = new Set(lines.map((l) => l._id || l.id));
       const existingByContent = new Set(lines.map((l) => l.content));
       const merged = [...lines];
-      returnedLines.forEach((rl) => {
+      created.forEach((rl) => {
         const id = rl._id || rl.id;
         if (id && existingById.has(id)) return;
         if (existingByContent.has(rl.content)) return;
@@ -140,12 +143,18 @@ export default function NumbersSorter() {
       setLines(merged);
       setInputValue("");
 
-      let message = `${returnedLines.length} line${returnedLines.length > 1 ? "s" : ""} added`;
-      const totalRemoved = duplicatesInInput + duplicatesWithExisting;
-      if (totalRemoved > 0) {
-        message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
+      // Build message
+      let messageParts: string[] = [];
+      if (created.length > 0) messageParts.push(`${created.length} added`);
+      if (duplicatesInInput > 0) messageParts.push(`${duplicatesInInput} duplicates removed from input`);
+      if (duplicatesWithExisting > 0) messageParts.push(`${duplicatesWithExisting} duplicates removed (already in Sorted)`);
+      if (skippedFromOtherLists.length > 0) messageParts.push(`${skippedFromOtherLists.length} skipped (already in Queued/Distributed)`);
+
+      if (messageParts.length === 0) {
+        toast.error('No lines were added');
+      } else {
+        toast.success(messageParts.join(' — '));
       }
-      toast.success(message);
     } catch (error) {
       console.error("Error adding lines:", error);
       toast.error("Failed to add lines");
