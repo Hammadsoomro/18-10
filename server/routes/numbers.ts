@@ -82,7 +82,7 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
             io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved", line: existing });
             // Notify the source list (queued/distributed) that an item was removed/moved
             if (prevStatus === 'queued') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", id: existing._id });
-            if (prevStatus === 'distributed') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", id: existing._id });
+            if (prevStatus === 'distributed') io.to(`team_${decoded.teamId}`).emit("distributed_lines", { action: "moved_to_sorted", id: existing._id });
             io.to(`team_${decoded.teamId}`).emit("stats_updated");
           }
         } catch (e) {
@@ -191,7 +191,7 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
           const movedFromQueued = updatedLines.filter((u: any) => u._prevStatus === 'queued').map((u: any) => u._id);
           const movedFromDistributed = updatedLines.filter((u: any) => u._prevStatus === 'distributed').map((u: any) => u._id);
           if (movedFromQueued.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", ids: movedFromQueued });
-          if (movedFromDistributed.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", ids: movedFromDistributed });
+          if (movedFromDistributed.length > 0) io.to(`team_${decoded.teamId}`).emit("distributed_lines", { action: "moved_to_sorted", ids: movedFromDistributed });
         } else {
           if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
         }
