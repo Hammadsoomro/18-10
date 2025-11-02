@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const socket = useSocket();
   const [stats, setStats] = useState({
     totalNumbers: 0,
     queuedLines: 0,
@@ -67,26 +68,38 @@ export default function Dashboard() {
 
     // socket for real-time distributor indicator & stats
     try {
-      const s = socketRef.current = useSocket();
       const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const teamId = payload?.teamId;
 
-      if (s) {
-        s.on('connect', () => {
-          if (teamId) s.emit('join_team', teamId);
-        });
+      if (socket) {
+        socketRef.current = socket;
 
-        s.on('distributor_indicator', (data: any) => {
+        const onConnect = () => {
+          if (teamId) socket.emit('join_team', teamId);
+        };
+
+        const onDistributorIndicator = (data: any) => {
           if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
-        });
+        };
 
-        s.on('stats_updated', () => {
-          fetchStats();
-        });
+        const onStatsUpdated = () => fetchStats();
+        const onQueuedChanged = () => fetchStats();
 
-        s.on('queued_lines_changed', () => {
-          fetchStats();
-        });
+        socket.on('connect', onConnect);
+        socket.on('distributor_indicator', onDistributorIndicator);
+        socket.on('stats_updated', onStatsUpdated);
+        socket.on('queued_lines_changed', onQueuedChanged);
+
+        // store ref for cleanup
+        socketRef.current = socket;
+
+        // cleanup function will remove listeners
+        return () => {
+          socket.off('connect', onConnect);
+          socket.off('distributor_indicator', onDistributorIndicator);
+          socket.off('stats_updated', onStatsUpdated);
+          socket.off('queued_lines_changed', onQueuedChanged);
+        };
       }
     } catch (e) {
       console.error('Dashboard socket init error', e);
@@ -97,12 +110,8 @@ export default function Dashboard() {
     return () => {
       mounted = false;
       if (interval) window.clearInterval(interval);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [token]);
+  }, [token, socket]);
 
   return (
     <Layout title="Dashboard">
