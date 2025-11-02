@@ -13,6 +13,8 @@ import {
   Menu,
   X,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,15 +38,32 @@ export function Sidebar({
 
   const handleCollapseToggle = (newCollapsedState: boolean) => {
     setIsCollapsed(newCollapsedState);
-    if (onCollapsedChange) {
-      onCollapsedChange(newCollapsedState);
-    }
   };
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Initialize collapsed state from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("sidebar:collapsed");
+      if (stored !== null) {
+        setIsCollapsed(stored === "true");
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist collapsed state and notify parent
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebar:collapsed", String(isCollapsed));
+    } catch {}
+    if (onCollapsedChange) onCollapsedChange(isCollapsed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCollapsed]);
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -96,7 +115,7 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen border-r border-transparent z-40 transition-all duration-300 flex flex-col shadow-xl sidebar-gradient",
+          "fixed left-0 top-0 h-screen border-r border-slate-800 z-40 transition-all duration-300 flex flex-col shadow-xl bg-slate-900/90 backdrop-blur",
           isCollapsed ? "w-20" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
@@ -124,10 +143,14 @@ export function Sidebar({
                   <div className="text-white font-extrabold tracking-tight text-lg truncate">Line-Link</div>
                   <button
                     onClick={() => handleCollapseToggle(!isCollapsed)}
-                    className="md:hidden p-1 hover:bg-white/10 rounded-lg transition"
-                    aria-label="Toggle sidebar"
+                    className="hidden md:inline-flex p-1 hover:bg-white/10 rounded-lg transition"
+                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                   >
-                    <Menu className="h-4 w-4 text-white/80" />
+                    {isCollapsed ? (
+                      <ChevronRight className="h-4 w-4 text-white/80" />
+                    ) : (
+                      <ChevronLeft className="h-4 w-4 text-white/80" />
+                    )}
                   </button>
                 </div>
               </div>
