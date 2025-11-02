@@ -124,10 +124,23 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to add lines");
       const data = await response.json();
 
-      setLines([...lines, ...data.lines]);
+      // Merge returned lines into existing state without duplicating by id or content
+      const returnedLines: NumberLine[] = data.lines || [];
+      const existingById = new Set(lines.map((l) => l._id || l.id));
+      const existingByContent = new Set(lines.map((l) => l.content));
+      const merged = [...lines];
+      returnedLines.forEach((rl) => {
+        const id = rl._id || rl.id;
+        if (id && existingById.has(id)) return;
+        if (existingByContent.has(rl.content)) return;
+        existingById.add(id);
+        existingByContent.add(rl.content);
+        merged.push(rl);
+      });
+      setLines(merged);
       setInputValue("");
 
-      let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
+      let message = `${returnedLines.length} line${returnedLines.length > 1 ? "s" : ""} added`;
       const totalRemoved = duplicatesInInput + duplicatesWithExisting;
       if (totalRemoved > 0) {
         message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
