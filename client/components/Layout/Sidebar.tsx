@@ -157,6 +157,18 @@ export function Sidebar({
             )}
           </div>
 
+          {isCollapsed && (
+            <div className="mt-2 hidden md:flex justify-end">
+              <button
+                onClick={() => handleCollapseToggle(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition"
+                aria-label="Expand sidebar"
+              >
+                <ChevronRight className="h-4 w-4 text-white/80" />
+              </button>
+            </div>
+          )}
+
           {!isCollapsed && (
             <div className="mt-3">
               <div className="text-white font-mono text-lg font-semibold">{time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
