@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout/Layout";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSocket } from "@/hooks/useSocket";
+import { Socket } from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Activity,
