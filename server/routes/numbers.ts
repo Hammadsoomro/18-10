@@ -49,18 +49,24 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const lineNumber = existingLines.length + 1;
 
+    const status = req.body.status === 'sorted' ? 'sorted' : 'queued';
+
     const line = new NumberLine({
       teamId: decoded.teamId,
       content,
       lineNumber,
-      status: "queued",
+      status,
     });
 
     await line.save();
     // emit websocket event to team room
     try {
       const io = (req as any).app?.get("io");
-      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created", line: line });
+      if (io) {
+        if (status === 'sorted') io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created", line });
+        else io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created", line });
+        io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      }
     } catch (e) {
       console.error('Emit create line error', e);
     }
@@ -91,17 +97,23 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
     const existingLines = await NumberLine.find({ teamId: decoded.teamId });
     const startLineNumber = existingLines.length + 1;
 
+    const status = req.body.status === 'sorted' ? 'sorted' : 'queued';
+
     const newLines = contents.map((content, index) => ({
       teamId: decoded.teamId,
       content,
       lineNumber: startLineNumber + index,
-      status: "queued" as const,
+      status: status as const,
     }));
 
     const createdLines = await NumberLine.insertMany(newLines);
     try {
       const io = (req as any).app?.get("io");
-      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
+      if (io) {
+        if (status === 'sorted') io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created_bulk", lines: createdLines });
+        else io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
+        io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      }
     } catch (e) {
       console.error('Emit create lines error', e);
     }
@@ -133,7 +145,11 @@ export const handleDeleteLine: RequestHandler = async (req, res) => {
 
     try {
       const io = (req as any).app?.get("io");
-      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "deleted", id });
+      if (io) {
+        if (line.status === 'sorted') io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "deleted", id });
+        else if (line.status === 'queued') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "deleted", id });
+        io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      }
     } catch (e) {
       console.error('Emit delete line error', e);
     }
@@ -162,6 +178,9 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Line IDs are required" });
     }
 
+    // fetch previous statuses to detect if any were 'sorted'
+    const prev = await NumberLine.find({ _id: { $in: lineIds }, teamId: decoded.teamId }).select('status');
+
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
       { status: "queued", claimedBy: null },
@@ -169,8 +188,13 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
 
     try {
       const io = (req as any).app?.get("io");
-      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_queue", ids: lineIds });
-      if (io) io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      if (io) {
+        io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_queue", ids: lineIds });
+        io.to(`team_${decoded.teamId}`).emit("stats_updated");
+        if (prev.some((p:any) => p.status === 'sorted')) {
+          io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved_to_queue", ids: lineIds });
+        }
+      }
     } catch (e) {
       console.error('Emit move to queue error', e);
     }
@@ -202,6 +226,9 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Line IDs are required" });
     }
 
+    // fetch previous statuses to detect if any were 'sorted'
+    const prev = await NumberLine.find({ _id: { $in: lineIds }, teamId: decoded.teamId }).select('status');
+
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
       { status: "distributed" },
@@ -209,8 +236,13 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
 
     try {
       const io = (req as any).app?.get("io");
-      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_distributor", ids: lineIds });
-      if (io) io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      if (io) {
+        io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_distributor", ids: lineIds });
+        io.to(`team_${decoded.teamId}`).emit("stats_updated");
+        if (prev.some((p:any) => p.status === 'sorted')) {
+          io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved_to_distributor", ids: lineIds });
+        }
+      }
     } catch (e) {
       console.error('Emit move to distributor error', e);
     }
