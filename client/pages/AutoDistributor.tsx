@@ -49,7 +49,7 @@ export default function AutoDistributor() {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
-  const socketRef = useRef<Socket | null>(null);
+  const socket = useSocket();
 
   useEffect(() => {
     fetchMembers();
@@ -72,10 +72,8 @@ export default function AutoDistributor() {
     };
     window.addEventListener("storage", onStorage);
 
-    const s = useSocket();
-
-    if (s) {
-      s.on("distributed_lines", (data: any) => {
+    if (socket) {
+      const onDistributed = (data: any) => {
         fetchDistributedLines();
         try {
           const count = Array.isArray(data.lines) ? data.lines.length : 0;
@@ -85,14 +83,31 @@ export default function AutoDistributor() {
               .catch(() => {});
           }
         } catch (e) {}
-      });
+      };
 
-      s.on("distributor_indicator", (data: any) => {
+      const onDistributorIndicator = (data: any) => {
         // could update UI indicator if needed
-      });
+      };
 
-      s.on("queued_lines_changed", () => fetchDistributedLines());
-      s.on("sorted_lines_changed", () => fetchDistributedLines());
+      const onQueuedChanged = () => fetchDistributedLines();
+      const onSortedChanged = () => fetchDistributedLines();
+
+      socket.on("distributed_lines", onDistributed);
+      socket.on("distributor_indicator", onDistributorIndicator);
+      socket.on("queued_lines_changed", onQueuedChanged);
+      socket.on("sorted_lines_changed", onSortedChanged);
+
+      return () => {
+        window.removeEventListener(
+          "distributor_updated",
+          onDistributorUpdated as EventListener,
+        );
+        window.removeEventListener("storage", onStorage);
+        socket.off("distributed_lines", onDistributed);
+        socket.off("distributor_indicator", onDistributorIndicator);
+        socket.off("queued_lines_changed", onQueuedChanged);
+        socket.off("sorted_lines_changed", onSortedChanged);
+      };
     }
 
     return () => {
@@ -101,12 +116,8 @@ export default function AutoDistributor() {
         onDistributorUpdated as EventListener,
       );
       window.removeEventListener("storage", onStorage);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [token]);
+  }, [token, socket]);
 
   const fetchMembers = async () => {
     if (!token) return;
