@@ -38,9 +38,29 @@ export default function QueuedList() {
   useEffect(() => {
     fetchQueuedLines();
 
-    // Auto-refresh every 3 seconds to show claimed lines removal
-    const interval = setInterval(fetchQueuedLines, 3000);
-    return () => clearInterval(interval);
+    // subscribe to socket updates for queued lines
+    let socket: any = null;
+    try {
+      // dynamic import hook
+      // @ts-ignore
+      const { useSocket } = require("@/hooks/useSocket");
+      socket = useSocket();
+    } catch (e) {
+      // fallback to global io if hook import fails
+      // @ts-ignore
+      socket = (window as any).io ? (window as any).io() : null;
+    }
+
+    if (socket) {
+      socket.on("queued_lines_changed", () => {
+        fetchQueuedLines();
+      });
+    }
+
+    return () => {
+      if (socket) socket.off("queued_lines_changed");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchQueuedLines = async () => {
