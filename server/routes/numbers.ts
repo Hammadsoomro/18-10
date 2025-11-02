@@ -133,24 +133,17 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
     const existingMap: Record<string, any> = {};
     existingDocs.forEach((d: any) => (existingMap[d.content] = d));
 
-    // Prepare arrays for creating new docs and updating existing ones
+    // Prepare arrays for creating new docs and skipped existing ones
     const toCreate: any[] = [];
-    const updatedLines: any[] = [];
+    const skipped: any[] = [];
     const nowCount = await NumberLine.countDocuments({ teamId: decoded.teamId });
     let nextLineNumber = nowCount + 1;
 
     for (const content of normalized) {
       const existing = existingMap[content];
       if (existing) {
-        // If requested status is 'sorted' and existing is not sorted, move it
-        if (status === 'sorted' && existing.status !== 'sorted') {
-          const prevStatus = existing.status;
-          existing.status = 'sorted';
-          await existing.save();
-          (existing as any)._prevStatus = prevStatus; // attach for emission
-          updatedLines.push(existing);
-        }
-        // otherwise skip duplicates
+        // skip creating duplicates; report as skipped
+        skipped.push({ _id: existing._id, content: existing.content, status: existing.status });
       } else {
         toCreate.push({ teamId: decoded.teamId, content, lineNumber: nextLineNumber++, status: status as const });
       }
@@ -167,7 +160,6 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       if (io) {
         if (status === 'sorted') {
           if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created_bulk", lines: createdLines });
-          // Do not emit moved_bulk since existing queued/distributed items are not moved by this operation
         } else {
           if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
         }
@@ -178,7 +170,6 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
     }
 
     // Return created lines and any skipped existing items for client to update UI
-    const skipped = updatedLines.map((u: any) => ({ _id: u._id, content: u.content, status: u._prevStatus }));
     res.json({ lines: createdLines, skipped });
   } catch (error) {
     console.error("Create lines error:", error);
