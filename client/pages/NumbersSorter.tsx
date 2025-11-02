@@ -210,15 +210,7 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
-      // notify other pages to refresh distributed lines
-      try {
-        localStorage.setItem("distributor_updated", String(Date.now()));
-        window.dispatchEvent(
-          new CustomEvent("distributor_updated", {
-            detail: { teamId: user?.teamId },
-          }),
-        );
-      } catch (e) {}
+      // server will emit socket events to update other pages; clear local list
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
     } catch (error) {
