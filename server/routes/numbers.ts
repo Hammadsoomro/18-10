@@ -54,14 +54,52 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Content is required" });
     }
 
-    const existingLines = await NumberLine.find({ teamId: decoded.teamId });
-    const lineNumber = existingLines.length + 1;
+    const trimmedContent = String(content).trim();
+    if (!trimmedContent) {
+      return res.status(400).json({ error: "Content is required" });
+    }
 
     const status = req.body.status === 'sorted' ? 'sorted' : 'queued';
 
+    // If creating a sorted line, check for existing lines with same content across all statuses
+    if (status === 'sorted') {
+      const existing = await NumberLine.findOne({ teamId: decoded.teamId, content: trimmedContent });
+      if (existing) {
+        // If it's already sorted, don't create duplicate
+        if (existing.status === 'sorted') {
+          return res.status(409).json({ error: 'Line already exists in sorted lines', line: existing });
+        }
+
+        // Move existing line to 'sorted' instead of creating a new one
+        const prevStatus = existing.status;
+        existing.status = 'sorted';
+        await existing.save();
+
+        try {
+          const io = (req as any).app?.get("io");
+          if (io) {
+            // Notify sorted list changed
+            io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved", line: existing });
+            // Notify the source list (queued/distributed) that an item was removed/moved
+            if (prevStatus === 'queued') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", id: existing._id });
+            if (prevStatus === 'distributed') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", id: existing._id });
+            io.to(`team_${decoded.teamId}`).emit("stats_updated");
+          }
+        } catch (e) {
+          console.error('Emit move existing to sorted error', e);
+        }
+
+        return res.json({ line: existing });
+      }
+    }
+
+    // Create new line
+    const existingLines = await NumberLine.find({ teamId: decoded.teamId });
+    const lineNumber = existingLines.length + 1;
+
     const line = new NumberLine({
       teamId: decoded.teamId,
-      content,
+      content: trimmedContent,
       lineNumber,
       status,
     });
@@ -102,30 +140,69 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Contents array is required" });
     }
 
-    const existingLines = await NumberLine.find({ teamId: decoded.teamId });
-    const startLineNumber = existingLines.length + 1;
-
     const status = req.body.status === 'sorted' ? 'sorted' : 'queued';
 
-    const newLines = contents.map((content, index) => ({
-      teamId: decoded.teamId,
-      content,
-      lineNumber: startLineNumber + index,
-      status: status as const,
-    }));
+    // Normalize and deduplicate inputs
+    const normalized = Array.from(new Set(contents.map((c: any) => String(c || '').trim()).filter((c: any) => c.length > 0)));
+    if (normalized.length === 0) return res.status(400).json({ error: 'Contents array is required' });
 
-    const createdLines = await NumberLine.insertMany(newLines);
+    // Find existing lines that match any of the input contents
+    const existingDocs = await NumberLine.find({ teamId: decoded.teamId, content: { $in: normalized } });
+    const existingMap: Record<string, any> = {};
+    existingDocs.forEach((d: any) => (existingMap[d.content] = d));
+
+    // Prepare arrays for creating new docs and updating existing ones
+    const toCreate: any[] = [];
+    const updatedLines: any[] = [];
+    const nowCount = await NumberLine.countDocuments({ teamId: decoded.teamId });
+    let nextLineNumber = nowCount + 1;
+
+    for (const content of normalized) {
+      const existing = existingMap[content];
+      if (existing) {
+        // If requested status is 'sorted' and existing is not sorted, move it
+        if (status === 'sorted' && existing.status !== 'sorted') {
+          const prevStatus = existing.status;
+          existing.status = 'sorted';
+          await existing.save();
+          (existing as any)._prevStatus = prevStatus; // attach for emission
+          updatedLines.push(existing);
+        }
+        // otherwise skip duplicates
+      } else {
+        toCreate.push({ teamId: decoded.teamId, content, lineNumber: nextLineNumber++, status: status as const });
+      }
+    }
+
+    let createdLines: any[] = [];
+    if (toCreate.length > 0) {
+      createdLines = await NumberLine.insertMany(toCreate);
+    }
+
+    // Emit socket events based on what changed
     try {
       const io = (req as any).app?.get("io");
       if (io) {
-        if (status === 'sorted') io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created_bulk", lines: createdLines });
-        else io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
+        if (status === 'sorted') {
+          if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created_bulk", lines: createdLines });
+          if (updatedLines.length > 0) io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved_bulk", lines: updatedLines });
+
+          // notify queued/distributed lists if items were moved
+          const movedFromQueued = updatedLines.filter((u: any) => u._prevStatus === 'queued').map((u: any) => u._id);
+          const movedFromDistributed = updatedLines.filter((u: any) => u._prevStatus === 'distributed').map((u: any) => u._id);
+          if (movedFromQueued.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", ids: movedFromQueued });
+          if (movedFromDistributed.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", ids: movedFromDistributed });
+        } else {
+          if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
+        }
         io.to(`team_${decoded.teamId}`).emit("stats_updated");
       }
     } catch (e) {
       console.error('Emit create lines error', e);
     }
-    res.json({ lines: createdLines });
+
+    // Return both newly created and updated lines for client to update UI
+    res.json({ lines: [...createdLines, ...updatedLines] });
   } catch (error) {
     console.error("Create lines error:", error);
     res.status(500).json({ error: "Failed to create lines" });
