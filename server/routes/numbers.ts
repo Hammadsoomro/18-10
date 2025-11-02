@@ -70,26 +70,8 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
           return res.status(409).json({ error: 'Line already exists in sorted lines', line: existing });
         }
 
-        // Move existing line to 'sorted' instead of creating a new one
-        const prevStatus = existing.status;
-        existing.status = 'sorted';
-        await existing.save();
-
-        try {
-          const io = (req as any).app?.get("io");
-          if (io) {
-            // Notify sorted list changed
-            io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved", line: existing });
-            // Notify the source list (queued/distributed) that an item was removed/moved
-            if (prevStatus === 'queued') io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", id: existing._id });
-            if (prevStatus === 'distributed') io.to(`team_${decoded.teamId}`).emit("distributed_lines", { action: "moved_to_sorted", id: existing._id });
-            io.to(`team_${decoded.teamId}`).emit("stats_updated");
-          }
-        } catch (e) {
-          console.error('Emit move existing to sorted error', e);
-        }
-
-        return res.json({ line: existing });
+        // If it's queued or distributed, do NOT move it to sorted. Inform caller it's skipped.
+        return res.status(409).json({ error: 'Line exists in another list', skipped: [{ _id: existing._id, content: existing.content, status: existing.status }] });
       }
     }
 
@@ -185,13 +167,7 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       if (io) {
         if (status === 'sorted') {
           if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "created_bulk", lines: createdLines });
-          if (updatedLines.length > 0) io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", { action: "moved_bulk", lines: updatedLines });
-
-          // notify queued/distributed lists if items were moved
-          const movedFromQueued = updatedLines.filter((u: any) => u._prevStatus === 'queued').map((u: any) => u._id);
-          const movedFromDistributed = updatedLines.filter((u: any) => u._prevStatus === 'distributed').map((u: any) => u._id);
-          if (movedFromQueued.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_sorted", ids: movedFromQueued });
-          if (movedFromDistributed.length > 0) io.to(`team_${decoded.teamId}`).emit("distributed_lines", { action: "moved_to_sorted", ids: movedFromDistributed });
+          // Do not emit moved_bulk since existing queued/distributed items are not moved by this operation
         } else {
           if (createdLines.length > 0) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
         }
@@ -201,8 +177,9 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
       console.error('Emit create lines error', e);
     }
 
-    // Return both newly created and updated lines for client to update UI
-    res.json({ lines: [...createdLines, ...updatedLines] });
+    // Return created lines and any skipped existing items for client to update UI
+    const skipped = updatedLines.map((u: any) => ({ _id: u._id, content: u.content, status: u._prevStatus }));
+    res.json({ lines: createdLines, skipped });
   } catch (error) {
     console.error("Create lines error:", error);
     res.status(500).json({ error: "Failed to create lines" });
