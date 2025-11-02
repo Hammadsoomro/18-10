@@ -118,7 +118,7 @@ export default function NumbersSorter() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ contents: lineTexts }),
+        body: JSON.stringify({ contents: lineTexts, status: 'sorted' }),
       });
 
       if (!response.ok) throw new Error("Failed to add lines");
