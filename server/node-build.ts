@@ -1,8 +1,8 @@
 import path from "path";
-import { createServer } from "./index";
+import { createServerWithSocket } from "./index";
 import * as express from "express";
 
-const app = createServer();
+const { app, httpServer } = createServerWithSocket();
 const port = process.env.PORT || 3000;
 
 // In production, serve the built SPA files
@@ -22,7 +22,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`🚀 Line-Link server running on port ${port}`);
   console.log(`📱 Frontend: http://localhost:${port}`);
   console.log(`🔧 API: http://localhost:${port}/api`);
@@ -31,10 +31,10 @@ app.listen(port, () => {
 // Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("🛑 Received SIGTERM, shutting down gracefully");
-  process.exit(0);
+  httpServer.close(() => process.exit(0));
 });
 
 process.on("SIGINT", () => {
   console.log("🛑 Received SIGINT, shutting down gracefully");
-  process.exit(0);
+  httpServer.close(() => process.exit(0));
 });
