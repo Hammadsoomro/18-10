@@ -36,21 +36,10 @@ export default function QueuedList() {
   const [lines, setLines] = useState<QueuedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchQueuedLines();
-
-    // subscribe to socket updates for queued lines
-    let socket: any = null;
-    try {
-      // dynamic import hook
-      // @ts-ignore
-      const { useSocket } = require("@/hooks/useSocket");
-      socket = useSocket();
-    } catch (e) {
-      // fallback to global io if hook import fails
-      // @ts-ignore
-      socket = (window as any).io ? (window as any).io() : null;
-    }
 
     if (socket) {
       socket.on("queued_lines_changed", () => {
@@ -62,7 +51,7 @@ export default function QueuedList() {
       if (socket) socket.off("queued_lines_changed");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, socket]);
 
   const fetchQueuedLines = async () => {
     if (!token) {
