@@ -11,7 +11,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { io, Socket } from "socket.io-client";
 
 export default function Dashboard() {
   const { user, token } = useAuth();
