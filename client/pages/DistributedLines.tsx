@@ -44,9 +44,26 @@ export default function DistributedLines() {
     );
   });
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchDistributedLines();
-  }, [token]);
+
+    if (socket) {
+      socket.on('distributed_lines', () => fetchDistributedLines());
+      socket.on('queued_lines_changed', () => fetchDistributedLines());
+      socket.on('sorted_lines_changed', () => fetchDistributedLines());
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('distributed_lines', () => fetchDistributedLines());
+        socket.off('queued_lines_changed', () => fetchDistributedLines());
+        socket.off('sorted_lines_changed', () => fetchDistributedLines());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, socket]);
 
   const fetchDistributedLines = async () => {
     if (!token) {
