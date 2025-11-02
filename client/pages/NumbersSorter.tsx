@@ -28,9 +28,26 @@ export default function NumbersSorter() {
   const [isAdding, setIsAdding] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchLines();
-  }, [token]);
+
+    if (socket) {
+      socket.on('sorted_lines_changed', () => fetchLines());
+      socket.on('queued_lines_changed', () => fetchLines());
+      socket.on('stats_updated', () => fetchLines());
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('sorted_lines_changed', () => fetchLines());
+        socket.off('queued_lines_changed', () => fetchLines());
+        socket.off('stats_updated', () => fetchLines());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, socket]);
 
   const fetchLines = async () => {
     if (!token) {
@@ -40,18 +57,16 @@ export default function NumbersSorter() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch("/api/numbers/lines?status=sorted", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to fetch lines");
       const data = await response.json();
 
-      // Only show lines that are still in "queued" status (not moved yet)
-      const queuedLines = data.lines.filter(
-        (line: any) => line.status === "queued",
-      );
-      setLines(queuedLines);
+      // show only 'sorted' status lines
+      const sortedLines = (data.lines || []).filter((line: any) => line.status === "sorted");
+      setLines(sortedLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
