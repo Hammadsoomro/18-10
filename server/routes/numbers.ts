@@ -57,6 +57,13 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
     });
 
     await line.save();
+    // emit websocket event to team room
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created", line: line });
+    } catch (e) {
+      console.error('Emit create line error', e);
+    }
     res.json(line);
   } catch (error) {
     console.error("Create line error:", error);
@@ -92,6 +99,12 @@ export const handleCreateLines: RequestHandler = async (req, res) => {
     }));
 
     const createdLines = await NumberLine.insertMany(newLines);
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "created_bulk", lines: createdLines });
+    } catch (e) {
+      console.error('Emit create lines error', e);
+    }
     res.json({ lines: createdLines });
   } catch (error) {
     console.error("Create lines error:", error);
@@ -116,6 +129,13 @@ export const handleDeleteLine: RequestHandler = async (req, res) => {
 
     if (!line) {
       return res.status(404).json({ error: "Line not found" });
+    }
+
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "deleted", id });
+    } catch (e) {
+      console.error('Emit delete line error', e);
     }
 
     res.json({ message: "Line deleted" });
@@ -146,6 +166,14 @@ export const handleMoveToQueue: RequestHandler = async (req, res) => {
       { _id: { $in: lineIds }, teamId: decoded.teamId },
       { status: "queued", claimedBy: null },
     );
+
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_queue", ids: lineIds });
+      if (io) io.to(`team_${decoded.teamId}`).emit("stats_updated");
+    } catch (e) {
+      console.error('Emit move to queue error', e);
+    }
 
     res.json({
       message: "Lines moved to queue",
@@ -178,6 +206,14 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
       { _id: { $in: lineIds }, teamId: decoded.teamId },
       { status: "distributed" },
     );
+
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "moved_to_distributor", ids: lineIds });
+      if (io) io.to(`team_${decoded.teamId}`).emit("stats_updated");
+    } catch (e) {
+      console.error('Emit move to distributor error', e);
+    }
 
     res.json({
       message: "Lines moved to distributor",
@@ -289,6 +325,16 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
 
     // Return the lines that were successfully claimed by this user
     const claimedLines = await NumberLine.find({ _id: { $in: ids }, claimedBy: decoded.id });
+
+    try {
+      const io = (req as any).app?.get("io");
+      if (io) io.to(`team_${decoded.teamId}`).emit("queued_lines_changed", { action: "claimed", ids });
+      if (io) io.to(`team_${decoded.teamId}`).emit("stats_updated");
+      // also emit claim indicator for UI (claim button availability)
+      if (io) io.to(`team_${decoded.teamId}`).emit("claim_indicator", { ready: false });
+    } catch (e) {
+      console.error('Emit claim line error', e);
+    }
 
     res.json({ lines: claimedLines });
   } catch (error) {
