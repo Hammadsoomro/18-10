@@ -64,24 +64,39 @@ export default function Dashboard() {
     fetchStats();
     fetchDistributorActive();
 
-    // socket for real-time distributor indicator
+    // socket for real-time distributor indicator & stats
     try {
+      // use shared socket hook to avoid multiple connections
+      // @ts-ignore
+      const { useSocket } = require("@/hooks/useSocket");
+      // @ts-ignore
+      const s = useSocket();
+      socketRef.current = s;
       const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const teamId = payload?.teamId;
-      const s = io(undefined, { autoConnect: true });
-      socketRef.current = s;
-      s.on('connect', () => {
-        if (teamId) s.emit('join_team', teamId);
-      });
-      s.on('distributor_indicator', (data: any) => {
-        if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
-      });
+
+      if (s) {
+        s.on('connect', () => {
+          if (teamId) s.emit('join_team', teamId);
+        });
+
+        s.on('distributor_indicator', (data: any) => {
+          if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
+        });
+
+        s.on('stats_updated', () => {
+          fetchStats();
+        });
+
+        s.on('queued_lines_changed', () => {
+          fetchStats();
+        });
+      }
     } catch (e) {
       console.error('Dashboard socket init error', e);
     }
 
-    // poll every 10 seconds
-    interval = window.setInterval(fetchStats, 10000) as unknown as number;
+    // stop polling; rely on socket events for updates
 
     return () => {
       mounted = false;
