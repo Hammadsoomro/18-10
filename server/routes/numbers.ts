@@ -15,6 +15,14 @@ export const handleGetLines: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    const { status } = req.query as any;
+
+    if (status === 'sorted') {
+      const lines = await NumberLine.find({ teamId: decoded.teamId, status: 'sorted' })
+        .sort({ createdAt: -1 });
+      return res.json({ lines });
+    }
+
     const lines = await NumberLine.find({
       teamId: decoded.teamId,
       $or: [{ status: "queued" }, { status: "claimed", claimedBy: decoded.id }],
