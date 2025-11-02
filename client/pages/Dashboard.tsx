@@ -66,12 +66,7 @@ export default function Dashboard() {
 
     // socket for real-time distributor indicator & stats
     try {
-      // use shared socket hook to avoid multiple connections
-      // @ts-ignore
-      const { useSocket } = require("@/hooks/useSocket");
-      // @ts-ignore
-      const s = useSocket();
-      socketRef.current = s;
+      const s = socketRef.current = useSocket();
       const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const teamId = payload?.teamId;
 
