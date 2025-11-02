@@ -378,17 +378,31 @@ export default function Inbox() {
     try {
       // Step 1: Move all existing claimed lines to distributed
       if (claims.length > 0) {
-        const claimedLineIds = claims.map((c) => c._id || c.id);
-        const moveResponse = await fetch("/api/numbers/move-to-distributor", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ lineIds: claimedLineIds }),
-        });
+        const claimedLineIds = claims
+          .map((c) => c._id || c.id)
+          .filter((id): id is string => typeof id === "string" && id.trim() !== "");
 
-        if (!moveResponse.ok) throw new Error("Failed to move claimed lines");
+        if (claimedLineIds.length > 0) {
+          const moveResponse = await fetch("/api/numbers/move-to-distributor", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ lineIds: claimedLineIds }),
+          });
+
+          if (!moveResponse.ok) {
+            let errMsg = "Failed to move claimed lines";
+            try {
+              const err = await moveResponse.json();
+              if (err && err.error) errMsg = err.error;
+            } catch (e) {}
+            toast.error(errMsg);
+            await fetchData();
+            return;
+          }
+        }
       }
 
       // Step 2: Claim the next line
