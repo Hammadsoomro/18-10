@@ -42,7 +42,7 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await fetch("${window.location.origin}/api/auth/members", {
+          const res = await fetch(`${window.location.origin}/api/auth/members`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -184,7 +184,7 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch("${window.location.origin}/api/auth/members", {
+        const res = await fetch(`${window.location.origin}/api/auth/members`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -373,7 +373,7 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await fetch("${window.location.origin}/api/auth/members", {
+                          const res = await fetch(`${window.location.origin}/api/auth/members`, {
                             headers: { Authorization: `Bearer ${token}` },
                           });
                           if (res.ok) {
