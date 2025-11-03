@@ -157,6 +157,7 @@ export default function AutoDistributor() {
   };
 
   const fetchDistributedLines = async () => {
+    // For the Auto Distributor UI we want to show 'Queued' lines available for distribution
     if (!token) {
       setIsLoading(false);
       return;
@@ -164,22 +165,18 @@ export default function AutoDistributor() {
 
     try {
       setIsLoading(true);
-      // Use the claimed-lines endpoint which includes distributed items
-      const response = await fetch("/api/numbers/claimed-lines", {
+      // Fetch queued lines instead of claimed/distributed
+      const response = await fetch("/api/numbers/queued", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch distributed lines");
+      if (!response.ok) throw new Error("Failed to fetch queued lines");
       const data = await response.json();
 
-      // Show only lines with "distributed" status (endpoint returns claimed + distributed)
-      const distributed = data.lines.filter(
-        (line: any) => line.status === "distributed",
-      );
-      setDistributedLines(distributed);
+      setDistributedLines(data.lines || []);
     } catch (error) {
-      console.error("Error fetching distributed lines:", error);
-      toast.error("Failed to fetch distributed lines");
+      console.error("Error fetching queued lines for distributor:", error);
+      toast.error("Failed to fetch lines for distribution");
     } finally {
       setIsLoading(false);
     }
