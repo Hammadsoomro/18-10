@@ -129,6 +129,12 @@ export function Sidebar({
     };
     window.addEventListener('storage', onStorage);
 
+    const onDistributorRead = () => {
+      // mark as read in same window
+      setUnreadDistributor(0);
+    };
+    window.addEventListener('distributor_read', onDistributorRead);
+
     if (socket) {
       const onDistributed = (data: any) => {
         // recompute unread when new distributed events arrive
@@ -137,6 +143,7 @@ export function Sidebar({
       socket.on('distributed_lines', onDistributed);
       return () => {
         window.removeEventListener('storage', onStorage);
+        window.removeEventListener('distributor_read', onDistributorRead);
         socket.off('distributed_lines', onDistributed);
         mounted = false;
       };
@@ -144,6 +151,7 @@ export function Sidebar({
 
     return () => {
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener('distributor_read', onDistributorRead);
       mounted = false;
     };
   }, [socket, user]);
