@@ -364,7 +364,7 @@ export default function Inbox() {
       setIsLoading(true);
 
       // Fetch queued lines for claim UI
-      const qRes = await fetch("/api/numbers/queued", {
+      const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!qRes.ok) throw new Error("Failed to fetch queued lines");
