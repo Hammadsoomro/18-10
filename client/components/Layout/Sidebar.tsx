@@ -269,7 +269,11 @@ export function Sidebar({
                   <item.icon className="h-5 w-5 text-white" />
                 </div>
                 {!isCollapsed && (
-                  <span className="text-sm font-semibold">{item.label}</span>
+                  <span className="text-sm font-semibold">{item.label}
+                    {item.path === '/inbox' && unreadDistributor > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full w-5 h-5">{unreadDistributor}</span>
+                    )}
+                  </span>
                 )}
               </button>
             ))}
