@@ -87,10 +87,67 @@ export function Sidebar({
     { icon: Inbox, label: "Inbox", path: "/inbox" },
   ];
 
+  const socket = useSocket();
   const visibleNavItems = navItems.filter((item) => {
     if (item.adminOnly && user?.role !== "admin") return false;
     return true;
   });
+
+  const [unreadDistributor, setUnreadDistributor] = useState<number>(0);
+
+  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+
+  const computeUnread = async () => {
+    try {
+      if (!user) return 0;
+      const res = await fetch('/api/numbers/claimed-lines', { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` } });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      const distributed = (data.lines || []).filter((l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0);
+      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      if (!last) return distributed.length;
+      const count = distributed.filter((it: any) => {
+        const t = Date.parse(it.claimedAt || it.updatedAt || it.createdAt);
+        return !isNaN(t) && t > last;
+      }).length;
+      return count;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const update = async () => {
+      const c = await computeUnread();
+      if (!mounted) return;
+      setUnreadDistributor(c);
+    };
+    update();
+
+    const onStorage = () => {
+      computeUnread().then((c) => setUnreadDistributor(c));
+    };
+    window.addEventListener('storage', onStorage);
+
+    if (socket) {
+      const onDistributed = (data: any) => {
+        // recompute unread when new distributed events arrive
+        computeUnread().then((c) => setUnreadDistributor(c));
+      };
+      socket.on('distributed_lines', onDistributed);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        socket.off('distributed_lines', onDistributed);
+        mounted = false;
+      };
+    }
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      mounted = false;
+    };
+  }, [socket, user]);
 
   return (
     <>
