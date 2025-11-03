@@ -423,7 +423,7 @@ export default function Inbox() {
           );
 
         if (claimedLineIds.length > 0) {
-          const moveResponse = await fetch("/api/numbers/move-to-distributor", {
+          const moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
