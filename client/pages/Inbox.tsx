@@ -113,6 +113,25 @@ export default function Inbox() {
         } catch (e) {}
       });
 
+      // Listen for other relevant events so inbox updates in real-time
+      s.on("queued_lines_changed", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
+      s.on("sorted_lines_changed", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
+      s.on("stats_updated", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
