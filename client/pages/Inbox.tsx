@@ -145,6 +145,10 @@ export default function Inbox() {
     try {
       localStorage.setItem(getDistributorLastReadKey(), String(Date.now()));
       setUnreadDistributor(0);
+      // notify same-window listeners (storage event doesn't fire in same window)
+      try {
+        window.dispatchEvent(new CustomEvent('distributor_read'));
+      } catch (e) {}
     } catch {}
   };
 
