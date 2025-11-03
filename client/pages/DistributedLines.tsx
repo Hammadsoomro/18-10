@@ -93,7 +93,7 @@ export default function DistributedLines() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`/api/numbers/line/${id}`, {
+      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
