@@ -241,7 +241,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
