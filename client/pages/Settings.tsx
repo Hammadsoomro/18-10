@@ -413,7 +413,7 @@ export default function Settings() {
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const res = await fetch(`${window.location.origin}/api/auth/member/${m.id}`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                       body: JSON.stringify({ active: !m.active }),
