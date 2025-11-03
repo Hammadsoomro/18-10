@@ -93,17 +93,17 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          claimLineCount,
-          cooldownSeconds,
-        }),
-      });
+      const response = await fetch(`${window.location.origin}/api/auth/claim-settings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      claimLineCount,
+      cooldownSeconds,
+    }),
+  });
 
       if (!response.ok) throw new Error("Failed to save claim settings");
 
