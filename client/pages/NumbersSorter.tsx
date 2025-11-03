@@ -114,7 +114,7 @@ export default function NumbersSorter() {
 
     setIsAdding(true);
     try {
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
