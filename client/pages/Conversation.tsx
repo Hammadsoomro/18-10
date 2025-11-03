@@ -63,9 +63,9 @@ export default function Conversation() {
     const fetchMessages = async () => {
       if (!token || !selectedContact) return;
       try {
-        const res = await fetch(`/api/contacts/${selectedContact.id}/messages`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${window.location.origin}/api/contacts/${selectedContact.id}/messages`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
         if (!res.ok) throw new Error('Failed to fetch messages');
         const data = await res.json();
         setMessages(data.messages || []);
