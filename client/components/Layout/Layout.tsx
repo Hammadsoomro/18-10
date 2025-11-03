@@ -28,7 +28,8 @@ export function Layout({ children, title = "Dashboard" }: LayoutProps) {
       } catch (e) {}
 
       try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const ctx = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = "sine";
@@ -45,11 +46,22 @@ export function Layout({ children, title = "Dashboard" }: LayoutProps) {
       } catch (e) {}
 
       try {
-        if ((window as any).Notification && Notification.permission === "granted") {
-          new Notification("Line Claim Available", { body: "You can now claim the next line." });
-        } else if ((window as any).Notification && Notification.permission !== "denied") {
+        if (
+          (window as any).Notification &&
+          Notification.permission === "granted"
+        ) {
+          new Notification("Line Claim Available", {
+            body: "You can now claim the next line.",
+          });
+        } else if (
+          (window as any).Notification &&
+          Notification.permission !== "denied"
+        ) {
           Notification.requestPermission().then((perm) => {
-            if (perm === "granted") new Notification("Line Claim Available", { body: "You can now claim the next line." });
+            if (perm === "granted")
+              new Notification("Line Claim Available", {
+                body: "You can now claim the next line.",
+              });
           });
         }
       } catch (e) {}
@@ -77,7 +89,10 @@ export function Layout({ children, title = "Dashboard" }: LayoutProps) {
       }
     };
 
-    window.addEventListener("claim_cooldown_updated", onCustom as EventListener);
+    window.addEventListener(
+      "claim_cooldown_updated",
+      onCustom as EventListener,
+    );
     window.addEventListener("storage", onStorage);
 
     // also listen to server-side claim_indicator for cross-client notifications
@@ -89,7 +104,10 @@ export function Layout({ children, title = "Dashboard" }: LayoutProps) {
     if (socket) socket.on("claim_indicator", onClaimIndicator);
 
     return () => {
-      window.removeEventListener("claim_cooldown_updated", onCustom as EventListener);
+      window.removeEventListener(
+        "claim_cooldown_updated",
+        onCustom as EventListener,
+      );
       window.removeEventListener("storage", onStorage);
       if (socket) socket.off("claim_indicator", onClaimIndicator);
     };

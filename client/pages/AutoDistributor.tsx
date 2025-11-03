@@ -437,7 +437,6 @@ export default function AutoDistributor() {
             </CardContent>
           </Card>
         </div>
-
       </div>
     </Layout>
   );

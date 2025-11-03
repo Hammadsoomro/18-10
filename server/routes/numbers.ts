@@ -358,7 +358,12 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
 
     const updatedLines = await NumberLine.updateMany(
       { _id: { $in: lineIds }, teamId: decoded.teamId },
-      { status: "distributed", distributedTo: [], claimedBy: null, claimedAt: null },
+      {
+        status: "distributed",
+        distributedTo: [],
+        claimedBy: null,
+        claimedAt: null,
+      },
     );
 
     try {

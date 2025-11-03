@@ -146,9 +146,12 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${window.location.origin}/api/auth/claim-settings`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${window.location.origin}/api/auth/claim-settings`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
@@ -166,7 +169,7 @@ export default function Inbox() {
       setUnreadDistributor(0);
       // notify same-window listeners (storage event doesn't fire in same window)
       try {
-        window.dispatchEvent(new CustomEvent('distributor_read'));
+        window.dispatchEvent(new CustomEvent("distributor_read"));
       } catch (e) {}
     } catch {}
   };
@@ -190,9 +193,12 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${window.location.origin}/api/numbers/claimed-lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
@@ -372,14 +378,19 @@ export default function Inbox() {
       setQueuedLines(qData.lines || []);
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
-      const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const cRes = await fetch(
+        `${window.location.origin}/api/numbers/claimed-lines`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
       const cData = await cRes.json();
 
       // endpoint returns claimed + distributed; only show claimed in Claims tab
-      const claimedOnly = (cData.lines || []).filter((l: any) => l.status === "claimed");
+      const claimedOnly = (cData.lines || []).filter(
+        (l: any) => l.status === "claimed",
+      );
       // show only lines claimed by the current user in the 'Your Claimed Lines' card
       const myClaims = claimedOnly.filter((l: any) => {
         const claimedById = l.claimedBy && (l.claimedBy._id || l.claimedBy);
@@ -423,14 +434,17 @@ export default function Inbox() {
           );
 
         if (claimedLineIds.length > 0) {
-          const moveResponse = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          const moveResponse = await fetch(
+            `${window.location.origin}/api/numbers/move-to-distributor`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ lineIds: claimedLineIds }),
             },
-            body: JSON.stringify({ lineIds: claimedLineIds }),
-          });
+          );
 
           if (!moveResponse.ok) {
             let errMsg = "Failed to move claimed lines";
@@ -447,14 +461,17 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const claimResponse = await fetch(
+        `${window.location.origin}/api/numbers/claim`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineId: lineToClaimId }),
         },
-        body: JSON.stringify({ lineId: lineToClaimId }),
-      });
+      );
 
       if (!claimResponse.ok) {
         if (claimResponse.status === 409) {

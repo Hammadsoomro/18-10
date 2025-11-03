@@ -50,7 +50,9 @@ export default function QueuedList() {
           setLines((prev) => {
             // avoid duplicates by id
             const existingIds = new Set(prev.map((p) => String(p._id || p.id)));
-            const newOnes = data.lines.filter((l: any) => !existingIds.has(String(l._id || l.id)));
+            const newOnes = data.lines.filter(
+              (l: any) => !existingIds.has(String(l._id || l.id)),
+            );
             return [...newOnes, ...prev];
           });
           return;
@@ -156,7 +158,9 @@ export default function QueuedList() {
         <div className="p-6">
           <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <p className="text-lg font-semibold">Not available</p>
-            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
           </div>
         </div>
       </Layout>

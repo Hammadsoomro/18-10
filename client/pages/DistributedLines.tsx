@@ -208,8 +208,13 @@ export default function DistributedLines() {
                         {truncateText(line.content)}
                       </p>
                       {(() => {
-                        const claimerName = (line as any).claimedBy?.name || line.claimedByName || "";
-                        const when = formatDateTime(line.claimedAt || line.createdAt);
+                        const claimerName =
+                          (line as any).claimedBy?.name ||
+                          line.claimedByName ||
+                          "";
+                        const when = formatDateTime(
+                          line.claimedAt || line.createdAt,
+                        );
                         if (user?.role === "admin") {
                           return (
                             <p className="text-xs text-slate-500 dark:text-slate-400">
