@@ -436,7 +436,7 @@ export default function Settings() {
                                   if (!token) return;
                                   if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
+                                    const res = await fetch(`${window.location.origin}/api/auth/member/${m.id}`, {
                                       method: 'DELETE',
                                       headers: { Authorization: `Bearer ${token}` },
                                     });
