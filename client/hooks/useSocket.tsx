@@ -20,13 +20,24 @@ export function useSocket() {
 
     socketRef.current = sharedSocket;
 
-    // join team room when user is available
-    if (socketRef.current && user?.teamId) {
-      socketRef.current.emit("join_team", user.teamId);
-    }
+    const tryJoin = () => {
+      try {
+        if (socketRef.current && user?.teamId) {
+          socketRef.current.emit("join_team", user.teamId);
+        }
+      } catch (e) {}
+    };
+
+    // join immediately if possible
+    tryJoin();
+
+    // also re-join on connect (handles reconnects)
+    const onConnect = () => tryJoin();
+    socketRef.current?.on("connect", onConnect);
 
     return () => {
-      // don't disconnect shared socket on component unmount
+      // cleanup connect listener; keep shared socket alive
+      socketRef.current?.off("connect", onConnect);
       socketRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
