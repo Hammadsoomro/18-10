@@ -140,7 +140,7 @@ export default function Conversation() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/contacts", {
+      const response = await fetch(`${window.location.origin}/api/contacts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
