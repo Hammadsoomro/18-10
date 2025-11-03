@@ -372,7 +372,7 @@ export default function Inbox() {
       setQueuedLines(qData.lines || []);
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
-      const cRes = await fetch("/api/numbers/claimed-lines", {
+      const cRes = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
