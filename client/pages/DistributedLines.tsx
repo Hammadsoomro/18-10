@@ -124,6 +124,24 @@ export default function DistributedLines() {
       : text;
   };
 
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    const dateFormatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+    return `${time}   ${dateFormatted}`;
+  };
+
   if (isLoading) {
     return (
       <Layout title="Distributed Lines">
