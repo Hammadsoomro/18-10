@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSocket } from "@/hooks/useSocket";
 
