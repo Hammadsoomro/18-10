@@ -153,18 +153,18 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch("/api/auth/create-member", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: memberName,
-          email: memberEmail,
-          password: memberPassword,
-        }),
-      });
+      const response = await fetch(`${window.location.origin}/api/auth/create-member`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name: memberName,
+      email: memberEmail,
+      password: memberPassword,
+    }),
+  });
 
       if (!response.ok) {
         try {
