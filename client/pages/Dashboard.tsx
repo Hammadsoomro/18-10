@@ -35,7 +35,7 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         if (!token) return;
-        const res = await fetch("/api/numbers/stats", {
+        const res = await fetch(`${window.location.origin}/api/numbers/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch stats");
