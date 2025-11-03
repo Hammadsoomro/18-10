@@ -204,7 +204,7 @@ export default function DistributedLines() {
                       )}
                       {user?.role === "member" && (
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {line.claimedAt || line.createdAt}
+                          {formatDateTime(line.claimedAt || line.createdAt)}
                         </p>
                       )}
                       {line.distributedTo && line.distributedTo.length > 0 && (
