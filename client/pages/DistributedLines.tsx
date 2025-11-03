@@ -208,23 +208,22 @@ export default function DistributedLines() {
                       <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                         {truncateText(line.content)}
                       </p>
-                      {user?.role === "admin" && (
-                        <div>
-                          {(line as any).claimedBy && (
-                            <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                              ✓ Claimed by {(line as any).claimedBy.name}
+                      {(() => {
+                        const claimerName = (line as any).claimedBy?.name || line.claimedByName || "";
+                        const when = formatDateTime(line.claimedAt || line.createdAt);
+                        if (user?.role === "admin") {
+                          return (
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {claimerName ? `${claimerName}   ${when}` : when}
                             </p>
-                          )}
+                          );
+                        }
+                        return (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatDateTime(line.claimedAt || line.createdAt)}
+                            {when}
                           </p>
-                        </div>
-                      )}
-                      {user?.role === "member" && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {formatDateTime(line.claimedAt || line.createdAt)}
-                        </p>
-                      )}
+                        );
+                      })()}
                       {line.distributedTo && line.distributedTo.length > 0 && (
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Distributed to {line.distributedTo.length} member(s)
