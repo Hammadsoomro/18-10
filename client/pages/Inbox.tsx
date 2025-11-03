@@ -447,7 +447,7 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`/api/numbers/claim`, {
+      const claimResponse = await fetch(`${window.location.origin}/api/numbers/claim`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
