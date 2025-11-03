@@ -228,7 +228,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`/api/contacts/${contact.id}`, {
+      const response = await fetch(`${window.location.origin}/api/contacts/${contact.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
