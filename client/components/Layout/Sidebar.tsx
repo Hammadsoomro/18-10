@@ -20,8 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   open?: boolean;
