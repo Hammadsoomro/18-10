@@ -203,7 +203,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`/api/contacts/${id}`, {
+      const response = await fetch(`${window.location.origin}/api/contacts/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
