@@ -229,7 +229,7 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-distributor", {
+      const response = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
