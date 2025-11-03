@@ -373,6 +373,24 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
           ids: lineIds,
         });
         io.to(`team_${decoded.teamId}`).emit("stats_updated");
+
+        // Fetch the moved lines to include in distributed_lines event
+        const movedDocs = await NumberLine.find({ _id: { $in: lineIds }, teamId: decoded.teamId });
+        const distributedPayload = movedDocs
+          .filter((d: any) => d.status === "distributed")
+          .map((l: any) => ({
+            id: l._id,
+            lineNumber: l.lineNumber,
+            content: l.content,
+            createdAt: l.createdAt,
+            distributedTo: l.distributedTo || [],
+            status: l.status,
+          }));
+
+        if (distributedPayload.length > 0) {
+          io.to(`team_${decoded.teamId}`).emit("distributed_lines", { lines: distributedPayload });
+        }
+
         if (prev.some((p: any) => p.status === "sorted")) {
           io.to(`team_${decoded.teamId}`).emit("sorted_lines_changed", {
             action: "moved_to_distributor",
