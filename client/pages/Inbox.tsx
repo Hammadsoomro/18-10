@@ -325,6 +325,51 @@ export default function Inbox() {
     };
   }, [user]);
 
+  // play sound + toast when cooldown finishes
+  const prevCooldownRef = useRef<number>(claimCooldown);
+  useEffect(() => {
+    if (prevCooldownRef.current > 0 && claimCooldown === 0) {
+      // cooldown finished
+      try {
+        // small toast
+        // @ts-ignore
+        import("sonner").then(({ toast }) => toast.info("Claim available now"));
+      } catch (e) {}
+
+      try {
+        // play beep via WebAudio
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(880, ctx.currentTime);
+        g.gain.setValueAtTime(0.001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        setTimeout(() => {
+          o.stop();
+          ctx.close();
+        }, 400);
+      } catch (e) {
+        // ignore audio errors
+      }
+
+      // also use Notification API
+      try {
+        if (Notification && Notification.permission === "granted") {
+          new Notification("Line Claim Available", { body: "You can now claim the next line." });
+        } else if (Notification && Notification.permission !== "denied") {
+          Notification.requestPermission().then((perm) => {
+            if (perm === "granted") new Notification("Line Claim Available", { body: "You can now claim the next line." });
+          });
+        }
+      } catch (e) {}
+    }
+    prevCooldownRef.current = claimCooldown;
+  }, [claimCooldown]);
+
   const fetchData = async () => {
     if (!token) {
       setIsLoading(false);
