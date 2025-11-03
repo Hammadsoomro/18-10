@@ -41,14 +41,31 @@ export default function QueuedList() {
   useEffect(() => {
     fetchQueuedLines();
 
-    if (socket) {
-      socket.on("queued_lines_changed", () => {
+    if (!socket) return;
+
+    const onQueuedChanged = (data: any) => {
+      try {
+        // If server sent created lines, merge them for instant UI update
+        if (data && Array.isArray(data.lines) && data.lines.length > 0) {
+          setLines((prev) => {
+            // avoid duplicates by id
+            const existingIds = new Set(prev.map((p) => String(p._id || p.id)));
+            const newOnes = data.lines.filter((l: any) => !existingIds.has(String(l._id || l.id)));
+            return [...newOnes, ...prev];
+          });
+          return;
+        }
+        // otherwise, refetch full list
         fetchQueuedLines();
-      });
-    }
+      } catch (e) {
+        fetchQueuedLines();
+      }
+    };
+
+    socket.on("queued_lines_changed", onQueuedChanged);
 
     return () => {
-      if (socket) socket.off("queued_lines_changed");
+      socket.off("queued_lines_changed", onQueuedChanged);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, socket]);
