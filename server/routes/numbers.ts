@@ -72,27 +72,23 @@ export const handleCreateLine: RequestHandler = async (req, res) => {
       if (existing) {
         // If it's already sorted, don't create duplicate
         if (existing.status === "sorted") {
-          return res
-            .status(409)
-            .json({
-              error: "Line already exists in sorted lines",
-              line: existing,
-            });
+          return res.status(409).json({
+            error: "Line already exists in sorted lines",
+            line: existing,
+          });
         }
 
         // If it's queued or distributed, do NOT move it to sorted. Inform caller it's skipped.
-        return res
-          .status(409)
-          .json({
-            error: "Line exists in another list",
-            skipped: [
-              {
-                _id: existing._id,
-                content: existing.content,
-                status: existing.status,
-              },
-            ],
-          });
+        return res.status(409).json({
+          error: "Line exists in another list",
+          skipped: [
+            {
+              _id: existing._id,
+              content: existing.content,
+              status: existing.status,
+            },
+          ],
+        });
       }
     }
 
@@ -375,7 +371,10 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
         io.to(`team_${decoded.teamId}`).emit("stats_updated");
 
         // Fetch the moved lines to include in distributed_lines event
-        const movedDocs = await NumberLine.find({ _id: { $in: lineIds }, teamId: decoded.teamId });
+        const movedDocs = await NumberLine.find({
+          _id: { $in: lineIds },
+          teamId: decoded.teamId,
+        });
         const distributedPayload = movedDocs
           .filter((d: any) => d.status === "distributed")
           .map((l: any) => ({
@@ -388,7 +387,9 @@ export const handleMoveToDistributor: RequestHandler = async (req, res) => {
           }));
 
         if (distributedPayload.length > 0) {
-          io.to(`team_${decoded.teamId}`).emit("distributed_lines", { lines: distributedPayload });
+          io.to(`team_${decoded.teamId}`).emit("distributed_lines", {
+            lines: distributedPayload,
+          });
         }
 
         if (prev.some((p: any) => p.status === "sorted")) {
@@ -528,11 +529,9 @@ export const handleClaimLine: RequestHandler = async (req, res) => {
 
     if (updateResult.modifiedCount === 0) {
       // Nothing was claimed (race condition) - inform client to retry
-      return res
-        .status(409)
-        .json({
-          error: "Failed to claim lines, they may have been claimed by others",
-        });
+      return res.status(409).json({
+        error: "Failed to claim lines, they may have been claimed by others",
+      });
     }
 
     // Return the lines that were successfully claimed by this user
