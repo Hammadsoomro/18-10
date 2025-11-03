@@ -333,24 +333,25 @@ export default function Inbox() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+
+      // Fetch queued lines for claim UI
+      const qRes = await fetch("/api/numbers/queued", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!qRes.ok) throw new Error("Failed to fetch queued lines");
+      const qData = await qRes.json();
+      setQueuedLines(qData.lines || []);
 
-      if (!response.ok) throw new Error("Failed to fetch lines");
-      const data = await response.json();
+      // Fetch claimed lines using dedicated endpoint which respects user/admin
+      const cRes = await fetch("/api/numbers/claimed-lines", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
+      const cData = await cRes.json();
 
-      // Filter queued lines (status: queued)
-      const queued = data.lines.filter(
-        (line: QueuedLine) => line.status === "queued",
-      );
-      setQueuedLines(queued);
-
-      // Filter claimed lines (status: claimed)
-      const claimed = data.lines.filter(
-        (line: ClaimItem) => line.status === "claimed",
-      );
-      setClaims(claimed);
+      // endpoint returns claimed + distributed; only show claimed in Claims tab
+      const claimedOnly = (cData.lines || []).filter((l: any) => l.status === "claimed");
+      setClaims(claimedOnly);
 
       // also refresh distributor assignments
       fetchDistributorAssignments();
