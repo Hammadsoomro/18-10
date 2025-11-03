@@ -57,7 +57,7 @@ export default function NumbersSorter() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines?status=sorted", {
+      const response = await fetch(`${window.location.origin}/api/numbers/lines?status=sorted`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

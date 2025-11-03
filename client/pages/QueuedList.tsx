@@ -80,7 +80,7 @@ export default function QueuedList() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/queued", {
+      const response = await fetch(`${window.location.origin}/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
