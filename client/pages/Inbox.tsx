@@ -380,7 +380,12 @@ export default function Inbox() {
 
       // endpoint returns claimed + distributed; only show claimed in Claims tab
       const claimedOnly = (cData.lines || []).filter((l: any) => l.status === "claimed");
-      setClaims(claimedOnly);
+      // show only lines claimed by the current user in the 'Your Claimed Lines' card
+      const myClaims = claimedOnly.filter((l: any) => {
+        const claimedById = l.claimedBy && (l.claimedBy._id || l.claimedBy);
+        return String(claimedById) === String(user?.id);
+      });
+      setClaims(myClaims);
 
       // also refresh distributor assignments
       fetchDistributorAssignments();
