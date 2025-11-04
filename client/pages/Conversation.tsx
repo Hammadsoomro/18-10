@@ -63,7 +63,7 @@ export default function Conversation() {
     const fetchMessages = async () => {
       if (!token || !selectedContact) return;
       try {
-        const res = await fetch(`${window.location.origin}/api/contacts/${selectedContact.id}/messages`, {
+        const res = await fetch(`/api/contacts/${selectedContact.id}/messages`, {
     headers: { Authorization: `Bearer ${token}` },
   });
         if (!res.ok) throw new Error('Failed to fetch messages');
@@ -140,7 +140,7 @@ export default function Conversation() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${window.location.origin}/api/contacts`, {
+      const response = await fetch(`/api/contacts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -169,7 +169,7 @@ export default function Conversation() {
 
     setIsAdding(true);
     try {
-      const response = await fetch(`${window.location.origin}/api/contacts`, {
+      const response = await fetch(`/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +203,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`${window.location.origin}/api/contacts/${id}`, {
+      const response = await fetch(`/api/contacts/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -228,7 +228,7 @@ export default function Conversation() {
     }
 
     try {
-      const response = await fetch(`${window.location.origin}/api/contacts/${contact.id}`, {
+      const response = await fetch(`/api/contacts/${contact.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
