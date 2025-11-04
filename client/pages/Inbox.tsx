@@ -146,12 +146,9 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch(
-        `/api/auth/claim-settings`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`/api/auth/claim-settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
@@ -193,12 +190,9 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch(
-        `/api/numbers/claimed-lines`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`/api/numbers/claimed-lines`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
@@ -378,12 +372,9 @@ export default function Inbox() {
       setQueuedLines(qData.lines || []);
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
-      const cRes = await fetch(
-        `/api/numbers/claimed-lines`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const cRes = await fetch(`/api/numbers/claimed-lines`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
       const cData = await cRes.json();
 
@@ -434,17 +425,14 @@ export default function Inbox() {
           );
 
         if (claimedLineIds.length > 0) {
-          const moveResponse = await fetch(
-            `/api/numbers/move-to-distributor`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ lineIds: claimedLineIds }),
+          const moveResponse = await fetch(`/api/numbers/move-to-distributor`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-          );
+            body: JSON.stringify({ lineIds: claimedLineIds }),
+          });
 
           if (!moveResponse.ok) {
             let errMsg = "Failed to move claimed lines";
@@ -461,17 +449,14 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(
-        `/api/numbers/claim`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ lineId: lineToClaimId }),
+      const claimResponse = await fetch(`/api/numbers/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ lineId: lineToClaimId }),
+      });
 
       if (!claimResponse.ok) {
         if (claimResponse.status === 409) {
