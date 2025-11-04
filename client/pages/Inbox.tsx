@@ -147,7 +147,7 @@ export default function Inbox() {
     if (!token) return;
     try {
       const res = await fetch(
-        `${window.location.origin}/api/auth/claim-settings`,
+        `/api/auth/claim-settings`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -194,7 +194,7 @@ export default function Inbox() {
     if (!token) return;
     try {
       const res = await fetch(
-        `${window.location.origin}/api/numbers/claimed-lines`,
+        `/api/numbers/claimed-lines`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -370,7 +370,7 @@ export default function Inbox() {
       setIsLoading(true);
 
       // Fetch queued lines for claim UI
-      const qRes = await fetch(`${window.location.origin}/api/numbers/queued`, {
+      const qRes = await fetch(`/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!qRes.ok) throw new Error("Failed to fetch queued lines");
@@ -379,7 +379,7 @@ export default function Inbox() {
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
       const cRes = await fetch(
-        `${window.location.origin}/api/numbers/claimed-lines`,
+        `/api/numbers/claimed-lines`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -435,7 +435,7 @@ export default function Inbox() {
 
         if (claimedLineIds.length > 0) {
           const moveResponse = await fetch(
-            `${window.location.origin}/api/numbers/move-to-distributor`,
+            `/api/numbers/move-to-distributor`,
             {
               method: "POST",
               headers: {
@@ -462,7 +462,7 @@ export default function Inbox() {
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
       const claimResponse = await fetch(
-        `${window.location.origin}/api/numbers/claim`,
+        `/api/numbers/claim`,
         {
           method: "POST",
           headers: {
