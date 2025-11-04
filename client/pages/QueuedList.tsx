@@ -80,7 +80,7 @@ export default function QueuedList() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${window.location.origin}/api/numbers/queued`, {
+      const response = await fetch(`/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -97,7 +97,7 @@ export default function QueuedList() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
+      const response = await fetch(`/api/numbers/line/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -116,7 +116,7 @@ export default function QueuedList() {
     try {
       // Delete all lines
       const deletePromises = lines.map((line) =>
-        fetch(`${window.location.origin}/api/numbers/line/${line._id || line.id}`, {
+        fetch(`/api/numbers/line/${line._id || line.id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }),
