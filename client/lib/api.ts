@@ -6,7 +6,11 @@ export async function apiFetch(input: string, init?: RequestInit) {
   } catch (err) {
     // If relative failed (network), try prefixed with origin (fallback)
     try {
-      if (typeof window !== "undefined" && window.location && window.location.origin) {
+      if (
+        typeof window !== "undefined" &&
+        window.location &&
+        window.location.origin
+      ) {
         const alt = window.location.origin.replace(/\/$/, "") + input;
         const res2 = await fetch(alt, init);
         return res2;

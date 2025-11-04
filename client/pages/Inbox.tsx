@@ -146,7 +146,11 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/claim-settings`, { headers: { Authorization: `Bearer ${token}` } }));
+      const res = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
       if (!res || !res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
@@ -188,7 +192,11 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${token}` } }));
+      const res = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
       if (!res || !res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
@@ -360,13 +368,21 @@ export default function Inbox() {
       setIsLoading(true);
 
       // Fetch queued lines for claim UI
-      const qRes = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/queued`, { headers: { Authorization: `Bearer ${token}` } }));
+      const qRes = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/queued`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
       if (!qRes || !qRes.ok) throw new Error("Failed to fetch queued lines");
       const qData = await qRes.json();
       setQueuedLines(qData.lines || []);
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
-      const cRes = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${token}` } }));
+      const cRes = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
       if (!cRes || !cRes.ok) throw new Error("Failed to fetch claimed lines");
       const cData = await cRes.json();
 
@@ -417,19 +433,23 @@ export default function Inbox() {
           );
 
         if (claimedLineIds.length > 0) {
-          const moveResponse = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/move-to-distributor`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ lineIds: claimedLineIds }),
-          }));
+          const moveResponse = await import("@/lib/api").then((m) =>
+            m.apiFetch(`/api/numbers/move-to-distributor`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ lineIds: claimedLineIds }),
+            }),
+          );
 
           if (!moveResponse || !moveResponse.ok) {
             let errMsg = "Failed to move claimed lines";
             try {
-              const err = await (moveResponse ? moveResponse.json() : Promise.resolve(null));
+              const err = await (moveResponse
+                ? moveResponse.json()
+                : Promise.resolve(null));
               if (err && err.error) errMsg = err.error;
             } catch (e) {}
             toast.error(errMsg);
@@ -441,14 +461,16 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lineId: lineToClaimId }),
-      }));
+      const claimResponse = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claim`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ lineId: lineToClaimId }),
+        }),
+      );
 
       if (!claimResponse || !claimResponse.ok) {
         if (claimResponse && claimResponse.status === 409) {

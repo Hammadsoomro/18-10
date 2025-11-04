@@ -102,7 +102,8 @@ export function useAuth() {
   if (!context) {
     // Fallback for safety: return a minimal implementation so components
     // can still call login/signup/logout when AuthProvider is missing.
-    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
     let user: UserData | null = null;
     try {
       if (token) {
@@ -125,7 +126,11 @@ export function useAuth() {
       return;
     };
 
-    const noOpSignup = async (email: string, password: string, name: string) => {
+    const noOpSignup = async (
+      email: string,
+      password: string,
+      name: string,
+    ) => {
       const res = await fetch(`/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

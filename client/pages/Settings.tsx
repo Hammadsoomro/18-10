@@ -44,7 +44,11 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/members`, { headers: { Authorization: `Bearer ${token}` } }));
+          const res = await import("@/lib/api").then((m) =>
+            m.apiFetch(`/api/auth/members`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          );
           if (res && res.ok) {
             const data = await res.json();
             setMembers(data.members || []);
@@ -63,9 +67,14 @@ export default function Settings() {
 
     try {
       setIsLoadingSettings(true);
-      const response = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/claim-settings`, { headers: { Authorization: `Bearer ${token}` } }));
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
 
-      if (!response || !response.ok) throw new Error("Failed to fetch claim settings");
+      if (!response || !response.ok)
+        throw new Error("Failed to fetch claim settings");
 
       const data = await response.json();
       setClaimLineCount(data.claimLineCount);
@@ -98,19 +107,22 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/claim-settings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      claimLineCount,
-      cooldownSeconds,
-    }),
-  }));
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            claimLineCount,
+            cooldownSeconds,
+          }),
+        }),
+      );
 
-      if (!response || !response.ok) throw new Error("Failed to save claim settings");
+      if (!response || !response.ok)
+        throw new Error("Failed to save claim settings");
 
       toast.success("Claim settings saved successfully");
       // update stored setting so other clients can pick it up
@@ -165,18 +177,20 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/create-member`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: memberName,
-          email: memberEmail,
-          password: memberPassword,
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/create-member`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: memberName,
+            email: memberEmail,
+            password: memberPassword,
+          }),
         }),
-      }));
+      );
 
       if (!response.ok) {
         try {
@@ -196,7 +210,11 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/members`, { headers: { Authorization: `Bearer ${token}` } }));
+        const res = await import("@/lib/api").then((m) =>
+          m.apiFetch(`/api/auth/members`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        );
         if (res && res.ok) {
           const d = await res.json();
           setMembers(d.members || []);
@@ -385,7 +403,11 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/members`, { headers: { Authorization: `Bearer ${token}` } }));
+                          const res = await import("@/lib/api").then((m) =>
+                            m.apiFetch(`/api/auth/members`, {
+                              headers: { Authorization: `Bearer ${token}` },
+                            }),
+                          );
                           if (res && res.ok) {
                             const data = await res.json();
                             setMembers(data.members || []);
@@ -432,16 +454,23 @@ export default function Settings() {
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await import("@/lib/api").then((mm) => mm.apiFetch(`/api/auth/member/${m.id}`, {
-                                        method: "PUT",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                          Authorization: `Bearer ${token}`,
-                                        },
-                                        body: JSON.stringify({
-                                          active: !m.active,
-                                        }),
-                                      }));
+                                    const res = await import("@/lib/api").then(
+                                      (mm) =>
+                                        mm.apiFetch(
+                                          `/api/auth/member/${m.id}`,
+                                          {
+                                            method: "PUT",
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                              Authorization: `Bearer ${token}`,
+                                            },
+                                            body: JSON.stringify({
+                                              active: !m.active,
+                                            }),
+                                          },
+                                        ),
+                                    );
                                     if (!res.ok)
                                       throw new Error(
                                         "Failed to update member",
@@ -476,12 +505,18 @@ export default function Settings() {
                                   )
                                     return;
                                   try {
-                                    const res = await import("@/lib/api").then((mm) => mm.apiFetch(`/api/auth/member/${m.id}`, {
-                                        method: "DELETE",
-                                        headers: {
-                                          Authorization: `Bearer ${token}`,
-                                        },
-                                      }));
+                                    const res = await import("@/lib/api").then(
+                                      (mm) =>
+                                        mm.apiFetch(
+                                          `/api/auth/member/${m.id}`,
+                                          {
+                                            method: "DELETE",
+                                            headers: {
+                                              Authorization: `Bearer ${token}`,
+                                            },
+                                          },
+                                        ),
+                                    );
                                     if (!res.ok)
                                       throw new Error(
                                         "Failed to delete member",
