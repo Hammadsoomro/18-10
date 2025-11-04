@@ -57,7 +57,7 @@ export default function NumbersSorter() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${window.location.origin}/api/numbers/lines?status=sorted`, {
+      const response = await fetch(`/api/numbers/lines?status=sorted`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -114,7 +114,7 @@ export default function NumbersSorter() {
 
     setIsAdding(true);
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/lines`, {
+      const response = await fetch(`/api/numbers/lines`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -174,7 +174,7 @@ export default function NumbersSorter() {
 
   const handleDeleteLine = async (id: string) => {
     try {
-      const response = await fetch(`${window.location.origin}/api/numbers/line/${id}`, {
+      const response = await fetch(`/api/numbers/line/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -198,7 +198,7 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch(`${window.location.origin}/api/numbers/move-to-queue`, {
+      const response = await fetch(`/api/numbers/move-to-queue`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -229,7 +229,7 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch(`${window.location.origin}/api/numbers/move-to-distributor`, {
+      const response = await fetch(`/api/numbers/move-to-distributor`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
