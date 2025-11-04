@@ -124,7 +124,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch(`${window.location.origin}/api/auth/members`, {
+      const response = await fetch(`/api/auth/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -141,7 +141,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -165,7 +165,7 @@ export default function AutoDistributor() {
     try {
       setIsLoading(true);
       // Use the claimed-lines endpoint which includes distributed items
-      const response = await fetch(`${window.location.origin}/api/numbers/claimed-lines`, {
+      const response = await fetch(`/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -203,7 +203,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -241,7 +241,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
