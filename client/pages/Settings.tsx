@@ -196,10 +196,8 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch(`/api/auth/members`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
+        const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/members`, { headers: { Authorization: `Bearer ${token}` } }));
+        if (res && res.ok) {
           const d = await res.json();
           setMembers(d.members || []);
         }
@@ -387,10 +385,8 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await fetch(`/api/auth/members`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          if (res.ok) {
+                          const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/members`, { headers: { Authorization: `Bearer ${token}` } }));
+                          if (res && res.ok) {
                             const data = await res.json();
                             setMembers(data.members || []);
                           }
