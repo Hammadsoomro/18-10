@@ -100,14 +100,9 @@ export function Sidebar({
   const computeUnread = async () => {
     try {
       if (!user) return 0;
-      try {
-        const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` } }));
-        if (!res || !res.ok) return 0;
-        const data = await res.json();
-        // continue below by returning distributed length
-      } catch (e) {
-        return 0;
-      }
+      const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` } }));
+      if (!res || !res.ok) return 0;
+      const data = await res.json();
       const distributed = (data.lines || []).filter((l: any) => Array.isArray(l.distributedTo) && l.distributedTo.length > 0);
       const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
       if (!last) return distributed.length;
