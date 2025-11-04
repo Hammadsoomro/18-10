@@ -417,19 +417,19 @@ export default function Inbox() {
           );
 
         if (claimedLineIds.length > 0) {
-          const moveResponse = await fetch(`/api/numbers/move-to-distributor`, {
+          const moveResponse = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/move-to-distributor`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ lineIds: claimedLineIds }),
-          });
+          }));
 
-          if (!moveResponse.ok) {
+          if (!moveResponse || !moveResponse.ok) {
             let errMsg = "Failed to move claimed lines";
             try {
-              const err = await moveResponse.json();
+              const err = await (moveResponse ? moveResponse.json() : Promise.resolve(null));
               if (err && err.error) errMsg = err.error;
             } catch (e) {}
             toast.error(errMsg);
