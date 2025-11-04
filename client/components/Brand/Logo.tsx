@@ -9,7 +9,10 @@ type LogoProps = {
   showTrademark?: boolean;
 };
 
-const Mark: React.FC<{ size?: number; className?: string }>=({ size = 32, className }) => {
+const Mark: React.FC<{ size?: number; className?: string }> = ({
+  size = 32,
+  className,
+}) => {
   const s = size;
   return (
     <svg
@@ -32,16 +35,59 @@ const Mark: React.FC<{ size?: number; className?: string }>=({ size = 32, classN
           <stop offset="100%" stopColor="#3b82f6" />
         </linearGradient>
         <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.25" />
+          <feDropShadow
+            dx="0"
+            dy="2"
+            stdDeviation="2"
+            floodColor="#000"
+            floodOpacity="0.25"
+          />
         </filter>
       </defs>
 
-      <rect x="0" y="0" width="40" height="40" rx="10" ry="10" fill="url(#ll-grad-a)" opacity="0.08" />
+      <rect
+        x="0"
+        y="0"
+        width="40"
+        height="40"
+        rx="10"
+        ry="10"
+        fill="url(#ll-grad-a)"
+        opacity="0.08"
+      />
 
       <g filter="url(#soft-shadow)">
-        <rect x="5" y="14" width="18" height="10" rx="5" ry="5" transform="rotate(-25 14 19)" fill="none" stroke="url(#ll-grad-a)" strokeWidth="2.5" />
-        <rect x="17" y="14" width="18" height="10" rx="5" ry="5" transform="rotate(25 26 19)" fill="none" stroke="url(#ll-grad-b)" strokeWidth="2.5" />
-        <path d="M14 26 C18 28, 22 28, 26 26" stroke="#06b6d4" strokeOpacity="0.6" strokeWidth="2" fill="none" />
+        <rect
+          x="5"
+          y="14"
+          width="18"
+          height="10"
+          rx="5"
+          ry="5"
+          transform="rotate(-25 14 19)"
+          fill="none"
+          stroke="url(#ll-grad-a)"
+          strokeWidth="2.5"
+        />
+        <rect
+          x="17"
+          y="14"
+          width="18"
+          height="10"
+          rx="5"
+          ry="5"
+          transform="rotate(25 26 19)"
+          fill="none"
+          stroke="url(#ll-grad-b)"
+          strokeWidth="2.5"
+        />
+        <path
+          d="M14 26 C18 28, 22 28, 26 26"
+          stroke="#06b6d4"
+          strokeOpacity="0.6"
+          strokeWidth="2"
+          fill="none"
+        />
       </g>
 
       <circle cx="20" cy="8.5" r="1.5" fill="#22d3ee" />
@@ -65,11 +111,21 @@ export const Logo: React.FC<LogoProps> = ({
   }
 
   return (
-    <div className={cn("inline-flex items-center gap-2", className)} aria-label="Line-Link">
+    <div
+      className={cn("inline-flex items-center gap-2", className)}
+      aria-label="Line-Link"
+    >
       <Mark size={size} />
-      <span className={cn("font-bold tracking-tight text-white", labelClassName)}>
-        Line-<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Link</span>
-        {showTrademark && <sup className="ml-0.5 text-[10px] text-slate-400 align-top">™</sup>}
+      <span
+        className={cn("font-bold tracking-tight text-white", labelClassName)}
+      >
+        Line-
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+          Link
+        </span>
+        {showTrademark && (
+          <sup className="ml-0.5 text-[10px] text-slate-400 align-top">™</sup>
+        )}
       </span>
     </div>
   );
