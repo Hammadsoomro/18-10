@@ -146,10 +146,8 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`/api/auth/claim-settings`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
+      const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/claim-settings`, { headers: { Authorization: `Bearer ${token}` } }));
+      if (!res || !res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
@@ -190,10 +188,8 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
+      const res = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${token}` } }));
+      if (!res || !res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
@@ -364,18 +360,14 @@ export default function Inbox() {
       setIsLoading(true);
 
       // Fetch queued lines for claim UI
-      const qRes = await fetch(`/api/numbers/queued`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!qRes.ok) throw new Error("Failed to fetch queued lines");
+      const qRes = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/queued`, { headers: { Authorization: `Bearer ${token}` } }));
+      if (!qRes || !qRes.ok) throw new Error("Failed to fetch queued lines");
       const qData = await qRes.json();
       setQueuedLines(qData.lines || []);
 
       // Fetch claimed lines using dedicated endpoint which respects user/admin
-      const cRes = await fetch(`/api/numbers/claimed-lines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!cRes.ok) throw new Error("Failed to fetch claimed lines");
+      const cRes = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claimed-lines`, { headers: { Authorization: `Bearer ${token}` } }));
+      if (!cRes || !cRes.ok) throw new Error("Failed to fetch claimed lines");
       const cData = await cRes.json();
 
       // endpoint returns claimed + distributed; only show claimed in Claims tab
