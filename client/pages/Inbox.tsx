@@ -441,17 +441,17 @@ export default function Inbox() {
 
       // Step 2: Claim the next line
       const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`/api/numbers/claim`, {
+      const claimResponse = await import("@/lib/api").then((m) => m.apiFetch(`/api/numbers/claim`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ lineId: lineToClaimId }),
-      });
+      }));
 
-      if (!claimResponse.ok) {
-        if (claimResponse.status === 409) {
+      if (!claimResponse || !claimResponse.ok) {
+        if (claimResponse && claimResponse.status === 409) {
           // Try to parse error message for better UX
           try {
             const err = await claimResponse.json();
