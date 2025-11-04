@@ -35,7 +35,7 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         if (!token) return;
-        const res = await fetch(`${window.location.origin}/api/numbers/stats`, {
+        const res = await fetch(`/api/numbers/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch stats");
@@ -55,7 +55,7 @@ export default function Dashboard() {
     const fetchDistributorActive = async () => {
       try {
         if (!token) return;
-        const res = await fetch(`${window.location.origin}/api/auth/distributor-settings`, {
+        const res = await fetch(`/api/auth/distributor-settings`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return;
