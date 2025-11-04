@@ -42,7 +42,7 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await fetch(`${window.location.origin}/api/auth/members`, {
+          const res = await fetch(`/api/auth/members`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -63,7 +63,7 @@ export default function Settings() {
 
     try {
       setIsLoadingSettings(true);
-      const response = await fetch(`${window.location.origin}/api/auth/claim-settings`, {
+      const response = await fetch(`/api/auth/claim-settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -93,7 +93,7 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await fetch(`${window.location.origin}/api/auth/claim-settings`, {
+      const response = await fetch(`/api/auth/claim-settings`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch(`${window.location.origin}/api/auth/create-member`, {
+      const response = await fetch(`/api/auth/create-member`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -184,7 +184,7 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch(`${window.location.origin}/api/auth/members`, {
+        const res = await fetch(`/api/auth/members`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -373,7 +373,7 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await fetch(`${window.location.origin}/api/auth/members`, {
+                          const res = await fetch(`/api/auth/members`, {
                             headers: { Authorization: `Bearer ${token}` },
                           });
                           if (res.ok) {
@@ -413,7 +413,7 @@ export default function Settings() {
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(`${window.location.origin}/api/auth/member/${m.id}`, {
+                                    const res = await fetch(`/api/auth/member/${m.id}`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                       body: JSON.stringify({ active: !m.active }),
@@ -436,7 +436,7 @@ export default function Settings() {
                                   if (!token) return;
                                   if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
                                   try {
-                                    const res = await fetch(`${window.location.origin}/api/auth/member/${m.id}`, {
+                                    const res = await fetch(`/api/auth/member/${m.id}`, {
                                       method: 'DELETE',
                                       headers: { Authorization: `Bearer ${token}` },
                                     });
