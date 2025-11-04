@@ -165,7 +165,7 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch(`/api/auth/create-member`, {
+      const response = await import("@/lib/api").then((m) => m.apiFetch(`/api/auth/create-member`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default function Settings() {
           email: memberEmail,
           password: memberPassword,
         }),
-      });
+      }));
 
       if (!response.ok) {
         try {
@@ -432,9 +432,7 @@ export default function Settings() {
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(
-                                      `/api/auth/member/${m.id}`,
-                                      {
+                                    const res = await import("@/lib/api").then((mm) => mm.apiFetch(`/api/auth/member/${m.id}`, {
                                         method: "PUT",
                                         headers: {
                                           "Content-Type": "application/json",
@@ -443,8 +441,7 @@ export default function Settings() {
                                         body: JSON.stringify({
                                           active: !m.active,
                                         }),
-                                      },
-                                    );
+                                      }));
                                     if (!res.ok)
                                       throw new Error(
                                         "Failed to update member",
@@ -479,15 +476,12 @@ export default function Settings() {
                                   )
                                     return;
                                   try {
-                                    const res = await fetch(
-                                      `/api/auth/member/${m.id}`,
-                                      {
+                                    const res = await import("@/lib/api").then((mm) => mm.apiFetch(`/api/auth/member/${m.id}`, {
                                         method: "DELETE",
                                         headers: {
                                           Authorization: `Bearer ${token}`,
                                         },
-                                      },
-                                    );
+                                      }));
                                     if (!res.ok)
                                       throw new Error(
                                         "Failed to delete member",
