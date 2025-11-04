@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Brand/Logo";
 import {
   MessageCircle,
   SortAsc,
@@ -28,10 +29,7 @@ export default function Index() {
       <nav className="border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">LL</span>
-            </div>
-            <span className="text-white font-bold text-lg">Line-Link</span>
+            <Logo variant="full" size={28} labelClassName="text-lg" />
           </div>
 
           <div className="flex items-center gap-4">

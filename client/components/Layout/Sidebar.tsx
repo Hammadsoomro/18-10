@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
+import { LogoMark } from "@/components/Brand/Logo";
 
 interface SidebarProps {
   open?: boolean;
@@ -190,18 +191,8 @@ export function Sidebar({
         <div className="px-4 pt-4 pb-2 border-b border-transparent">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
-              {/* logo */}
-              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="50%" stopColor="#06b6d4" />
-                    <stop offset="100%" stopColor="#7c3aed" />
-                  </linearGradient>
-                </defs>
-                <circle cx="24" cy="24" r="22" fill="url(#lg3)" />
-                <path d="M16 28c0-5 5-9 8-9s8 4 8 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Brand logo */}
+              <LogoMark size={28} />
             </div>
             {!isCollapsed && (
               <div className="flex-1">

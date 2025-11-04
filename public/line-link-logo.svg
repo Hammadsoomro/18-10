@@ -1,0 +1,26 @@
+<svg width="128" height="32" viewBox="0 0 128 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Line-Link">
+  <defs>
+    <linearGradient id="llg-a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="llg-b" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <g transform="translate(0,0)">
+      <rect x="2" y="6" width="22" height="12" rx="6" ry="6" transform="rotate(-25 13 12)" fill="none" stroke="url(#llg-a)" stroke-width="3"/>
+      <rect x="12" y="6" width="22" height="12" rx="6" ry="6" transform="rotate(25 23 12)" fill="none" stroke="url(#llg-b)" stroke-width="3"/>
+      <path d="M10 22 C16 25, 22 25, 28 22" stroke="#06b6d4" stroke-opacity="0.6" stroke-width="2" fill="none"/>
+      <circle cx="16" cy="4" r="2" fill="#22d3ee"/>
+    </g>
+    <g transform="translate(40,0)">
+      <text x="0" y="22" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, sans-serif" font-weight="700" font-size="18" fill="#ffffff">Line-</text>
+      <text x="52" y="22" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, sans-serif" font-weight="700" font-size="18" fill="url(#llg-a)">Link</text>
+    </g>
+  </g>
+</svg>
