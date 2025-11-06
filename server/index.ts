@@ -78,8 +78,8 @@ export function createServer() {
         "/api/demo",
         "/api/auth/*",
         "/api/numbers/*",
-        "/api/contacts/*"
-      ]
+        "/api/contacts/*",
+      ],
     });
   });
 
