@@ -201,3 +201,10 @@
     background: linear-gradient(120deg, #0ea5a4 0%, #7c3aed 33%, #f97316 66%, #ef476f 100%);
   }
 }
+
+/* Utilities for 3D flip cards */
+.perspective-1000 { perspective: 1000px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+.transform-preserve { transition: transform 0.5s; }
