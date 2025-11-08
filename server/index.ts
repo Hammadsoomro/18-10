@@ -68,6 +68,21 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true }));
 
   // Example API routes
+  // Root API route to help clients and deployments
+  app.get("/api", (_req, res) => {
+    res.json({
+      ok: true,
+      message: "Line-Link API",
+      endpoints: [
+        "/api/ping",
+        "/api/demo",
+        "/api/auth/*",
+        "/api/numbers/*",
+        "/api/contacts/*",
+      ],
+    });
+  });
+
   app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
     res.json({ message: ping });
