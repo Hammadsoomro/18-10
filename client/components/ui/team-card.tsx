@@ -19,11 +19,18 @@ export function TeamCard({ member }: { member: TeamMember }) {
         "relative w-full max-w-sm mx-auto perspective-1000",
       )}
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setFlipped((s) => !s)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setFlipped((s) => !s);
+          }
+        }}
         aria-pressed={flipped}
-        className="group w-full h-48 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg relative focus:outline-none"
-        type="button"
+        className="group w-full h-48 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg relative focus:outline-none cursor-pointer"
       >
         <div
           className={cn(
@@ -82,7 +89,7 @@ export function TeamCard({ member }: { member: TeamMember }) {
             </div>
           </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 }
