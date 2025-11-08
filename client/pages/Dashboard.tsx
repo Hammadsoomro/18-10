@@ -73,6 +73,25 @@ export default function Dashboard() {
     fetchStats();
     fetchDistributorActive();
 
+    // fetch team members for dashboard
+    const fetchMembers = async () => {
+      try {
+        if (!token) return;
+        const res = await fetch(`/api/auth/members`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch members");
+        const data = await res.json();
+        if (!mounted) return;
+        setMembers(data.members || []);
+      } catch (e) {
+        console.error("Failed to fetch members", e);
+        setMembers([]);
+      }
+    };
+
+    fetchMembers();
+
     // socket for real-time distributor indicator & stats
     try {
       const payload = token ? JSON.parse(atob(token.split(".")[1])) : null;
