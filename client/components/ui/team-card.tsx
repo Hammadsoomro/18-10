@@ -11,7 +11,7 @@ export interface TeamMember {
 }
 
 export function TeamCard({ member }: { member: TeamMember }) {
-  const [flipped, setFlipped] = useState(false);
+  const [flipped, setFlipped] = React.useState(false);
 
   return (
     <div
