@@ -282,6 +282,20 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Team Members (card grid) */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Team Members</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {members.length === 0 ? (
+              <div className="text-sm text-slate-500">No team members yet</div>
+            ) : (
+              members.map((m) => (
+                <TeamCard key={m.id} member={m} />
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader>
