@@ -28,6 +28,8 @@ export default function Dashboard() {
     claimedToday: 0,
   });
 
+  const [members, setMembers] = useState<{ id: string; name: string; email?: string; active?: boolean; }[]>([]);
+
   useEffect(() => {
     let mounted = true;
     let interval: number | undefined;
