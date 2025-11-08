@@ -29,7 +29,9 @@ export default function Dashboard() {
     claimedToday: 0,
   });
 
-  const [members, setMembers] = useState<{ id: string; name: string; email?: string; active?: boolean; }[]>([]);
+  const [members, setMembers] = useState<
+    { id: string; name: string; email?: string; active?: boolean }[]
+  >([]);
 
   useEffect(() => {
     let mounted = true;
@@ -308,9 +310,7 @@ export default function Dashboard() {
             {members.length === 0 ? (
               <div className="text-sm text-slate-500">No team members yet</div>
             ) : (
-              members.map((m) => (
-                <TeamCard key={m.id} member={m} />
-              ))
+              members.map((m) => <TeamCard key={m.id} member={m} />)
             )}
           </div>
         </div>

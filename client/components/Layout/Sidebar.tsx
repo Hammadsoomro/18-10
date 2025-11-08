@@ -332,22 +332,22 @@ export function Sidebar({
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
             <div className="flex items-center justify-between">
-            <button
-              onClick={() => handleNavigate("/settings")}
-              className="p-2 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all w-12 h-12"
-              aria-label="Settings"
-            >
-              <Settings className="h-5 w-5 text-white" />
-            </button>
+              <button
+                onClick={() => handleNavigate("/settings")}
+                className="p-2 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all w-12 h-12"
+                aria-label="Settings"
+              >
+                <Settings className="h-5 w-5 text-white" />
+              </button>
 
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg flex items-center justify-center hover:bg-red-900/20 transition-all w-12 h-12"
-              aria-label="Logout"
-            >
-              <LogOut className="h-5 w-5 text-red-400" />
-            </button>
-          </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg flex items-center justify-center hover:bg-red-900/20 transition-all w-12 h-12"
+                aria-label="Logout"
+              >
+                <LogOut className="h-5 w-5 text-red-400" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
