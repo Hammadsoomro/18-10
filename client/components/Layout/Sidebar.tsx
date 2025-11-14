@@ -331,28 +331,21 @@ export function Sidebar({
 
           {/* Footer should remain visible */}
           <div className="px-3 pb-4">
-            <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <button
                 onClick={() => handleNavigate("/settings")}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/90 hover:bg-white/10 transition-all"
+                className="p-2 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all w-12 h-12"
+                aria-label="Settings"
               >
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <Settings className="h-5 w-5 text-white" />
-                </div>
-                {!isCollapsed && (
-                  <span className="text-sm font-semibold">Settings</span>
-                )}
+                <Settings className="h-5 w-5 text-white" />
               </button>
+
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 transition-all"
+                className="p-2 rounded-lg flex items-center justify-center hover:bg-red-900/20 transition-all w-12 h-12"
+                aria-label="Logout"
               >
-                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
-                  <LogOut className="h-5 w-5 text-red-400" />
-                </div>
-                {!isCollapsed && (
-                  <span className="text-sm font-semibold">Logout</span>
-                )}
+                <LogOut className="h-5 w-5 text-red-400" />
               </button>
             </div>
           </div>

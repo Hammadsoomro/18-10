@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSocket } from "@/hooks/useSocket";
 import { Socket } from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import TeamCard from "@/components/ui/team-card";
 import {
   Activity,
   AlertCircle,
@@ -27,6 +28,10 @@ export default function Dashboard() {
     activeMembers: 0,
     claimedToday: 0,
   });
+
+  const [members, setMembers] = useState<
+    { id: string; name: string; email?: string; active?: boolean }[]
+  >([]);
 
   useEffect(() => {
     let mounted = true;
@@ -69,6 +74,25 @@ export default function Dashboard() {
 
     fetchStats();
     fetchDistributorActive();
+
+    // fetch team members for dashboard
+    const fetchMembers = async () => {
+      try {
+        if (!token) return;
+        const res = await fetch(`/api/auth/members`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch members");
+        const data = await res.json();
+        if (!mounted) return;
+        setMembers(data.members || []);
+      } catch (e) {
+        console.error("Failed to fetch members", e);
+        setMembers([]);
+      }
+    };
+
+    fetchMembers();
 
     // socket for real-time distributor indicator & stats
     try {
@@ -277,6 +301,18 @@ export default function Dashboard() {
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Team Members (card grid) */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Team Members</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {members.length === 0 ? (
+              <div className="text-sm text-slate-500">No team members yet</div>
+            ) : (
+              members.map((m) => <TeamCard key={m.id} member={m} />)
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}

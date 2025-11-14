@@ -1,5 +1,4 @@
 import { RequestHandler } from "express";
-import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import { User, Contact } from "../db";
 
