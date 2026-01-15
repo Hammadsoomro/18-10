@@ -1,6 +1,8 @@
 import { Layout } from "@/components/Layout/Layout";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSocket } from "@/hooks/useSocket";
+import { Socket } from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Activity,
@@ -11,7 +13,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { io, Socket } from "socket.io-client";
 
 export default function Dashboard() {
   const { user, token } = useAuth();
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [claimReady, setClaimReady] = useState(true);
   const [distributorActive, setDistributorActive] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const socket = useSocket();
   const [stats, setStats] = useState({
     totalNumbers: 0,
     queuedLines: 0,
@@ -33,8 +35,10 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/numbers/stats', { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch stats');
+        const res = await fetch(`/api/numbers/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch stats");
         const data = await res.json();
         if (!mounted) return;
         setStats({
@@ -44,54 +48,75 @@ export default function Dashboard() {
           claimedToday: data.claimedToday || 0,
         });
       } catch (error) {
-        console.error('Failed to fetch stats:', error);
+        console.error("Failed to fetch stats:", error);
       }
     };
 
     const fetchDistributorActive = async () => {
       try {
         if (!token) return;
-        const res = await fetch('/api/auth/distributor-settings', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/auth/distributor-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (!mounted) return;
         setDistributorActive(Boolean(data.isActive));
       } catch (e) {
-        console.error('Failed to fetch distributor settings', e);
+        console.error("Failed to fetch distributor settings", e);
       }
     };
 
     fetchStats();
     fetchDistributorActive();
 
-    // socket for real-time distributor indicator
+    // socket for real-time distributor indicator & stats
     try {
-      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      const payload = token ? JSON.parse(atob(token.split(".")[1])) : null;
       const teamId = payload?.teamId;
-      const s = io(undefined, { autoConnect: true });
-      socketRef.current = s;
-      s.on('connect', () => {
-        if (teamId) s.emit('join_team', teamId);
-      });
-      s.on('distributor_indicator', (data: any) => {
-        if (typeof data?.active === 'boolean') setDistributorActive(Boolean(data.active));
-      });
+
+      if (socket) {
+        socketRef.current = socket;
+
+        const onConnect = () => {
+          if (teamId) socket.emit("join_team", teamId);
+        };
+
+        const onDistributorIndicator = (data: any) => {
+          if (typeof data?.active === "boolean")
+            setDistributorActive(Boolean(data.active));
+        };
+
+        const onStatsUpdated = () => fetchStats();
+        const onQueuedChanged = () => fetchStats();
+
+        socket.on("connect", onConnect);
+        socket.on("distributor_indicator", onDistributorIndicator);
+        socket.on("stats_updated", onStatsUpdated);
+        socket.on("queued_lines_changed", onQueuedChanged);
+
+        // store ref for cleanup
+        socketRef.current = socket;
+
+        // cleanup function will remove listeners
+        return () => {
+          socket.off("connect", onConnect);
+          socket.off("distributor_indicator", onDistributorIndicator);
+          socket.off("stats_updated", onStatsUpdated);
+          socket.off("queued_lines_changed", onQueuedChanged);
+        };
+      }
     } catch (e) {
-      console.error('Dashboard socket init error', e);
+      console.error("Dashboard socket init error", e);
     }
 
-    // poll every 10 seconds
-    interval = window.setInterval(fetchStats, 10000) as unknown as number;
+    // stop polling; rely on socket events for updates
 
     return () => {
       mounted = false;
       if (interval) window.clearInterval(interval);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [token]);
+  }, [token, socket]);
 
   return (
     <Layout title="Dashboard">
@@ -261,7 +286,10 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button onClick={()=>navigate('/numbers-sorter')} className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/numbers-sorter")}
+                className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-blue-900 dark:text-blue-400">
                   Add Numbers
                 </div>
@@ -270,7 +298,10 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button onClick={()=>navigate('/inbox')} className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/inbox")}
+                className="p-4 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-cyan-900 dark:text-cyan-400">
                   View Inbox
                 </div>
@@ -279,7 +310,10 @@ export default function Dashboard() {
                 </p>
               </button>
 
-              <button onClick={()=>navigate('/settings')} className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/settings")}
+                className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left"
+              >
                 <div className="font-semibold text-green-900 dark:text-green-400">
                   Team Settings
                 </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSocket } from "@/hooks/useSocket";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,18 +35,37 @@ export default function DistributedLines() {
     if (!search) return true;
     const q = search.toLowerCase();
     const content = (line.content || "").toLowerCase();
-    const claimedByName = ((line as any).claimedBy?.name || line.claimedByName || "").toLowerCase();
+    const claimedByName = (
+      (line as any).claimedBy?.name ||
+      line.claimedByName ||
+      ""
+    ).toLowerCase();
     const lineNum = String(line.lineNumber || "");
     return (
-      content.includes(q) ||
-      claimedByName.includes(q) ||
-      lineNum.includes(q)
+      content.includes(q) || claimedByName.includes(q) || lineNum.includes(q)
     );
   });
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchDistributedLines();
-  }, [token]);
+
+    if (socket) {
+      socket.on("distributed_lines", () => fetchDistributedLines());
+      socket.on("queued_lines_changed", () => fetchDistributedLines());
+      socket.on("sorted_lines_changed", () => fetchDistributedLines());
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("distributed_lines", () => fetchDistributedLines());
+        socket.off("queued_lines_changed", () => fetchDistributedLines());
+        socket.off("sorted_lines_changed", () => fetchDistributedLines());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, socket]);
 
   const fetchDistributedLines = async () => {
     if (!token) {
@@ -55,7 +75,7 @@ export default function DistributedLines() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -82,7 +102,7 @@ export default function DistributedLines() {
         let body = await response.text();
         try {
           const json = JSON.parse(body);
-          toast.error(json.error || 'Failed to delete line');
+          toast.error(json.error || "Failed to delete line");
         } catch (e) {
           toast.error(`Failed to delete line: ${response.status}`);
         }
@@ -101,6 +121,24 @@ export default function DistributedLines() {
     return words.length > maxWords
       ? words.slice(0, maxWords).join(" ") + "..."
       : text;
+  };
+
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    const dateFormatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+    return `${time}   ${dateFormatted}`;
   };
 
   if (isLoading) {
@@ -169,23 +207,27 @@ export default function DistributedLines() {
                       <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                         {truncateText(line.content)}
                       </p>
-                      {user?.role === "admin" && (
-                        <div>
-                          {(line as any).claimedBy && (
-                            <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                              ✓ Claimed by {(line as any).claimedBy.name}
+                      {(() => {
+                        const claimerName =
+                          (line as any).claimedBy?.name ||
+                          line.claimedByName ||
+                          "";
+                        const when = formatDateTime(
+                          line.claimedAt || line.createdAt,
+                        );
+                        if (user?.role === "admin") {
+                          return (
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {claimerName ? `${claimerName}   ${when}` : when}
                             </p>
-                          )}
+                          );
+                        }
+                        return (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {line.claimedAt || line.createdAt}
+                            {when}
                           </p>
-                        </div>
-                      )}
-                      {user?.role === "member" && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {line.claimedAt || line.createdAt}
-                        </p>
-                      )}
+                        );
+                      })()}
                       {line.distributedTo && line.distributedTo.length > 0 && (
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Distributed to {line.distributedTo.length} member(s)

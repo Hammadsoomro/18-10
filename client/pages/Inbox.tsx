@@ -113,6 +113,25 @@ export default function Inbox() {
         } catch (e) {}
       });
 
+      // Listen for other relevant events so inbox updates in real-time
+      s.on("queued_lines_changed", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
+      s.on("sorted_lines_changed", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
+      s.on("stats_updated", () => {
+        try {
+          fetchData();
+        } catch (e) {}
+      });
+
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -127,10 +146,12 @@ export default function Inbox() {
   const fetchClaimSettings = async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/auth/claim-settings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
+      const res = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+      if (!res || !res.ok) return;
       const data = await res.json();
       setClaimSettingCooldown(data.cooldownSeconds ?? null);
     } catch (e) {
@@ -138,18 +159,25 @@ export default function Inbox() {
     }
   };
 
-  const getDistributorLastReadKey = () => `distributor_last_read_${user?.id ?? "global"}`;
+  const getDistributorLastReadKey = () =>
+    `distributor_last_read_${user?.id ?? "global"}`;
 
   const markDistributorRead = () => {
     try {
       localStorage.setItem(getDistributorLastReadKey(), String(Date.now()));
       setUnreadDistributor(0);
+      // notify same-window listeners (storage event doesn't fire in same window)
+      try {
+        window.dispatchEvent(new CustomEvent("distributor_read"));
+      } catch (e) {}
     } catch {}
   };
 
   const computeUnreadForDistributor = (items: DistributorItem[]) => {
     try {
-      const last = Number(localStorage.getItem(getDistributorLastReadKey()) || 0);
+      const last = Number(
+        localStorage.getItem(getDistributorLastReadKey()) || 0,
+      );
       if (!last) return items.length;
       const count = items.filter((it) => {
         const t = Date.parse(it.distributedAt);
@@ -164,10 +192,12 @@ export default function Inbox() {
   const fetchDistributorAssignments = async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/numbers/claimed-lines", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
+      const res = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+      if (!res || !res.ok) return;
       const data = await res.json();
       const lines = data.lines || [];
       // only include lines that were distributed by Auto Distributor (distributedTo populated)
@@ -322,6 +352,12 @@ export default function Inbox() {
     };
   }, [user]);
 
+  // track previous cooldown value (no local notification; handled globally in Layout)
+  const prevCooldownRef = useRef<number>(claimCooldown);
+  useEffect(() => {
+    prevCooldownRef.current = claimCooldown;
+  }, [claimCooldown]);
+
   const fetchData = async () => {
     if (!token) {
       setIsLoading(false);
@@ -330,24 +366,36 @@ export default function Inbox() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
-        headers: { Authorization: `Bearer ${token}` },
+
+      // Fetch queued lines for claim UI
+      const qRes = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/queued`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+      if (!qRes || !qRes.ok) throw new Error("Failed to fetch queued lines");
+      const qData = await qRes.json();
+      setQueuedLines(qData.lines || []);
+
+      // Fetch claimed lines using dedicated endpoint which respects user/admin
+      const cRes = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claimed-lines`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+      if (!cRes || !cRes.ok) throw new Error("Failed to fetch claimed lines");
+      const cData = await cRes.json();
+
+      // endpoint returns claimed + distributed; only show claimed in Claims tab
+      const claimedOnly = (cData.lines || []).filter(
+        (l: any) => l.status === "claimed",
+      );
+      // show only lines claimed by the current user in the 'Your Claimed Lines' card
+      const myClaims = claimedOnly.filter((l: any) => {
+        const claimedById = l.claimedBy && (l.claimedBy._id || l.claimedBy);
+        return String(claimedById) === String(user?.id);
       });
-
-      if (!response.ok) throw new Error("Failed to fetch lines");
-      const data = await response.json();
-
-      // Filter queued lines (status: queued)
-      const queued = data.lines.filter(
-        (line: QueuedLine) => line.status === "queued",
-      );
-      setQueuedLines(queued);
-
-      // Filter claimed lines (status: claimed)
-      const claimed = data.lines.filter(
-        (line: ClaimItem) => line.status === "claimed",
-      );
-      setClaims(claimed);
+      setClaims(myClaims);
 
       // also refresh distributor assignments
       fetchDistributorAssignments();
@@ -378,32 +426,54 @@ export default function Inbox() {
     try {
       // Step 1: Move all existing claimed lines to distributed
       if (claims.length > 0) {
-        const claimedLineIds = claims.map((c) => c._id || c.id);
-        const moveResponse = await fetch("/api/numbers/move-to-distributor", {
+        const claimedLineIds = claims
+          .map((c) => c._id || c.id)
+          .filter(
+            (id): id is string => typeof id === "string" && id.trim() !== "",
+          );
+
+        if (claimedLineIds.length > 0) {
+          const moveResponse = await import("@/lib/api").then((m) =>
+            m.apiFetch(`/api/numbers/move-to-distributor`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ lineIds: claimedLineIds }),
+            }),
+          );
+
+          if (!moveResponse || !moveResponse.ok) {
+            let errMsg = "Failed to move claimed lines";
+            try {
+              const err = await (moveResponse
+                ? moveResponse.json()
+                : Promise.resolve(null));
+              if (err && err.error) errMsg = err.error;
+            } catch (e) {}
+            toast.error(errMsg);
+            await fetchData();
+            return;
+          }
+        }
+      }
+
+      // Step 2: Claim the next line
+      const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
+      const claimResponse = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/numbers/claim`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ lineIds: claimedLineIds }),
-        });
+          body: JSON.stringify({ lineId: lineToClaimId }),
+        }),
+      );
 
-        if (!moveResponse.ok) throw new Error("Failed to move claimed lines");
-      }
-
-      // Step 2: Claim the next line
-      const lineToClaimId = queuedLines[0]._id || queuedLines[0].id;
-      const claimResponse = await fetch(`/api/numbers/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lineId: lineToClaimId }),
-      });
-
-      if (!claimResponse.ok) {
-        if (claimResponse.status === 409) {
+      if (!claimResponse || !claimResponse.ok) {
+        if (claimResponse && claimResponse.status === 409) {
           // Try to parse error message for better UX
           try {
             const err = await claimResponse.json();
@@ -482,18 +552,24 @@ export default function Inbox() {
   return (
     <Layout title="Numbers Inbox">
       <div className="p-6">
-        <Tabs value={tab} onValueChange={(v) => {
-            const nv = (v as any) as "claims" | "distributor";
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            const nv = v as any as "claims" | "distributor";
             setTab(nv);
             if (nv === "distributor") markDistributorRead();
-          }} className="w-full">
+          }}
+          className="w-full"
+        >
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="claims">Numbers Claim</TabsTrigger>
             <TabsTrigger value="distributor">
               <span className="relative inline-flex items-center gap-2">
                 Auto Distributor
                 {unreadDistributor > 0 && (
-                  <Badge variant="destructive" className="animate-pulse">{unreadDistributor}</Badge>
+                  <Badge variant="destructive" className="animate-pulse">
+                    {unreadDistributor}
+                  </Badge>
                 )}
               </span>
             </TabsTrigger>

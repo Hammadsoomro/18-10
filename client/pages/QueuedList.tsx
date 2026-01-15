@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSocket } from "@/hooks/useSocket";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,13 +36,41 @@ export default function QueuedList() {
   const [lines, setLines] = useState<QueuedLine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchQueuedLines();
 
-    // Auto-refresh every 3 seconds to show claimed lines removal
-    const interval = setInterval(fetchQueuedLines, 3000);
-    return () => clearInterval(interval);
-  }, [token]);
+    if (!socket) return;
+
+    const onQueuedChanged = (data: any) => {
+      try {
+        // If server sent created lines, merge them for instant UI update
+        if (data && Array.isArray(data.lines) && data.lines.length > 0) {
+          setLines((prev) => {
+            // avoid duplicates by id
+            const existingIds = new Set(prev.map((p) => String(p._id || p.id)));
+            const newOnes = data.lines.filter(
+              (l: any) => !existingIds.has(String(l._id || l.id)),
+            );
+            return [...newOnes, ...prev];
+          });
+          return;
+        }
+        // otherwise, refetch full list
+        fetchQueuedLines();
+      } catch (e) {
+        fetchQueuedLines();
+      }
+    };
+
+    socket.on("queued_lines_changed", onQueuedChanged);
+
+    return () => {
+      socket.off("queued_lines_changed", onQueuedChanged);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, socket]);
 
   const fetchQueuedLines = async () => {
     if (!token) {
@@ -51,7 +80,7 @@ export default function QueuedList() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/queued", {
+      const response = await fetch(`/api/numbers/queued`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -129,7 +158,9 @@ export default function QueuedList() {
         <div className="p-6">
           <div className="p-8 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
             <p className="text-lg font-semibold">Not available</p>
-            <p className="text-sm text-slate-500 mt-2">This page is only visible to admins.</p>
+            <p className="text-sm text-slate-500 mt-2">
+              This page is only visible to admins.
+            </p>
           </div>
         </div>
       </Layout>

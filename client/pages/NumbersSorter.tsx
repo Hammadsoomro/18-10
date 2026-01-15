@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSocket } from "@/hooks/useSocket";
 import { Layout } from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,26 @@ export default function NumbersSorter() {
   const [isAdding, setIsAdding] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchLines();
-  }, [token]);
+
+    if (socket) {
+      socket.on("sorted_lines_changed", () => fetchLines());
+      socket.on("queued_lines_changed", () => fetchLines());
+      socket.on("stats_updated", () => fetchLines());
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("sorted_lines_changed", () => fetchLines());
+        socket.off("queued_lines_changed", () => fetchLines());
+        socket.off("stats_updated", () => fetchLines());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, socket]);
 
   const fetchLines = async () => {
     if (!token) {
@@ -39,18 +57,18 @@ export default function NumbersSorter() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch(`/api/numbers/lines?status=sorted`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to fetch lines");
       const data = await response.json();
 
-      // Only show lines that are still in "queued" status (not moved yet)
-      const queuedLines = data.lines.filter(
-        (line: any) => line.status === "queued",
+      // show only 'sorted' status lines
+      const sortedLines = (data.lines || []).filter(
+        (line: any) => line.status === "sorted",
       );
-      setLines(queuedLines);
+      setLines(sortedLines);
     } catch (error) {
       console.error("Error fetching lines:", error);
       toast.error("Failed to fetch lines");
@@ -96,27 +114,56 @@ export default function NumbersSorter() {
 
     setIsAdding(true);
     try {
-      const response = await fetch("/api/numbers/lines", {
+      const response = await fetch(`/api/numbers/lines`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ contents: lineTexts }),
+        body: JSON.stringify({ contents: lineTexts, status: "sorted" }),
       });
 
       if (!response.ok) throw new Error("Failed to add lines");
       const data = await response.json();
 
-      setLines([...lines, ...data.lines]);
+      // Server returns created lines in `lines` and optionally `skipped` for items that already exist in queued/distributed
+      const created: NumberLine[] = data.lines || [];
+      const skippedFromOtherLists: any[] = data.skipped || [];
+
+      // Merge created lines into existing state without duplicating by id or content
+      const existingById = new Set(lines.map((l) => l._id || l.id));
+      const existingByContent = new Set(lines.map((l) => l.content));
+      const merged = [...lines];
+      created.forEach((rl) => {
+        const id = rl._id || rl.id;
+        if (id && existingById.has(id)) return;
+        if (existingByContent.has(rl.content)) return;
+        existingById.add(id);
+        existingByContent.add(rl.content);
+        merged.push(rl);
+      });
+      setLines(merged);
       setInputValue("");
 
-      let message = `${lineTexts.length} line${lineTexts.length > 1 ? "s" : ""} added`;
-      const totalRemoved = duplicatesInInput + duplicatesWithExisting;
-      if (totalRemoved > 0) {
-        message += ` (${totalRemoved} duplicate${totalRemoved > 1 ? "s" : ""} removed)`;
+      // Build message
+      let messageParts: string[] = [];
+      if (created.length > 0) messageParts.push(`${created.length} added`);
+      if (duplicatesInInput > 0)
+        messageParts.push(`${duplicatesInInput} duplicates removed from input`);
+      if (duplicatesWithExisting > 0)
+        messageParts.push(
+          `${duplicatesWithExisting} duplicates removed (already in Sorted)`,
+        );
+      if (skippedFromOtherLists.length > 0)
+        messageParts.push(
+          `${skippedFromOtherLists.length} skipped (already in Queued/Distributed)`,
+        );
+
+      if (messageParts.length === 0) {
+        toast.error("No lines were added");
+      } else {
+        toast.success(messageParts.join(" — "));
       }
-      toast.success(message);
     } catch (error) {
       console.error("Error adding lines:", error);
       toast.error("Failed to add lines");
@@ -151,7 +198,7 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-queue", {
+      const response = await fetch(`/api/numbers/move-to-queue`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +229,7 @@ export default function NumbersSorter() {
     setIsMoving(true);
     try {
       const lineIds = lines.map((l) => l._id || l.id).filter(Boolean);
-      const response = await fetch("/api/numbers/move-to-distributor", {
+      const response = await fetch(`/api/numbers/move-to-distributor`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -194,15 +241,7 @@ export default function NumbersSorter() {
       if (!response.ok) throw new Error("Failed to move lines");
 
       toast.success(`${lines.length} line(s) moved to Auto Distributor`);
-      // notify other pages to refresh distributed lines
-      try {
-        localStorage.setItem("distributor_updated", String(Date.now()));
-        window.dispatchEvent(
-          new CustomEvent("distributor_updated", {
-            detail: { teamId: user?.teamId },
-          }),
-        );
-      } catch (e) {}
+      // server will emit socket events to update other pages; clear local list
       setLines([]);
       setTimeout(() => navigate("/auto-distributor"), 500);
     } catch (error) {

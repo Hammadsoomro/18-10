@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout/Layout";
@@ -16,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Zap, Users, Loader2, AlertCircle } from "lucide-react";
-import { io, Socket } from "socket.io-client";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
 
 interface TeamMember {
@@ -49,7 +48,7 @@ export default function AutoDistributor() {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
 
-  const socketRef = useRef<Socket | null>(null);
+  const socket = useSocket();
 
   useEffect(() => {
     fetchMembers();
@@ -72,44 +71,44 @@ export default function AutoDistributor() {
     };
     window.addEventListener("storage", onStorage);
 
-    // socket connection for real-time distribution events
-    if (token) {
-      try {
-        const tokenRaw = localStorage.getItem("auth_token");
-        const payload = tokenRaw
-          ? JSON.parse(atob(tokenRaw.split(".")[1]))
-          : null;
-        const teamId = payload?.teamId;
-        const s = io(undefined, { autoConnect: true });
-        socketRef.current = s;
-        s.on("connect", () => {
-          if (teamId) s.emit("join_team", teamId);
-        });
+    if (socket) {
+      const onDistributed = (data: any) => {
+        fetchDistributedLines();
+        try {
+          const count = Array.isArray(data.lines) ? data.lines.length : 0;
+          if (count > 0) {
+            import("sonner")
+              .then(({ toast }) =>
+                toast.success(`${count} line(s) distributed`),
+              )
+              .catch(() => {});
+          }
+        } catch (e) {}
+      };
 
-        s.on("distributed_lines", (data: any) => {
-          // server informs which lines were moved from 'Lines in Distribution'
-          // refresh the distributed list so UI updates immediately
-          fetchDistributedLines();
-          try {
-            const count = Array.isArray(data.lines) ? data.lines.length : 0;
-            if (count > 0) {
-              // small toast
-              // @ts-ignore
-              import("sonner")
-                .then(({ toast }) =>
-                  toast.success(`${count} line(s) distributed`),
-                )
-                .catch(() => {});
-            }
-          } catch (e) {}
-        });
+      const onDistributorIndicator = (data: any) => {
+        // could update UI indicator if needed
+      };
 
-        s.on("distributor_indicator", (data: any) => {
-          // could update UI indicator if needed
-        });
-      } catch (e) {
-        console.error("Socket error", e);
-      }
+      const onQueuedChanged = () => fetchDistributedLines();
+      const onSortedChanged = () => fetchDistributedLines();
+
+      socket.on("distributed_lines", onDistributed);
+      socket.on("distributor_indicator", onDistributorIndicator);
+      socket.on("queued_lines_changed", onQueuedChanged);
+      socket.on("sorted_lines_changed", onSortedChanged);
+
+      return () => {
+        window.removeEventListener(
+          "distributor_updated",
+          onDistributorUpdated as EventListener,
+        );
+        window.removeEventListener("storage", onStorage);
+        socket.off("distributed_lines", onDistributed);
+        socket.off("distributor_indicator", onDistributorIndicator);
+        socket.off("queued_lines_changed", onQueuedChanged);
+        socket.off("sorted_lines_changed", onSortedChanged);
+      };
     }
 
     return () => {
@@ -118,18 +117,14 @@ export default function AutoDistributor() {
         onDistributorUpdated as EventListener,
       );
       window.removeEventListener("storage", onStorage);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [token]);
+  }, [token, socket]);
 
   const fetchMembers = async () => {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/auth/members", {
+      const response = await fetch(`/api/auth/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -146,7 +141,7 @@ export default function AutoDistributor() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -170,7 +165,7 @@ export default function AutoDistributor() {
     try {
       setIsLoading(true);
       // Use the claimed-lines endpoint which includes distributed items
-      const response = await fetch("/api/numbers/claimed-lines", {
+      const response = await fetch(`/api/numbers/claimed-lines`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -208,7 +203,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -246,7 +241,7 @@ export default function AutoDistributor() {
     }
 
     try {
-      const response = await fetch("/api/auth/distributor-settings", {
+      const response = await fetch(`/api/auth/distributor-settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -441,72 +436,6 @@ export default function AutoDistributor() {
               ))}
             </CardContent>
           </Card>
-        </div>
-
-        {/* Distributed Lines Section */}
-        <div className="mt-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Lines in Distribution
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400">
-              {distributedLines.length} line(s) being distributed
-            </p>
-          </div>
-
-          {distributedLines.length > 0 && (
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardContent className="pt-6 space-y-3">
-                {distributedLines.slice(0, 5).map((line) => (
-                  <div
-                    key={line._id || line.id}
-                    className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            #{line.lineNumber}
-                          </span>
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {truncateText(line.content)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {line.createdAt}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {distributedLines.length > 5 && (
-                  <Button
-                    onClick={() => navigate("/distributed-lines")}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    View all {distributedLines.length} distributed lines
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {distributedLines.length === 0 && (
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardContent className="pt-12 pb-12">
-                <div className="text-center">
-                  <AlertCircle className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No lines in distribution yet
-                  </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
-                    Lines will appear here when you add them from Numbers Sorter
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </Layout>

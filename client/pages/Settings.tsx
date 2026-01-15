@@ -32,7 +32,9 @@ export default function Settings() {
   const [memberEmail, setMemberEmail] = useState("");
   const [memberPassword, setMemberPassword] = useState("");
   const [isCreatingMember, setIsCreatingMember] = useState(false);
-  const [members, setMembers] = useState<{ id: string; name: string; email: string; active: boolean }[]>([]);
+  const [members, setMembers] = useState<
+    { id: string; name: string; email: string; active: boolean }[]
+  >([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   useEffect(() => {
@@ -42,10 +44,12 @@ export default function Settings() {
       (async () => {
         setIsLoadingMembers(true);
         try {
-          const res = await fetch("/api/auth/members", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
+          const res = await import("@/lib/api").then((m) =>
+            m.apiFetch(`/api/auth/members`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          );
+          if (res && res.ok) {
             const data = await res.json();
             setMembers(data.members || []);
           }
@@ -63,19 +67,29 @@ export default function Settings() {
 
     try {
       setIsLoadingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
 
-      if (!response.ok) throw new Error("Failed to fetch claim settings");
+      if (!response || !response.ok)
+        throw new Error("Failed to fetch claim settings");
 
       const data = await response.json();
       setClaimLineCount(data.claimLineCount);
       setCooldownSeconds(data.cooldownSeconds);
       // propagate to other tabs/clients by storing default for new claims
       try {
-        localStorage.setItem(`claim_settings_cooldown_${user?.teamId || 'global'}`, String(data.cooldownSeconds));
-        window.dispatchEvent(new CustomEvent('claim_settings_updated', { detail: { cooldownSeconds: data.cooldownSeconds } }));
+        localStorage.setItem(
+          `claim_settings_cooldown_${user?.teamId || "global"}`,
+          String(data.cooldownSeconds),
+        );
+        window.dispatchEvent(
+          new CustomEvent("claim_settings_updated", {
+            detail: { cooldownSeconds: data.cooldownSeconds },
+          }),
+        );
       } catch (e) {}
     } catch (error) {
       console.error("Error fetching claim settings:", error);
@@ -93,25 +107,35 @@ export default function Settings() {
 
     try {
       setIsSavingSettings(true);
-      const response = await fetch("/api/auth/claim-settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          claimLineCount,
-          cooldownSeconds,
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/claim-settings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            claimLineCount,
+            cooldownSeconds,
+          }),
         }),
-      });
+      );
 
-      if (!response.ok) throw new Error("Failed to save claim settings");
+      if (!response || !response.ok)
+        throw new Error("Failed to save claim settings");
 
       toast.success("Claim settings saved successfully");
       // update stored setting so other clients can pick it up
       try {
-        localStorage.setItem(`claim_settings_cooldown_${user?.teamId || 'global'}`, String(cooldownSeconds));
-        window.dispatchEvent(new CustomEvent('claim_settings_updated', { detail: { cooldownSeconds } }));
+        localStorage.setItem(
+          `claim_settings_cooldown_${user?.teamId || "global"}`,
+          String(cooldownSeconds),
+        );
+        window.dispatchEvent(
+          new CustomEvent("claim_settings_updated", {
+            detail: { cooldownSeconds },
+          }),
+        );
       } catch (e) {}
     } catch (error) {
       console.error("Error saving claim settings:", error);
@@ -153,18 +177,20 @@ export default function Settings() {
 
     setIsCreatingMember(true);
     try {
-      const response = await fetch("/api/auth/create-member", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: memberName,
-          email: memberEmail,
-          password: memberPassword,
+      const response = await import("@/lib/api").then((m) =>
+        m.apiFetch(`/api/auth/create-member`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: memberName,
+            email: memberEmail,
+            password: memberPassword,
+          }),
         }),
-      });
+      );
 
       if (!response.ok) {
         try {
@@ -184,10 +210,12 @@ export default function Settings() {
       setMemberPassword("");
       // reload members
       try {
-        const res = await fetch("/api/auth/members", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
+        const res = await import("@/lib/api").then((m) =>
+          m.apiFetch(`/api/auth/members`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        );
+        if (res && res.ok) {
           const d = await res.json();
           setMembers(d.members || []);
         }
@@ -337,7 +365,9 @@ export default function Settings() {
                               type="password"
                               placeholder="Enter password (min 6 characters)"
                               value={memberPassword}
-                              onChange={(e) => setMemberPassword(e.target.value)}
+                              onChange={(e) =>
+                                setMemberPassword(e.target.value)
+                              }
                               className="mt-2"
                             />
                           </div>
@@ -373,10 +403,12 @@ export default function Settings() {
                         if (!token) return;
                         setIsLoadingMembers(true);
                         try {
-                          const res = await fetch("/api/auth/members", {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          if (res.ok) {
+                          const res = await import("@/lib/api").then((m) =>
+                            m.apiFetch(`/api/auth/members`, {
+                              headers: { Authorization: `Bearer ${token}` },
+                            }),
+                          );
+                          if (res && res.ok) {
                             const data = await res.json();
                             setMembers(data.members || []);
                           }
@@ -396,56 +428,106 @@ export default function Settings() {
                     {isLoadingMembers ? (
                       <div className="text-sm text-slate-500">Loading...</div>
                     ) : members.length === 0 ? (
-                      <div className="text-sm text-slate-500">No team members yet</div>
+                      <div className="text-sm text-slate-500">
+                        No team members yet
+                      </div>
                     ) : (
                       <div className="space-y-2">
                         {members.map((m) => (
-                          <div key={m.id} className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                          <div
+                            key={m.id}
+                            className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-800"
+                          >
                             <div>
                               <div className="font-semibold">{m.name}</div>
-                              <div className="text-xs text-slate-500">{m.email}</div>
+                              <div className="text-xs text-slate-500">
+                                {m.email}
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-500 mr-3">{m.active ? 'Active' : 'Inactive'}</span>
+                              <span className="text-xs text-slate-500 mr-3">
+                                {m.active ? "Active" : "Inactive"}
+                              </span>
                               <Button
                                 size="sm"
-                                variant={m.active ? 'destructive' : 'secondary'}
+                                variant={m.active ? "destructive" : "secondary"}
                                 onClick={async () => {
                                   if (!token) return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                      body: JSON.stringify({ active: !m.active }),
-                                    });
-                                    if (!res.ok) throw new Error('Failed to update member');
-                                    setMembers((prev) => prev.map(p => p.id === m.id ? { ...p, active: !p.active } : p));
-                                    toast.success(`${m.active ? 'Blocked' : 'Unblocked'} ${m.name}`);
+                                    const res = await import("@/lib/api").then(
+                                      (mm) =>
+                                        mm.apiFetch(
+                                          `/api/auth/member/${m.id}`,
+                                          {
+                                            method: "PUT",
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                              Authorization: `Bearer ${token}`,
+                                            },
+                                            body: JSON.stringify({
+                                              active: !m.active,
+                                            }),
+                                          },
+                                        ),
+                                    );
+                                    if (!res.ok)
+                                      throw new Error(
+                                        "Failed to update member",
+                                      );
+                                    setMembers((prev) =>
+                                      prev.map((p) =>
+                                        p.id === m.id
+                                          ? { ...p, active: !p.active }
+                                          : p,
+                                      ),
+                                    );
+                                    toast.success(
+                                      `${m.active ? "Blocked" : "Unblocked"} ${m.name}`,
+                                    );
                                   } catch (e) {
                                     console.error(e);
-                                    toast.error('Failed to update member');
+                                    toast.error("Failed to update member");
                                   }
                                 }}
                               >
-                                {m.active ? 'Block' : 'Unblock'}
+                                {m.active ? "Block" : "Unblock"}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
                                   if (!token) return;
-                                  if (!confirm(`Delete member ${m.name}? This cannot be undone.`)) return;
+                                  if (
+                                    !confirm(
+                                      `Delete member ${m.name}? This cannot be undone.`,
+                                    )
+                                  )
+                                    return;
                                   try {
-                                    const res = await fetch(`/api/auth/member/${m.id}`, {
-                                      method: 'DELETE',
-                                      headers: { Authorization: `Bearer ${token}` },
-                                    });
-                                    if (!res.ok) throw new Error('Failed to delete member');
-                                    setMembers((prev) => prev.filter(p => p.id !== m.id));
+                                    const res = await import("@/lib/api").then(
+                                      (mm) =>
+                                        mm.apiFetch(
+                                          `/api/auth/member/${m.id}`,
+                                          {
+                                            method: "DELETE",
+                                            headers: {
+                                              Authorization: `Bearer ${token}`,
+                                            },
+                                          },
+                                        ),
+                                    );
+                                    if (!res.ok)
+                                      throw new Error(
+                                        "Failed to delete member",
+                                      );
+                                    setMembers((prev) =>
+                                      prev.filter((p) => p.id !== m.id),
+                                    );
                                     toast.success(`Deleted ${m.name}`);
                                   } catch (e) {
                                     console.error(e);
-                                    toast.error('Failed to delete member');
+                                    toast.error("Failed to delete member");
                                   }
                                 }}
                               >
@@ -465,7 +547,9 @@ export default function Settings() {
                   <CardTitle>Team Management</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Only admins can manage team members.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Only admins can manage team members.
+                  </p>
                 </CardContent>
               </Card>
             )}
